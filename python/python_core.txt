@@ -187,12 +187,6 @@ p(1) or p(2) and p(3)
 #> 1
 #  True
 
-## even `not' have NO higher priority
-p(1) and not p(2) # "p(1) and (not p(2))" will have the same result
-#> 1
-#  2
-#  False
-
 
 ##----------------------------------------------------------------------------
 ## the value that `and'/`or' returns is not forced to be a bool
@@ -224,7 +218,7 @@ p(1) and not p(2) # "p(1) and (not p(2))" will have the same result
 #  6
 
 ## but you can NOT do assignment on the whole expressions:
-x = ("abcde"; 1 + 2 * 3))
+x = ("abcde"; 1 + 2 * 3)
 #>   File "<stdin>", line 1
 #      x = ("abcde"; 1 + 2 * 3)
 #                  ^
@@ -244,7 +238,6 @@ hello("Ron")
 hello(1)
 #> 1
 
-## see, the type check is NOT done.
 ## NO automatic type checking happens at runtime. Instead, it is assumed
 ## that a separate off-line type checker (e.g. mypy) will be used for
 ## on-demand source code analysis.
@@ -320,6 +313,13 @@ _v
 dir()
 #> ['__builtins__', '__doc__', '__name__', '__package__', 'v']
 
+## using `import xx` is different
+import a
+a.v
+#> 1
+a._v
+#> 2
+
 ## but if you change __all__, things changed
 ## in a.py
 v, _v, b = 1, 2, 3
@@ -332,13 +332,6 @@ dir()
 ## and if you specify the variable
 from a import _v
 _v
-#> 2
-
-## but import xx is different
-import a
-a.v
-#> 1
-a._v
 #> 2
 
 
@@ -424,7 +417,7 @@ dict.fromkeys((1, 2, 3), 0)
 
 
 ## concat two dict. `+' works for str, bytes, list, tuple... but NOT for dict.
-## you can use update. and of course, the data with same key will overlay
+## you can use update. and of course, the data with same key will overwrite
 ## the old data. no duplicated keys in dict
 ## but unlike `+', `update' will not return the result.
 a = {1: 2}
@@ -432,6 +425,7 @@ a.update({3: 4})
 a
 #> {1: 2, 3: 4}
 a.update({1: 5})
+a
 #> {1: 5, 3: 4}
 
 
@@ -459,9 +453,11 @@ a[(3, 4)] # same as a[3, 4]
 {[1]: 3}
 #> TypeError: unhashable type: 'list'
 
-## `|' works different for set
 {1, 2, 3} | {2, 3, 4}
 #> {1, 2, 3, 4}
+
+{1,2,3} & {2,3,4}
+#> {2, 3}
 
 ## comparisons like `<', `>', `>=', `<=' is special for set, too.
 ## `>' for list and tuple works just like str, it test the element with `>'
@@ -520,7 +516,7 @@ a
 #> [2, 3]
 
 ## if you want to pop a certain element, do it from the end of sequence.
-## because `pop' will change the index, make the list shorter.
+## because `pop' will change the index, which makes the list shorter.
 a = [1, 2, 3, 1, 2, 3]
 for i in range(len(a)):
     if a[i] == 1: a.pop(i)
@@ -558,7 +554,7 @@ a
 
 ## `index' and `find' can take 2 or 3 arguments
 ##  *   L.index(value, [start, [stop]])
-##  *   S.find(sub[, start[, end]])
+##  *   S.find(sub, [start, [end]])
 [1, 2, 3, 1, 2, 3].index(3)
 #> 2
 [1, 2, 3, 1, 2, 3].index(3, 2)
@@ -610,7 +606,7 @@ str.maketrans("abc", "123")
 "{ww}".format(ww=3)
 #> '3'
 
-## alignment `<`, `^`, `>` (`<` is the default)
+## alignment `<`, `^`, `>` (`>` is the default)
 ## way to write: "{:[FILLCHAR][ALIGNCHAR][LENGTH][TAIL]}", 4 element in total
 
 ## e.g.
@@ -736,6 +732,15 @@ str.maketrans("abc", "123")
 {"x": 1, **{"y": 2}}
 #> {'x': 1, 'y': 2}
 
+## `*` can also be used on dict, only keys are kept
+(1, *{"y": 2})
+#> (1, 'y')
+
+## but it's only allow in special context
+{"x": 1, *{"y": 2}}
+#> SyntaxError: invalid syntax
+
+
 ## You can't use it alone. (of course you can't, or what type it should be)
 *(0, 1, 2, 3)
 #> SyntaxError: can't use starred expression here
@@ -745,8 +750,12 @@ print(*[1], 2, *[3, 4, 5])
 #> 1 2 3 4 5
 
 def fn(a, b, c, d): print(a, b, c, d)
+
 fn(**{'a': 1, 'c': 3}, **{'b': 2, 'd': 4})
 #> 1 2 3 4
+
+fn(*{'a': 1, 'c': 3}, *{'b': 2, 'd': 4})
+#> a c b d
 
 ## in python3.4, unpacking only have limited power
 *(0, 1, 2, 3), 4
@@ -784,11 +793,9 @@ type(())
 def x(a): print(a[0]) # assume a is a dict
 threading.Thread(target=x, args=({"a": 1},)).start()
 
-## Thread will do `tuple unpacking' on `args'
+## Thread will do unpacking on `args'
 ## you have to write as `args=({"a":1},)' because `args=({"a":1})' will only
-## pass "a" as arguement, not {"a":1}, because :
-## the parameter tuple unpacking contains a "convert to tuple" process
-## before unpacking.
+## pass "a" as arguement, not {"a":1}
 
 ## another example to show this:
 def x(a): print(a)
@@ -802,7 +809,7 @@ def x(a): print(type(a))
 
 x({"a": 1})
 #> <class 'dict'>
-x(*{"a": 1})
+x(*{"a": 1}) # just like x('a')
 #> <class 'str'>
 
 ## and
@@ -956,47 +963,6 @@ print(type(b"a"))
 
 
 ##----------------------------------------------------------------------------
-## python is dynamic, when calling a function through the function name, i.e.
-## the variable name, it evaluate and get the function object. BUT, that's what
-## happened in the FUNCTION CALLING, NOT THE FUNCTION DEFINITION
-## in the function definition, it just make records of variables with scope.
-## this is the 'late binding' in python, BUT, function argument with default
-## value is different,
-## the binding of an arguement with default value happens at the time that the
-## function is defined. And the assignment happens for only one time.
-var = 3
-def t(par): print("outer, and par is {}".format(par))
-def a(): t(var)
-a()
-#> outer, and par is 3
-def t(par): print("outer 2, and par is {}".format(par))
-a()
-#> outer 2, and par is 3
-## create a scope by creating a function
-def test():
-    var = 4
-    def t(par): print("inner, and par is {}".format(par))
-    a()
-
-test()
-#> outer 2, and par is 3
-
-## for the same reason:
-def a(x, y): return x * y
-def b(): a(1, 2, 3)  #====> no Error
-b()
-#> TypeError: a() takes exactly 2 positional arguements (3 given)
-## a(1, 2, 3) will not execute until b is called
-
-def a(): z()  #====> no Error
-a()
-#> NameError: name 'z' is not defined
-z = 3
-a()
-#> TypeError: 'int' object is not callable
-
-
-##----------------------------------------------------------------------------
 ## the default value for a function arguement is only evaluated once, at the 
 ## time that the function is defined
 def foo(bar=[]):
@@ -1009,7 +975,7 @@ foo()
 #> ["baz", "baz"]
 foo()
 #> ["baz", "baz", "baz"]
-foo([]) # not use the default argument
+foo([]) # do not use the default argument
 #> ['baz']
 foo([]) # again
 #> ['baz']
@@ -1066,7 +1032,7 @@ print(1)
 del print
 print(1)
 #> 1
-## see, the del did not really delete the symbol "print"
+## the del did not really delete the symbol "print"
 
 
 ##----------------------------------------------------------------------------
@@ -1369,20 +1335,6 @@ str(a)
 
 
 ##----------------------------------------------------------------------------
-## `__file__' is not dynamic (unlike `__name__')
-
-## in a.py
-def log(*x): print("[{}]".format(__file__), *x)
-
-## in b.py
-from a import log
-log("this is file b.py")
-
-## then, you run this in command line:
-#$ python3 b.py
-#> [/home/pi/a.py] this is file b.py
-
-
 ## `__file__` is sometimes absloute path, sometimes relative path
 ## if not used as module, `__file__' is just like `argv[0]'
 
@@ -1423,10 +1375,9 @@ a
 
 print(a)
 #> a\b\c\d\m
-## this is different from C language, in C:
 
-#c printf("a\\b\c\d\m");
-#> a\bcdm
+## this is different from C language, in C:
+## printf("a\\b\c\d\m"); //> a\bcdm
 
 
 ##----------------------------------------------------------------------------
@@ -1463,6 +1414,7 @@ False == ""
 #> False
 False == []
 #> False
+
 ## sometimes, bool is not the right choice even if you are trying to store
 ## a two-value thing
 
@@ -1514,12 +1466,6 @@ a = [1, 2, 3]
 b = [1, 2, 3]
 id(a) == id(b)
 #> False
-
-## but take care
-id([1, 2, 3]) == id([1, 2, 3])
-#> True
-
-## things go different when you use list literal with `id`
 
 
 ##----------------------------------------------------------------------------
@@ -1591,56 +1537,6 @@ isinstance((), tuple)
 ## issubclass
 issubclass(bool, int)
 #> True
-
-
-
-##----------------------------------------------------------------------------
-## instance attribute & class attribute
-## class attribute can be accessed via class or via an instance
-## before doing assignment on instance attribute, it point to the same
-## object as class attribute. after assignment, thing changed
-
-## IN PYTHON, ASSIGNMENT WILL ALWAYS TRY TO CREATE A NEW VARIABLE !
-
-## but you can still change the class attribute through instances,
-## you can use a list or dict as class attribute to avoid the assignment
-## e.g.
-class C:
-    def __call__(self): self.n[0] += 1  # NO assignment to self.n
-    n = [0]
-
-c = C()
-d = C()
-c.n is C.n
-#> True
-c.n is d.n
-#> True
-c.n
-#> [0]
-c()
-c.n
-#> [1]
-C.n
-#> [1]
-d.n
-#> [1]
-## do assignment to C.n will not change it. C.n and c.n still point to the
-## same object
-C.n = [10]
-c.n is C.n
-#> True
-c.n
-#> [10]
-## but after doing assignment to c.n, c.n and C.n will not point to the
-## same object anymore.
-c.n = [20]
-c.n is C.n
-#> False
-c()
-c.n
-#> [21]
-C.n
-#> [10]
 
 
 ##----------------------------------------------------------------------------
@@ -1749,9 +1645,6 @@ t.hello()
 #> name is myname
 
 ## unlike javascript, "invocation pattern" of python function does NOT matter.
-## JS have NO concept for "class", which make many things different.
-## In python, method is function for class, but `method` for instance.
-## even if you do another assignment
 x = t.hello
 x
 #> <bound method T.hello of <__main__.T object at 0x107444320>>
@@ -2419,13 +2312,7 @@ raise MyException("this is my exception")
 with open("./deltas.gz", "rb") as i:
     with open("./output.txt", "wb") as o:
         o.write(gzip.decompress(i.read()))
-## it's same as: `gzip -d deltas.gz'
-## things better than `gzip' command:
-##  1. the origin file won't change. (`gzip -d' will remove the original file)
-##  2. the output file name is decided by you
-##
-## so, a compressed file is just a normal file who contains data that is
-## compressed.
+## it's just like: `gzip -d deltas.gz'
 
 
 ##----------------------------------------------------------------------------
@@ -2521,14 +2408,5 @@ for i in range(3): pass
 i
 #> 2
 ## see ! it's 2, not 3. not like "for (i = 0; i < 3; i++) {}" in C.
-
-
-##----------------------------------------------------------------------------
-## Caution !
-## When using "chr" function, don't pass negative number to it. The error info
-## is not wrong, but it had confused you for 2 times.
-##  (you thought you passed 0x110000 as argument, but it's range(0x110000))
-chr(-1)
-#> ValueError: chr() arg not in range(0x110000)
 
 
