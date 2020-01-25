@@ -1,0 +1,20 @@
+## vim: ft=dosini :
+
+##############################################################################
+## To enable CORS(Cross-Origin Resource Sharing), you need special
+## configurations.
+## (you have to use authorization, so setup a user for couchdb)
+[cors]
+origins = *
+credentials = true
+methods = GET, POST, PUT, DELETE
+headers = accept, authorization, content-type, origin, referer, x-csrf-token, if-match
+
+[httpd]
+enable_cors = true
+
+## Then in your client, you need to do this:
+#   req.setRequestHeader("Authorization","Basic "+btoa("name:passwd"));
+#   req.withCredentials = true;
+
+

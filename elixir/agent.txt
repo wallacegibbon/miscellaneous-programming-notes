@@ -1,0 +1,35 @@
+## vim: ft=elixir :
+
+
+## Agent is based on process, you can use it to store state
+
+{:ok, pid} = Agent.start_link fn -> [] end
+#> {:ok, #PID<0.59.0>}
+
+Agent.update pid, fn lst -> [:hello | lst] end
+#> :ok
+
+Agent.get pid, fn lst -> lst end
+#> [:hello]
+
+Agent.update pid, fn lst -> [:world | lst] end
+#> :ok
+
+Agent.get pid, fn lst -> lst end
+#> [:world, :hello]
+
+
+
+## you can give Agent.start_link/2 a :name option, so that it will be
+## automatically registered
+{:ok, pid} = Agent.start_link fn -> [] end, name: :blah
+#> {:ok, #PID<0.63.0>}
+
+Agent.update :blah, fn lst -> [:hello | lst] end
+#> :ok
+
+Agent.get :blah, fn lst -> lst end
+#> [:hello]
+
+
+

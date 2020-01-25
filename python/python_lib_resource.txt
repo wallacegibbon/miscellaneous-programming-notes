@@ -1,0 +1,32 @@
+## vim: ft=python :
+
+
+## resource limit
+## specifies a value one greater than the maximum file descriptor number that
+## can be opened by this process.
+resource.getrlimit(resource.RLIMIT_NOFILE)
+#> (1024, 4096)
+## 1024 is soft limit, 4096 is hard limit
+resource.setrlimit(resource.RLIMIT_NOFILE, (3, 1024))
+resource.getrlimit(resource.RLIMIT_NOFILE)
+#> (3, 1024)
+## so, only 0, 1, 2 are allowed as file descriptor
+open("/dev/null")
+#> OSError: [Errno 24] Too many open files: '/dev/null'
+
+resource.RLIM_INFINITY
+#> -1
+## so -1 means unlimited
+
+## The maximum number of processes (or, more precisely on Linux, threads)
+## that can be created for the real user ID of the calling process.
+resource.getrlimit(resource.RLIMIT_NPROC)
+#> (31430, 31430)
+## file size limit
+resource.getrlimit(resource.RLIMIT_FSIZE)
+#> (-1, -1)
+## process stack limit
+resource.getrlimit(resource.RLIMIT_STACK)
+(8388608, -1)   # 8388608 is 8MB
+
+

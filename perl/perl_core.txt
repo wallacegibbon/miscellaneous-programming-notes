@@ -1,0 +1,13 @@
+## vim: ft=perl :
+
+## run perl interactive, like python and irb
+#$ perl -de 0
+
+## data structure in perl is horrible, list will be flatten
+@a = (1, 2, 3, (4, 5), 6)  # will become (1, 2, 3, 4, 5, 6)
+print $a[3]
+#> 4
+print $a[4]
+#> 5
+
+

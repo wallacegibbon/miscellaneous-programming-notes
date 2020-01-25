@@ -1,0 +1,56 @@
+# vim: ft=sh :
+
+
+# define a function in bourne shell
+ttt(){ echo this is a function;}
+#     ^                       ^
+# space needed         semicolon needed
+#
+# use `{', `}' have the same rule
+time { echo hi;}
+#     ^       ^
+
+
+# string manipulate:
+
+file=/dir1/dir2/dir3/my.file.txt
+
+# the shell version of `strlen', use ${#varname}
+${#file}  #> 27
+
+# `#' -> delete left  part (`#' is on the left  of `$')
+# `%' -> delete right part (`%' is on the right of `$')
+# single (`#'  or `%' ) means minimal match
+# double (`##' or `%%') means maximum match
+
+${file#*/}  #> dir1/dir2/dir3/my.file.txt (delete first / and string before it)
+
+${file##*/} #> my.file.txt                (delete last  / and string before it)
+
+${file#*.}  #> file.txt                   (delete first . and string before it)
+
+${file##*.} #> txt                        (delete last  . and string before it)
+
+${file%/*}  #> /dir1/dir2/dir3            (delete last  / and string after  it)
+
+${file%%/*} #> (empty)                    (delete first / and string after  it)
+
+${file%.*}  #> /dir1/dir2/dir3/my.file    (delete last  . and string after  it)
+
+${file%%.*} #> /dir1/dir2/dir3/my         (delete first . and stirng after  it)
+
+
+
+# `shift':  shift n -> make the n+1 argument the first argument
+# e.g.
+# ==================== test.sh ==========================
+echo "[BEFORE SHIFT]\$#:$#, \$1:$1, \$2:$2, \$3:$3"
+shift 2
+echo "[AFTER  SHIFT]\$#:$#, \$1:$1, \$2:$2, \$3:$3"
+# =======================================================
+
+shell test.sh a b c
+#> [BEFORE SHIFT]$#:3, $1:a, $2:b, $3:c
+#  [AFTER  SHIFT]$#:1, $1:c, $2:, $3:
+
+

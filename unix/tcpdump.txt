@@ -1,0 +1,15 @@
+# vim: ft=sh :
+
+# `-i'      ->  specify interface
+# `-n'      ->  show ip addr instead of domain name
+# `host'    ->  specify the target to capture
+# e.g. only capture request to "www.baidu.com"
+tcpdump -n -i en0 host 119.75.218.70
+
+
+# when you use `-w' to store data into a file, you will find all raw data in
+# this file, it's convenient to analysis HTTP protocol
+# e.g.
+tcpdump -i en0 -w ./a.txt
+
+

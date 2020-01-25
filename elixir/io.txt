@@ -1,0 +1,25 @@
+## vim: ft=elixir :
+
+
+## IO.puts can only be used on string or things that can be converted to string
+
+IO.puts %{:a => 1, :b => 2}
+#> ** (Protocol.UndefinedError) protocol String.Chars not implemented for %{a: 1, b: 2}
+
+IO.puts [:a, :b, :c]
+#> ** (ArgumentError) argument error
+
+IO.puts [?a, ?b, ?c]
+#> abc
+#  :ok
+
+## you need to use IO.inspect
+IO.inspect %{:a => 1, :b => 2}
+#> %{a: 1, b: 2}
+#  %{a: 1, b: 2}
+
+IO.inspect [:a, :b, :c]
+#> [:a, :b, :c]
+#  [:a, :b, :c]
+
+

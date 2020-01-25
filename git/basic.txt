@@ -1,0 +1,130 @@
+## vim: ft=sh :
+
+# basic operation
+git init
+git add file1 file2 ...
+git add [directory]
+git commit [-m 'version message']
+
+# config
+git config --global user.name myname
+git config --global user.email myemail@xx.com
+git config --global core.editor vi
+
+# enable color
+git config --global color.ui auto
+
+# or one by one:
+git config --global color.status auto
+git config --global color.branch auto
+git config --global color.diff auto
+#...
+
+# disable color
+git config --global color.ui false
+
+# list current config
+git config --list   # or just `git config -l`
+
+# you can also use
+git rm
+git mv
+
+# 'git rm' and 'git mv' works just like 'rm' and 'mv', but they change the
+# records in git
+
+# check out file change
+git status
+git diff
+
+## show information of previous versions
+* git log
+* git reflog
+
+# switch among different versions
+git reset --hard commit-id
+
+# if you just want to delete some commits, use "reset" WITHOUT "--hard"
+git reset commit-id
+# then commit again, the useless old commits will disappear.
+
+
+# discard the uncommitted change
+git checkout -- filename
+
+# Push to an existing repository from the command line
+# with https, you need always input username and password of you account
+git remote add origin https://github.com/yourname/test_git.git
+git push origin master
+
+# delete origin and add a new one
+git remote rm origin
+git remote add origin https://git.oschina.net/yourname/test.git
+
+# with ssh, you just need password of you ssh
+git remote add github git@github.com:yourname/test.git
+git push github master
+git remote add oschina git@git.oschina.net:yourname/test.git
+git push oschina master
+
+# or you can just simply:
+git push git@git.oschina.net:yourname/test.git master
+
+# fetch from repository
+git fetch git@git.oschina.net:yourname/test.git master:temp
+
+# fetch and merge
+git pull git@git.oschina.net:yourname/test.git master
+git pull oschina master
+
+
+# just copy the whole project
+git clone git@git.oschina.net:yourname/test.git
+
+# create a branch
+git branch branch_x
+
+# list branch
+git branch
+# branch that starting with a '*' is the current branch
+
+# switch to a certain branch
+git checkout branch_x
+# create a branch "branch_x" and switch to it
+git checkout -b branch_x
+
+# merge branch and master
+# you should commit both branch and master and switch to master, then:
+git merge branch_x
+
+# then commit again:
+git commit -a
+
+# 'git commit -a' is just like 'git add . ; git commit' sometimes, but it will
+# not add new file.
+
+# push local test as remote master
+git push origin test:master
+
+# push local test as remote test
+git push origin test:test
+
+# pull remote master as local test, different from push, master first
+git pull origin master:test
+
+# repalce the origin master:
+git push origin master --force
+
+# show the origin branch
+git ls-remote  # need password, show details
+git branch -r  # do not need password, show only branch name
+
+# delete branch
+# local
+git branch -d branchname
+# origin
+git push origin :branchname
+
+# change the last commit message
+git commit --amend
+

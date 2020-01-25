@@ -1,0 +1,71 @@
+## vim: ft=python :
+
+## python time functions
+t = time.strptime("2015-1-6 20:58:53", "%Y-%m-%d %H:%M:%S")
+t
+#> time.struct_time(tm_year=2015, tm_mon=1, tm_mday=6, tm_hour=20, \
+#    tm_min=58, tm_sec=53, tm_wday=1, tm_yday=6, tm_isdst=-1)
+t[0:6]
+#> (2015, 1, 6, 20, 58, 53)
+time.strftime("%Y,%m,%d %H.%M.%S", t)
+#> '2015,01,06 20.58.53'
+time.strftime("%y,%m,%d %H.%M.%S", t)
+#> '15,01,06 20.58.53'
+time.asctime(t)
+#> 'Tue Jan  6 20:58:53 2015'
+
+## time.asctime is just like strftime, they both take struct_time as argument,
+## and return a time string, but asctime can only return a static format
+
+time.mktime(t)
+#> 1420549133.0
+
+## get utc time(zero zone)
+time.gmtime()
+#> time.struct_time(tm_year=2015, tm_mon=2, tm_mday=14, tm_hour=9, \
+#    tm_min=33, tm_sec=30, tm_wday=5, tm_yday=45, tm_isdst=0)
+time.localtime()
+#> time.struct_time(tm_year=2015, tm_mon=2, tm_mday=14, tm_hour=17, \
+#    tm_min=33, tm_sec=29, tm_wday=5, tm_yday=45, tm_isdst=0)
+
+## time.localtime and time.gmtime can take one argument: seconds
+## when 'seconds' is not passed in, use the current time instead
+
+## !!! `localtime' might be the SAME as `gmtime' depending on the system
+## setting, so it's safer to use `gmtime'
+
+## time of unix starts from 1970-01-01 00:00:00 UTC !
+t = time.strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+time.mktime(t)
+#> -28800.0     # 8 * 60 * 60 = 28800
+time.altzone
+#> -28800
+time.timezone
+#> -28800
+time.mktime(t) + time.mktime(time.localtime()) - time.mktime(time.gmtime())
+#> 0.0
+## so unix time in your timezone starts from 1970-01-01 08:00:00
+## which means in your timezone, 0 is 1970-01-01 08:00:00
+t = time.strptime("1970-01-01 08:00:00", "%Y-%m-%d %H:%M:%S")
+time.mktime(t)
+#> 0.0
+
+## 'struct_time' does not contain timezone information
+
+## ctime, localtime take seconds as argument,
+## strptime take string as argument,
+## mktime take struct_time as argument,
+## but all of them treat time arguments as local time, not UTC, they know
+## nothing about UTC
+time.gmtime(0)
+#> time.struct_time(...1970...1...1...0...0...0...)
+time.localtime(0)
+#> time.struct_time(...1970...1...1...8...0...0...)
+time.ctime(0)
+#> 'Thu Jan  1 08:00:00 1970'
+time.mktime(time.localtime(0))
+#> 0.0
+time.mktime(time.gmtime(0))
+#> -28800.0
+
+

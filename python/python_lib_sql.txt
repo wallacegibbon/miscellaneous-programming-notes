@@ -1,0 +1,89 @@
+## vim: ft=python :
+
+## sqlite3: connect, cursor, execute
+conn = sqlite3.connect("tmp.db")
+cursor = conn.cursor()
+r = cursor.execute("select * from company")
+r
+#> <sqlite3.Cursor object at 0xb718f8e0>
+for i in r: print(i)
+#> (1, 'Paul', 32, 'California', 20000.0)
+#  (2, 'Allen', 25, None, 15000.0)
+#  (3, 'Teddy', 23, 'Norway', 20000.0)
+#...
+## after the for iteration, r will be empty
+conn.close()
+
+## update, insert, delete will need conn.commit() because sqlite3 lib
+## treat those as transaction, and you can use conn.rollback() to undo
+## uncommitted changes
+## if conn.close() before conn.commit(), the change will disappear
+cursor.execute("update company set salary=25000.00 where id=1")
+#> <sqlite3.Cursor object at 0xb718f8e0>
+r = cursor.execute("select * from company")
+for i in r: print(i)
+#> (1, 'Paul', 32, 'California', 25000.0)
+#...
+conn.rollback() # conn.commit() will commit changes
+r = cursor.execute("select * from company")
+for i in r: print(i)
+#> (1, 'Paul', 32, 'California', 20000.0)
+#...
+
+
+## mysql: use pymysql (install with `pip-3.2 install pymysql3')
+conn = pymysql.connect(user="root", passwd="rootpass", host="localhost",
+                       db="dbname")
+## then it's just like sqlite3
+cursor = conn.cursor()
+## ...
+cursor.close()
+conn.close()
+
+
+## sqlalchemy
+## BTW. ORM -- Object Relational Mapping
+from sqlalchemy import Column, String, create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
+class User(Base):
+    __tablename__ = "user"
+    id = Column(String(20), primary_key=True)
+    name = Column(String(20))
+
+## initialize the database connection
+engine = create_engine("sqlite:////home/user/test.db")
+## create DBSession class
+DBSession = sessionmaker(bind=engine)
+## create a session
+session = DBSession()
+u1 = User(id="5", name="Harry")
+session.add(u1)
+## the database(/home/user/test.db) should already have the table 'user', or
+## session.commit() will go wrong, so create a table like this:
+#$ sqlite3 /home/user/test.db
+## create table user(id text primary key, name text);
+session.commit()
+## query through sqlite3 command
+## select * from user;
+## id          name      
+## ----------  ----------
+## 5           Harry
+session.close()
+
+## query
+## all for all that match,
+## one for the first that match(ok, I am not about the "first")
+user = session.query(User).filter(User.id=='5').one()
+type(user)
+#> <class '__main__.User'>
+user.name
+#> 'Harry'
+user = session.query(User).filter(User.id=='5').all()
+type(user)
+#> <class 'list'>
+user[0].name
+#> 'Harry'
+
+

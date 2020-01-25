@@ -1,0 +1,23 @@
+;; vim: ft=clojure :
+
+;;-----------------------------------------------------------------------------
+;; download javabase64-1.3.1.jar
+;;-----------------------------------------------------------------------------
+
+(it.sauronsoftware.base64.Base64/encode "hello")
+;> "aGVsbG8="
+
+(it.sauronsoftware.base64.Base64/decode "aGVsbG8=")
+;> "hello"
+
+
+(import '(it.sauronsoftware.base64 Base64))
+
+;; to handle binary data, just use byte array as argument
+(def e (Base64/encode (byte-array (map byte "what"))))
+;> #<byte[] [B@b86894>
+
+(map char (Base64/decode e))
+;> (\w \h \a \t)
+
+

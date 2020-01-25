@@ -1,0 +1,26 @@
+# vim: ft=sh :
+
+# VT100
+<< CTRL_CODE
+\033[0m                   # close all attributes
+\033[1m                   # set high-light mode
+\033[4m                   # underline
+\033[5m                   # blink
+\033[7m                   # reverse
+\033[8m                   # ? (chinese: xiaoyin)
+\033[30m -- \033[37m      # set foreground-color
+\033[40m -- \033[47m      # set background-color
+\033[nA                   # cusor up    `n` lines
+\033[nB                   # cusor down  `n` lines
+\033[nC                   # cusor right `n` columns
+\033[nD                   # cusor left  `n` columns
+\033[y;xH                 # set cursor position
+\033[2J                   # clear the screen
+\033[K                    # clear from the cursor to the end of line
+\033[s                    # save the cursor position
+\033[u                    # restore the cursor position
+\033[?25l                 # hide cursor
+\033[?25h                 # show cursor
+CTRL_CODE
+
+

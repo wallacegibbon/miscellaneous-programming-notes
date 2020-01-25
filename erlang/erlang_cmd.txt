@@ -1,0 +1,41 @@
+%% vim: ft=erlang :
+
+%%-----------------------------------------------------------------------------
+%% "-boot" specify the boot script
+%% start without loading ~/.erlang
+%%-----------------------------------------------------------------------------
+erl -boot no_dot_erlang
+
+
+%%-----------------------------------------------------------------------------
+%% serial port
+%$ git clone https://github.com/tonyg/erlang-serial.git
+%$ DESTDIR=/usr/lib make install
+%     lib will be installed to "${DESTDIR}/erlang/lib/serial-1.1/"
+%%-----------------------------------------------------------------------------
+
+
+%%-----------------------------------------------------------------------------
+%% rebar
+%  git clone https://github.com/rebar/rebar && cd rebar &&
+%       ./bootstrap && cp rebar /usr/local/bin/
+%  Usage:
+%  rebar create-app appid=myapp
+%  rebar compile
+%  rebar clean
+%
+%  rebar get-deps % you do not need "git clone" if you have rebar.config
+%%-----------------------------------------------------------------------------
+
+
+%%-----------------------------------------------------------------------------
+%% erlang.mk
+%  git clone https://github.com/ninenines/erlang.mk.git
+%%-----------------------------------------------------------------------------
+
+
+%%-----------------------------------------------------------------------------
+%% cowboy
+%  git clone https://github.com/extend/cowboy.git
+%%-----------------------------------------------------------------------------
+

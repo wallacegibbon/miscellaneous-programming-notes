@@ -1,0 +1,19 @@
+## vim: ft=python :
+
+
+## warnings.warn: issue a warning
+warnings.simplefilter("always") # cause all warnings to always be triggered
+warnings.warn("warning, blahblah....", DeprecationWarning)
+#> __main__:1: DeprecationWarning: warning, blahblah....
+## stacklevel = 2 will make the warning refer to deprecation()‘s caller,
+## rather than to the source of deprecation() itself
+warnings.warn("warning, blahblah....", DeprecationWarning, stacklevel=2)
+#> sys:1: DeprecationWarning: warning, blahblah....
+
+## other kinds of warning
+warnings.warn("warning, blahblah....", Warning)
+#> __main__:1: Warning: warning, blahblah....
+warnings.warn("warning, blahblah....", UserWarning)
+#> __main__:1: UserWarning: warning, blahblah....
+
+

@@ -1,0 +1,15 @@
+## vim: ft=conf :
+
+## a basic form looks like:
+<form action="form_action.asp" method="get">
+<input type="submit" value="Submit" />
+</form>
+
+## besides "action" and "method", form have a interesting parameter: enctype
+
+## enctype can be one of them: (default `application/x-www-form-urlencoded`)
+application/x-www-form-urlencoded
+multipart/form-data
+text/plain
+
+

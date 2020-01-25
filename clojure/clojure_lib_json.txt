@@ -1,0 +1,95 @@
+;; vim: ft=clojure :
+
+
+;; clojurescript have built-in JSON functions !
+(JSON.stringify #js {:a 1 :b 2 :c 3})
+;> "{\"a\":1,\"b\":2,\"c\":3}"
+(JSON.parse "{\"a\":1,\"b\":2,\"c\":3}")
+;> #js {:a 1, :b 2, :c 3}
+
+(js->clj (JSON.parse "{\"a\":1,\"b\":2,\"c\":3}"))
+;> {"a" 1, "b" 2, "c" 3}
+
+
+;;-----------------------------------------------------------------------------
+;; leiningen:
+;;    add to project.clj: [org.clojure/data.json "0.2.6"]
+;;    then `lein deps`
+
+;; github address: https://github.com/clojure/data.json.git
+;;-----------------------------------------------------------------------------
+
+
+;;-----------------------------------------------------------------------------
+;; basic usage:
+;;-----------------------------------------------------------------------------
+(require '[clojure.data.json :as json])
+;> nil
+
+;; keyword will be converted to string in this case
+(json/write-str {:a 1 :b 2})
+;> "{\"a\":1,\"b\":2}"
+
+(json/read-str "{\"a\":1,\"b\":2}")
+;> {"a" 1, "b" 2}
+
+
+;;-----------------------------------------------------------------------------
+;; convert key/value type
+;;-----------------------------------------------------------------------------
+;; :key-fn
+(json/read-str "{\"a\":1,\"b\":2}" :key-fn keyword)
+;> {:a 1, :b 2}
+
+(json/read-str "{\"a\":1,\"b\":2}" :key-fn #(keyword "com.blah" %))
+;> {:com.blah/a 1, :com.blah/b 2}
+
+(json/read-str "{\"a\":1,\"b\":2}" :key-fn #(.toUpperCase %))
+;> {"A" 1, "B" 2}
+
+;; keyword will NOT be converted to string in this case
+(json/write-str {:a 1 :b 2} :key-fn #(.toUpperCase (name %)))
+;> "{\"A\":1,\"B\":2}"
+
+
+;; :value-fn need two arguments
+
+;; read-str with value-fn
+(defn my-value-reader
+  [k v]
+  (if (= k :date) (java.sql.Date/valueOf v) v))
+;
+
+(json/read-str "{\"number\":42,\"date\":\"2012-06-02\"}"
+               :value-fn my-value-reader
+               :key-fn keyword)
+;> {:number 42, :date #inst "2012-06-01T16:00:00.000-00:00"}
+
+;; write-str with value-fn
+(defn my-value-writer
+  [k v]
+  (if (= k :date) (str (java.sql.Date. (.getTime v))) v))
+;
+
+(json/write-str {:number 42, :date (java.util.Date. 112 5 2)}
+                :value-fn my-value-writer
+                :key-fn name)
+;> "{\"number\":42,\"date\":\"2012-06-02\"}"
+
+
+;; If you specify both a :key-fn and a :value-fn when reading,
+;; the value-fn is called after the key has been processed by the key-fn.
+
+
+
+;;-----------------------------------------------------------------------------
+;; Reading/Writing a Stream:
+;; read  JSON directly from a java.io.Reader with json/read,
+;; write JSON directly to   a java.io.Writer with json/write.
+;;-----------------------------------------------------------------------------
+(json/read (io/reader "/tmp/test.json"))
+;> {"a" 1, "b" 2}
+
+;; how to use json/write ?
+
+

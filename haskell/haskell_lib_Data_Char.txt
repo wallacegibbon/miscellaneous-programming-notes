@@ -1,0 +1,45 @@
+-- vim: ft=haskell :
+
+isControl
+isSpace -- (including spaces, tab characters, newlines, etc)
+isLower
+isUpper
+isAlpha
+isAlphaNum
+isPrint
+isDigit
+isOctDigit
+isHexDigit
+isLetter
+isMark
+isNumber
+isPunctuation
+isSymbol
+isSeparator
+isAscii
+isLatin1
+isAsciiUpper
+isAsciiLower
+
+all isAlphaNum "bobby283" -- > True
+all isAlphaNum "eddy the fish!" -- > False
+
+generalCategory ' ' -- > Space
+generalCategory 'A' -- > UppercaseLetter
+generalCategory 'a' -- > LowercaseLetter
+generalCategory '.' -- > OtherPunctuation
+generalCategory '9' -- > DecimalNumber
+map generalCategory " \t\nA9?|"
+-- > [Space,Control,Control,UppercaseLetter,DecimalNumber,OtherPunctuation,MathSymbol]
+
+map digitToInt "34538" -- > [3,4,5,3,8]
+map digitToInt "FF85AB" -- > [15,15,8,5,10,11]
+
+intToDigit 15 -- > 'f'
+intToDigit 5  -- > '5'
+
+ord 'a' -- > 97
+chr 97  -- > 'a'
+
+map ord "abcdefgh" -- > [97,98,99,100,101,102,103,104]
+

@@ -1,0 +1,83 @@
+## vim: ft=sh :
+
+##############################################################################
+## GET PUT DELETE are the most foundamental methods, POST can make something
+## easier.
+
+##############################################################################
+## List the existing database
+curl localhost:5984/_all_dbs -X GET
+#> ["_replicator","_users"]
+
+
+##############################################################################
+## To create a new uuid, you can just use couchdb
+curl localhost:5984/_uuids
+#> {"uuids":["471e02d62c1118c0eee7e1af2b000eba"]}
+
+
+##############################################################################
+## CREATE a database
+curl localhost:5984/mydb_1 -X PUT
+#> {"ok":true}
+
+curl localhost:5984/mydb_2 -X PUT
+#> {"ok":true}
+
+
+##############################################################################
+## DELETE a database
+curl localhost:5984/mydb_2 -X DELETE
+#> {"ok":true}
+
+
+##############################################################################
+## A database can contain a lots of documents, documents do not have name,
+## it only have a id, which is uique in the database.
+## You have to give the id when you create a new document.
+##############################################################################
+
+
+##############################################################################
+## CREATE a document
+## Both `create` and `update` operation use PUT method. Because CouchDB
+## do NOT have the traditional update. It only append data, not change it.
+curl localhost:5984/mydb_1/471e02d62c1118c0eee7e1af2b001812 \
+  -X PUT -d '{"name": "Barry", "age": 22}'
+#> {"ok":true,"id":"471e02d62c1118c0eee7e1af2b001812",
+#   "rev":"1-9140963220d6c018df90a8ae9dda9071"}
+
+curl localhost:5984/mydb_1/471e02d62c1118c0eee7e1af2b00210c \
+  -X PUT -d '{"name": "Clark", "age": 33}'
+#> {"ok":true,"id":"471e02d62c1118c0eee7e1af2b00210c",
+#   "rev":"1-dac86b20cac555a0b3c0acf6895d9475"}
+
+##----------------------------------------------------------------------------
+## With POST, you don't need to specify the id when creating document.
+## (But you need to set the http header)
+curl localhost:5984/mydb_1 \
+  -X POST -d '{"name": "Clark", "age": 33}' \
+  -H 'Content-Type: application/json'
+#> {"ok":true,"id":"471e02d62c1118c0eee7e1af2b002818",
+#   "rev":"1-dac86b20cac555a0b3c0acf6895d9475"}
+##----------------------------------------------------------------------------
+
+
+##############################################################################
+## UPDATE a document
+## when you want to update the document, you need to give "_rev",
+## and the new data can be totally different from the old data.
+curl localhost:5984/mydb_1/471e02d62c1118c0eee7e1af2b00210c \
+  -X PUT -d '{"name": "Clark", "_rev": "1-dac86b20cac555a0b3c0acf6895d9475"}'
+#> {"ok":true,"id":"471e02d62c1118c0eee7e1af2b00210c",
+#   "rev":"2-d3fe8eac5b1828fbba1f3865cfad70ff"}
+
+
+##############################################################################
+## DELETE a document
+curl localhost:5984/mydb_1/471e02d62c1118c0eee7e1af2b00210c \
+  -X DELETE -H "If-Match: 2-d3fe8eac5b1828fbba1f3865cfad70ff"
+#> {"ok":true,"id":"471e02d62c1118c0eee7e1af2b00210c",
+#   "rev":"3-c897043a93e93ee44bedc1f37c28307c"}
+
+

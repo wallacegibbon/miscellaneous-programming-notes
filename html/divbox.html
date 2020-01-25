@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+  margin: 0;
+  padding: 0;
+}
+.box {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  width: 200px;
+  height: 50px;
+}
+</style>
+</head>
+
+<body>
+
+<script type="text/javascript">
+// global variables
+var colors = [
+  "blue", "green", "red", "orange", "yellow", "violet", "purple", "cyan"
+];
+
+var boxes = [];
+var activebox;
+var offx, offy;
+
+// reorder is just "resetting z-index" of objects, "z-index" big -> top
+var reorderDivs = function(divlist, activeDiv) {
+  var tmp = divlist.filter(function(x) {
+    return x !== activeDiv;
+  }).sort(function(x, y) {
+    return x.style["z-index"] > y.style["z-index"];
+  });
+  for (var i = 0, l = tmp.length; i < l; i++)
+    tmp[i].style["z-index"] = i;
+  activeDiv.style["z-index"] = tmp.length;
+};
+
+// transform e.g. "30px" -> 30
+var nopx = function(x) {
+  var val = parseInt(String.prototype.slice.call(x, 0, x.length - 2));
+  if (val !== NaN)
+    return val;
+  else
+    throw(Error(x + " is NOT pixel string"));
+};
+
+var createBox = function(id, left, top) {
+  var box = document.createElement("div");
+  box.setAttribute("id", "box" + id);
+  box.setAttribute("class", "box");
+  box.style.left = left;
+  box.style.top = top;
+  box.style.background = colors[id % colors.length];
+  box.style["z-index"] = id;
+
+  box.addEventListener("mousedown", function() {
+    activebox = box;
+    activebox.moving = true;
+  });
+  return box;
+};
+
+window.addEventListener("mousedown", function(e) {
+  offx = nopx(activebox.style.left) - e.pageX;
+  offy = nopx(activebox.style.top) - e.pageY;
+  reorderDivs(boxes, activebox);
+});
+
+window.addEventListener("mousemove", function(e) {
+  if (activebox.moving) {
+    activebox.style.left = e.pageX + offx + "px";
+    activebox.style.top = e.pageY+ offy + "px";
+  }
+});
+
+window.addEventListener("mouseup", function(e) {
+  activebox.moving = false;
+});
+
+// initialize boxes
+[1, 2, 3, 4, 5, 6, 7, 8].forEach(function(i) {
+  var box = createBox(i, i * 10 + "px", i * 10 + "px");
+  document.body.appendChild(box);
+  boxes.push(box);
+});
+
+activebox = boxes[0];
+</script>
+
+</body>
+</html>

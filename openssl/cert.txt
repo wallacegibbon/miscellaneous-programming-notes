@@ -1,0 +1,50 @@
+## vim: ft=sh :
+
+##==========================================================================
+## PROCESS 1
+##==========================================================================
+## generate rsa privte key (you need to give it a password here)
+openssl genrsa -des3 -out server.key 2048
+
+
+##==========================================================================
+## PROCESS 2
+##==========================================================================
+## create certificate request file (public key in this file)
+## "CSR" stands for "Certificate Signing Request"
+openssl req -new -key server.key -out server.csr
+
+## to get a cert file, you need to give the "*.csr" file to CA, then they
+## will give you a "*.crt" file.
+
+## "CRT" is short for "Certificate", this file contains the public key and
+## the CA signature(fingerprint of CA)
+
+
+##==========================================================================
+## PROCESS 3
+##==========================================================================
+## if you want to certificate it yourself (for test), do this:
+openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
+
+
+##==========================================================================
+## PROCESS 4
+##==========================================================================
+## delete the password for cert file
+cp server.key server.key.orig
+openssl rsa -in server.key.orig -out server.key
+
+
+## the "*.crt" and "*.key" is what you need for nginx.
+
+## X509 is a certification file format. Usually with a ".crt" ext-name.
+##
+## There are 2 kinds of encoding:
+##  1. "*.pem"(Privacy Enhanced Mail)         text    apache, nginx
+##  2. "*.der"(Distinguished Encoding Rules)  binary  java, windows server
+
+## A example I find in company project:
+## $ cat blah.crt blah.key > blah.pem
+
+

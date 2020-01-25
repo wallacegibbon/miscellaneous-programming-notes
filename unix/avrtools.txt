@@ -1,0 +1,50 @@
+# vim: ft=sh :
+
+# !!!
+# the `--disable-nls' : `nls' means "Native Language Support", you don't need
+# it. And it's said nls always cause some fault.
+
+
+# avrdude, install 5.8, as 6.0+ have many library dependencies.
+./configure --prefix=/usr --sysconfdir=/etc
+make
+make install
+
+
+# binutils, libbfd is need for embeded tool-chain
+../binutils-2.19.1/configure  \
+--target=avr                  \
+--prefix=/usr/local/avr       \
+--enable-install-libbfd       \
+--disable-nls                 \
+--disable-werror
+
+make
+make install
+# run `avr-as --version' to test it
+
+
+# avr-gcc, gcc-4.2.3 do not support ATmega328p. To support C, the
+# `gcc-core-xxx.tar.bz2' is enough
+../gcc-4.4.7/configure        \
+--target=avr                  \
+--prefix=/usr/local/avr       \
+--enable-languages=c          \
+--disable-nls                 \
+--disable-libssp
+
+make
+make install
+# run `avr-gcc --version' to test it
+
+
+# avr-libc
+CC=avr-gcc ../avr-libc-1.8.1/configure    \
+--prefix=/usr/local/avr                   \
+--build=`../avr-libc-1.8.1/config.guess`  \
+--host=avr
+
+make
+make install
+
+

@@ -1,0 +1,39 @@
+## vim: ft=python :
+
+
+## python struct: functions to convert between python values and c structs.
+## b:char      , B:unsigned char       , h:short        , H:unsigned short
+## i:int       , I:unsigned int        , l:long         , L:unsigned long
+## q:long long , Q:unsigned long long  , f:float        , d:double
+## s:char[]    , p:char[]              , P:void *       ,
+## @:native    , =:native              , <:little-endian,
+## >:big-endian, !:network(=big-endian),
+struct.pack("BB", 200, 16)
+#> b"\xc8\x10"
+struct.unpack("BB", b"\xfa\xfb")
+#> (250, 251)
+struct.unpack(">H", b"\x02\x01")
+#> (513,)
+
+struct.pack("B", 256)
+#> struct.error: ubyte format requires 0 <= number <= 255
+struct.pack("b", 256)
+#> struct.error: byte format requires -128 <= number <= 127
+
+struct.unpack("B", b'\xff')
+#> (255,)
+struct.unpack("b", b'\xff')
+#> (-1,)
+
+struct.pack("5s", b"123")
+#> b'123\x00\x00'
+struct.pack("5s", b"123456")
+#> b'12345'
+
+## `p' and `s' are different:
+struct.pack("5p", b"123")
+#> b'\x03123\x00'
+struct.pack("5p", b"1234")
+#> b'\x041234'
+
+

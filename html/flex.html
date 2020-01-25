@@ -1,0 +1,40 @@
+<!-- flex is complex, this file only show some of it's attributes -->
+
+<style>
+.container {
+  display: flex;
+  /*
+  direction: rtl;
+  flex-direction: column;
+  flex-direction: column-reverse;
+  justify-content: center;
+  */
+
+  background-color: silver;
+  width: 300px;
+  height: 200px;
+  margin: auto;
+}
+
+.flex-item {
+  background-color: deepskyblue;
+  color: white;
+  text-align: center;
+  width: 100px;
+  height: 100px;
+  margin: 5px;
+}
+</style>
+
+<div class="container"></div>
+<script>
+var container = document.querySelector(".container");
+
+for (var i = 0; i < 8; i++) {
+  var d = document.createElement("div");
+  d.setAttribute("class", "flex-item");
+  d.innerHTML = i;
+  container.appendChild(d);
+}
+</script>
+

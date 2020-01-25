@@ -1,0 +1,17 @@
+<div></div>
+<script>
+// you can jump to any site using JS.
+
+var info = document.querySelector("div");
+var count = 3;
+
+setInterval(() => {
+  if (count <= 0)
+    location.href = "http://baidu.com";
+
+  info.innerHTML = "jump in " + count-- + " seconds";
+}, 1000);
+
+
+</script>
+

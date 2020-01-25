@@ -1,0 +1,11 @@
+## vim: ft=python :
+
+## pygobject -> gi
+
+## it contains:
+##  GObject, Gio, GLib, Gtk, Gdk, Pango
+
+## Gtk
+from gi.repository import Gtk
+
+

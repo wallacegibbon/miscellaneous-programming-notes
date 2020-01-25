@@ -1,0 +1,17 @@
+## vim: ft=sh :
+
+## The unix regular expression (used by grep, sed, vi...) have it's own rule.
+
+## Just like regexp in other environment, the grouped part starts from 0. And
+## group 0 stands for the whole part that matched.
+## The group you specified with "()" is group 1.
+
+echo 'i am muggle' | sed 's/i am \([^\s]*\)/\1/'
+#> muggle
+
+echo 'i am muggle' | sed 's/i am \([^\s]*\)/\0/'
+#> i am muggle
+
+echo 'i am muggle' | sed 's/i am \([^\s]*\)/\0\1/'
+#> i am mugglemuggle
+

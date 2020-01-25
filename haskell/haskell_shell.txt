@@ -1,0 +1,85 @@
+-- vim: ft=haskell :
+
+-- let a = 1 inside GHCI is the equivalent of writing a = 1 in a script
+-- and then loading it.
+
+-------------------------------------------------------------------------------
+-- change the prompt of ghci
+-------------------------------------------------------------------------------
+:set prompt "test> "
+
+-- load a file, e.g. filename.hs
+:l filename
+
+-------------------------------------------------------------------------------
+-- check type
+-- :t on an expression prints out the expression followed by :: and its type
+-------------------------------------------------------------------------------
+:t variableName
+-- e.g.
+:t 3
+-- > 3 :: Num a => a
+:t True
+-- > True :: Bool
+:t "hello"
+-- > "hello" :: [Char]
+:t (True, 1)
+-- > (True, 1) :: Num t => (Bool, t)
+:t 1 == 2
+-- > 1 == 2 :: Bool
+-- functions are expressions, too
+:t head
+-- > head :: [a] -> a
+:t fst
+-- > fst :: (a, b) -> a
+:t (==)
+-- > (==) :: Eq a => a -> a -> Bool
+
+-------------------------------------------------------------------------------
+-- load module
+-------------------------------------------------------------------------------
+:m + Data.List
+-- load multiple modules
+:m + Data.List Data.Map Data.Set
+
+-------------------------------------------------------------------------------
+-- prints a value without forcing its computation, _ means un-evaluated.
+-------------------------------------------------------------------------------
+let x = 1 + 2
+:print x -- > x = (_t1::Integer)
+
+-- sprint is the simplified version of print
+:sprint x -- > x = _
+
+-- evaluate it
+x -- > 3
+:sprint x -- > x = 3
+
+
+-------------------------------------------------------------------------------
+-- see what the instances of a typeclass are
+-------------------------------------------------------------------------------
+:info Maybe
+:info Num
+
+
+-------------------------------------------------------------------------------
+-- examine the kind of a type by using the :k
+-------------------------------------------------------------------------------
+-- we can use :k on a type  to get its kind, just like
+-- we can use :t on a value to get its type.
+
+-- types are the labels of values and
+-- kinds are the labels of types,
+-- and there are parallels between the two.
+
+:k Int -- > Int :: *
+:k Enum -- > Enum :: * -> Constraint
+:k Maybe -- > Maybe :: * -> *
+:k Maybe Int -- > Maybe Int :: *
+
+-- it's some kind like :t
+:t isUpper -- > isUpper :: Char -> Bool
+:t isUpper a -- > isUpper 'a' :: Bool
+
+

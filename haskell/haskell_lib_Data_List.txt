@@ -1,0 +1,175 @@
+-- vim: ft=haskell :
+
+-- some functions of Data.List that is not preluded
+intersperse '.' "MONKEY" -- > "M.O.N.K.E.Y"
+intersperse 0 [1,2,3,4,5,6] -- > [1,0,2,0,3,0,4,0,5,0,6]
+
+intercalate " " ["hey","there","guys"] -- > "hey there guys"
+intercalate [0,0,0] [[1,2,3],[4,5,6],[7,8,9]]
+-- > [1,2,3,0,0,0,4,5,6,0,0,0,7,8,9]
+
+transpose [[1,2,3],[4,5,6],[7,8,9]] -- > [[1,4,7],[2,5,8],[3,6,9]]
+transpose ["hey","there","guys"] -- > ["htg","ehu","yey","rs","e"]
+
+-- foldl' and foldl1' are stricter versions of their respective
+-- lazy incarnations
+
+concat ["foo","bar","car"] -- > "foobarcar"
+concat [[3,4,5],[2,3,4],[2,1,1]] -- > [3,4,5,2,3,4,2,1,1]
+
+concatMap (replicate 4) [1..3] -- > [1,1,1,1,2,2,2,2,3,3,3,3]
+
+and $ map (>4) [5,6,7,8] -- > True
+and $ map (==4) [4,4,4,3,4] -- > False
+
+or $ map (==4) [2,3,4,5,6,1] -- > True
+or $ map (>4) [1,2,3] -- > False
+
+any (==4) [2,3,5,6,1,4] -- > True
+all (>4) [6,9,10] -- > True
+all (`elem` ['A'..'Z']) "HEYGUYSwhatsup" -- > False
+any (`elem` ['A'..'Z']) "HEYGUYSwhatsup" -- > True
+
+-- iterate takes a function and a starting value. It applies the function
+-- to the starting value, then it applies that function to the result,
+-- then it applies the function to that result again, etc.
+-- It returns all the results in the form of an infinite list.
+take 10 $ iterate (*2) 1 -- > [1,2,4,8,16,32,64,128,256,512]
+take 3 $ iterate (++ "haha") "haha" -- > ["haha","hahahaha","hahahahahaha"]
+
+splitAt 3 "heyman" -- > ("hey","man")
+splitAt 100 "heyman" -- > ("heyman","")
+splitAt (-3) "heyman" -- > ("","heyman")
+let (a,b) = splitAt 3 "foobar" in b ++ a -- > "barfoo"
+
+-- takeWhile
+takeWhile (/=' ') "elephants know how to party" -- > "elephants"
+takeWhile (>3) [6,5,4,3,2,1,2,3,4,5,4,3,2,1] -- > [6,5,4]
+
+-- dropWhile
+dropWhile (/=' ') "This is a sentence" -- > " is a sentence"
+dropWhile (<3) [1,2,2,2,3,4,5,4,3,2,1] -- > [3,4,5,4,3,2,1]
+
+-- span is kind of like takeWhile, only it returns a pair of lists
+span (/=' ') "elephants know how to party"
+-- > ("elephants"," know how to party")
+
+-- (break p) is the equivalent of doing (span (not . p))
+break (==' ') "elephants know how to party"
+-- > ("elephants"," know how to party")
+
+-- partition is different from span and break, span do once only
+span      (`elem` ['A'..'Z']) "BOBsidneyMORGANeddy"
+-- > ("BOB","sidneyMORGANeddy")
+partition (`elem` ['A'..'Z']) "BOBsidneyMORGANeddy"
+-- > ("BOBMORGAN","sidneyeddy")
+
+span      (>3) [1,3,5,6,3,2,1,0,3,7] -- > ([],[1,3,5,6,3,2,1,0,3,7])
+partition (>3) [1,3,5,6,3,2,1,0,3,7] -- > ([5,6,7],[1,3,3,2,1,0,3])
+
+group [1,1,1,1,2,2,2,2,3,3,2,2,2,5,6,7]
+-- > [[1,1,1,1],[2,2,2,2],[3,3],[2,2,2],[5],[6],[7]]
+
+-- when using sort with group:
+map (\l@(x:xs) -> (x,length l)) . group . sort $ [1,1,1,2,2,2,2,3,2,2,2,5,7]
+-- > [(1,3),(2,7),(3,1),(5,1),(7,1)]
+
+inits "w00t" -- > ["","w","w0","w00","w00t"]
+tails "w00t" -- > ["w00t","00t","0t","t",""]
+let w = "w00t" in zip (inits w) (tails w)
+-- > [("","w00t"),("w","00t"),("w0","0t"),("w00","t"),("w00t","")]
+
+"cat" `isInfixOf` "im a cat burglar" -- > True
+"hey" `isPrefixOf` "hey there!" -- > True
+"there!" `isSuffixOf` "oh hey there!" -- > True
+
+-- find :: (a -> Bool) -> [a] -> Maybe a
+find (>4) [1,2,3,4,5,6] -- > Just 5
+find (>9) [1,2,3,4,5,6] -- > Nothing
+
+-- elemIndex :: (Eq a) => a -> [a] -> Maybe Int
+4  `elemIndex` [1,2,3,4,5,6] -- > Just 3
+10 `elemIndex` [1,2,3,4,5,6] -- > Nothing
+
+' ' `elemIndices` "Where are the spaces?" -- > [5,9,13]
+
+-- find return element, findIndex return the index of the element
+findIndex (==4) [5,3,2,1,6,4] -- > Just 5
+findIndices (`elem` ['A'..'Z']) "Where Are The Caps?" -- > [0,6,10,14]
+
+-- besides zip and zipWith, there is also zip3, zip4, zipWith3, zipWith4
+zipWith3 (\x y z -> x + y + z) [1,2,3] [4,5,2,2] [2,2,3] -- > [7,9,8]
+zip4 [2,3,3] [2,2,2] [5,5,3] [2,2,2] -- > [(2,2,5,2),(3,2,5,2),(3,2,3,2)]
+
+lines "first line\nsecond line\nthird line"
+-- > ["first line","second line","third line"]
+
+unlines ["first line", "second line", "third line"]
+-- > "first line\nsecond line\nthird line\n"
+
+words "hey these are the words in this sentence"
+-- > ["hey","these","are","the","words","in","this","sentence"]
+words "hey these           are    the words in this\nsentence"
+-- > ["hey","these","are","the","words","in","this","sentence"]
+
+unwords ["hey","there","mate"] -- > "hey there mate"
+
+-- weeds out the duplicate elements
+nub [1,2,3,4,3,2,1,2,3,4,3,2,1] -- > [1,2,3,4]
+nub "Lots of words and stuff" -- > "Lots fwrdanu"
+
+
+delete 'h' "hey there ghang!" -- > "ey there ghang!"
+delete 'h' . delete 'h' $ "hey there ghang!" -- > "ey tere ghang!"
+delete 'h' . delete 'h' . delete 'h' $ "hey there ghang!" -- > "ey tere gang!"
+
+-- list difference
+[1..10] \\ [2,5,9] -- > [1,3,4,6,7,8,10]
+"Im a big baby" \\ "big" -- > "Im a  baby"
+
+-- Doing [1..10] \\ [2,5,9] is like
+-- doing delete 2 . delete 5 . delete 9 $ [1..10]
+"hey there ghang!" \\ "hhh" -- > "ey tere gang!"
+
+-- the union of two lists
+"hey man" `union` "man what's up" -- > "hey manwt'sup"
+[1..7] `union` [5..10] -- > [1,2,3,4,5,6,7,8,9,10]
+
+-- the intersect of two lists
+[1..7] `intersect` [5..10] -- > [5,6,7]
+
+insert 4 [3,5,1,2,8,2] -- > [3,4,5,1,2,8,2]
+insert 4 [1,3,4,4,1] -- > [1,3,4,4,4,1]
+
+-- If we use insert to insert into a sorted list, the resulting list will
+-- be kept sorted
+insert 4 [1,2,3,5,6,7] -- > [1,2,3,4,5,6,7]
+insert 'g' $ ['a'..'f'] ++ ['h'..'z'] -- > "abcdefghijklmnopqrstuvwxyz"
+
+-- What length, take, drop, splitAt, !! and replicate have in common is
+-- that they take an Int as one of their parameters (or return an Int)
+-- Data.List has their more generic equivalents, named
+-- genericLength, genericTake, genericDrop, genericSplitAt,
+-- genericIndex and genericReplicate
+length :: [a] -> Int
+genericLength :: Num i => [b] -> i
+
+
+values = [-4.3,-2.4,-1.2,0.4,2.3,5.9,10.5,29.1,5.3,-2.4,-14.5,2.9,2.3]
+groupBy (\x y -> (x > 0) == (y > 0)) values
+-- > [[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]]
+
+-- 
+-- on :: (b -> b -> c) -> (a -> b) -> a -> a -> c
+-- f `on` g = \x y -> f (g x) (g y)
+-- so (==) `on` (> 0) returns an equality function that looks like
+-- \x y -> (x > 0) == (y > 0)
+groupBy ((==) `on` (> 0)) values
+-- > [[-4.3,-2.4,-1.2],[0.4,2.3,5.9,10.5,29.1,5.3],[-2.4,-14.5],[2.9,2.3]]
+
+sortBy (compare `on` length) [[5,4,5,4,4],[1,2,3],[3,5,4,3],[],[2],[2,2]]
+-- > [[],[2],[2,2],[1,2,3],[3,5,4,3],[5,4,5,4,4]]
+
+-- (compare `on` length) can also be (\x y -> length x `compare` length y)
+
+

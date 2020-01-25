@@ -1,0 +1,551 @@
+-- vim: ft=haskell :
+
+------------------------------------------------------------------------------
+-- miscellaneous
+------------------------------------------------------------------------------
+
+-- If a function is comprised only of special characters, it's considered
+-- an infix function by default. Like +, -, *, /, ++, ...
+
+-- ++, +, -, *, /, ^, >, <,... they are all function, just used in infix way.
+-- you can also use them in prefix way with parameters
+(++) [1,2,3] [4] -- > [1,2,3,4]
+(>=) 1 2 -- > False
+(==) 1 1 -- > True
+
+-- "=" is pattern match. (just like erlang)
+(m,2) = (1,1)
+m -- > Exception: Irrefutable pattern failed for pattern (m, 2)
+
+(1,2,(3,4,(b,6))) = (1,2,(3,4,(5,6)))
+b -- > 5
+
+a:b = [1..10]
+a -- > 1
+b -- > [2,3,4,5,6,7,8,9,10]
+
+a:b:c = "hello"
+a -- > 'h'
+b -- > 'e'
+c -- > "llo"
+
+(f1,f2) = (\x -> x * 2,\x -> x * 3)
+f1 2 -- > 4
+f2 2 -- > 6
+
+(1,(2,c),4) = (1,(2,\x -> x * 2),4)
+c 2 -- > 4
+
+
+-- add :: on any expression specify the type
+1 + 2 :: Int -- > 3
+1 + 2 :: Float -- > 3.0
+
+
+------------------------------------------------------------------------------
+-- list related
+------------------------------------------------------------------------------
+-- list in haskell is HOMOGENEOUS, which means you can only store data of
+-- the same type.
+[1,'a'] -- > No instance for (Num Char) arising from the literal `1'
+
+-- list of list do not need it's element of the same length
+[[1,2],[1,2,3]] -- > nothing
+-- while list of tuple need element of the same type and same length
+[(1,2),(1,2,3)] -- > Error !
+
+-- string is list, just like erlang
+
+-- put something at the beginning of a list, use ":", which is just like
+-- "cons" in lisp, and "[|]" in erlang/prolog.
+'A':" small cat" -- > "A small cat"
+"A":" small cat" -- > Couldn't match type `Char' with `[Char]'
+
+-- "head" and "tail" is just like "car" and "cdr"
+head "hello" -- > 'h'
+tail "hello" -- > "ello"
+
+-- haskell has "init" and "last" that work like reverse "head" and "tail"
+init "hello" -- > "hell"
+last "hello" -- > 'o'
+
+-- check empty
+null [1,2,3] -- > False
+null [] -- > True
+
+-- reverse a list
+reverse "hello" -- > "olleh"
+length "hello" -- > 5
+
+-- take part of a list
+take 3 "hello" -- > "hel"
+
+-- drop part of a list
+drop 3 "hello" -- > "lo"
+
+minimum [1,2,3,4,5,6,7] -- > 1
+maximum [1,2,3,4,5,6,7] -- > 7
+
+-- do add on all elements
+sum [1,2,3,4,5,6,7] -- > 28
+
+-- do multiplication on all elements
+product [1,2,3,4,5,6,7] -- > 5040
+product [1,2,3,4,5,6,0] -- > 0
+
+-- check element
+elem 4 [1,2,3,4,5] -- > True
+elem 8 [1,2,3,4,5] -- > False
+
+-- notElem is the reverse for elem
+notElem 4 [1,2,3,4,5] -- > False
+
+-- concatnating two list have the same syntax as erlang
+['r','o'] ++ ['o','t'] -- > "root"
+
+-- get an element out of a list by index, use !!
+"hello" !! 1 -- > 'e'
+
+-- Lists can be compared if the stuff they contain can be compared.
+[3,2,1] > [2,1,0] -- > True
+
+-- range
+[1..5] -- > [1,2,3,4,5]
+['a'..'g'] -- > "abcdefg"
+
+-- you can also specify a step, but you do not need to calculate the step
+-- by your self
+[1,3..10] -- > [1,3,5,7,9]
+[2,3..10] -- > [2,3,4,5,6,7,8,9,10]
+
+-- when decrease the list, a step have to be specified
+[10,8..1] -- > [10,8,6,4,2]
+[10..1] -- > []
+
+-- take usually work with range.
+-- by the way, you should NEVER run these in ghci(because they are endless):
+--  [1..], repeat 5, cycle [1,2,3]
+take 5 ([1..]) -- > [1,2,3,4,5]
+take 5 (cycle [1,2]) -- > [1,2,1,2,1]
+take 5 (repeat 2) -- > [2,2,2,2,2]
+
+-- list comprehension
+[x * 2 | x <- [1..10], x `rem` 3 == 0] -- > [6,12,18]
+[(a,b) | a <- "ab", b <- "cd"] -- > [('a','c'),('a','d'),('b','c'),('b','d')]
+[a + b | (a,b) <- [(1,2),(3,4),(5,6)]] -- > [3,7,11]
+
+-- a user defined length' (' can be part of name in haskell)
+length' x = sum [1 | _ <- x]
+length' [1,2,3] -- > 3
+
+-- handy function
+removeNonUppercase st = [ c | c <- st, c `elem` ['A'..'Z']]
+
+
+------------------------------------------------------------------------------
+-- tuple related
+------------------------------------------------------------------------------
+-- there's no singleton tuple, tuple contains 2 element at least
+(8) -- > 8
+
+-- you can't write a general function to append an element to a tuple,
+-- you'd have to write a function for appending to a pair, one function
+-- for appending to a triple, one function for appending to a 4-tuple, etc.
+
+-- but there are some function work on pair(2-elements tuple), only pairs !
+fst (8,10) -- > 8
+snd (8,10) -- > 10
+
+-- create a list of pairs
+zip [1,2,3,4,5] [5,5,5,5,5] -- > [(1,5),(2,5),(3,5),(4,5),(5,5)]
+
+zip [1..5] ["one","two","three","four","five"]
+-- > [(1,"one"),(2,"two"),(3,"three"),(4,"four"),(5,"five")]
+
+-- when length do not match:
+zip [5,3,2,6,2,7,2,5,4,6,6] ["im","a","turtle"]
+-- > [(5,"im"),(3,"a"),(2,"turtle")]
+
+-- list right triangles, with a <= b <= c
+[(a,b,c) | c <- [1..10], b <- [1..c], a <- [1..b], a^2 + b^2 == c^2]
+-- > [(3,4,5),(6,8,10)]
+
+
+------------------------------------------------------------------------------
+-- type and type class
+------------------------------------------------------------------------------
+-- basic type:
+Int,Integer,Float,Double,Bool,Char
+-- "Int" and "Integer" are two type. "Int" is bounded, which means that it
+-- has a minimum and a maximum value. Usually on 32-bit machines the maximum
+-- possible Int is 2147483647 and the minimum is -2147483648
+
+-- basic type class:
+Eq,Ord,Show,Read,Enum,Bounded,Num,Integral,Floating,
+-- Integral include Int and Integer
+-- Floating include Float and Double
+-- Num include all numbers
+
+show 3.1415926 -- > "3.1415926"
+show True -- > "True"
+
+-- Read is sort of the opposite typeclass of Show
+read "True" :: Bool -- > True -- *read "True" || False* works, too
+read "5" :: Int -- > 5
+read "5" :: Float -- > 5.0
+read "[1,2,3,4]" :: [Int] -- > [1,2,3,4]
+read "(3,'a')" :: (Int,Char) -- > (3,'a')
+
+-- for types who are part of Bounded
+minBound :: Int -- > -2147483648
+maxBound :: Int -- > 2147483647
+minBound :: Bool -- > False
+maxBound :: Bool -- > True
+
+-- All tuples are also part of Bounded if the components are also in it
+maxBound :: (Bool,Int,Char) -- > (True,2147483647,'\1114111')
+
+-- the literal number is of type Num, so you can just use 5 * 6, 3 * 2
+(5 :: Int) * (6 :: Integer) -- > Couldn't match ... `Int' ... `Integer'
+5 * (6 :: Integer) -- > 30
+
+
+-- let bindings: let <binding> in <expression>
+-- "where bindings" are a syntactic construct, "let bindings" are expressions 
+let a = 9 in a + 1 -- > 10
+(let a = "Hell" in a ++ "o") ++ " world!" -- > "Hello world!"
+
+-- bind multiple in one line, use semicolons
+let a = 1; b = 2; c = 3 in a + b + c -- > 6
+
+-- you can also use pattern match
+let (a,(b,(c,1))) = (1,(2,(3,1))) in a + b + c -- > 6
+
+-- the "in" part is omitted in list comprehension
+[a | (x,y) <- [(1,2),(3,4),(5,6)], let a = x + y] -- > [3,7,11]
+
+
+-- case expression
+case [1,2] of [] -> "empty"; [x] -> "singleton list"; xs -> "long list"
+-- > "long list"
+case (1,(2,(3,4))) of (1,(a,(3,4))) -> a -- > 2
+
+
+------------------------------------------------------------------------------
+-- curried functions
+------------------------------------------------------------------------------
+-- Every function in Haskell officially only takes one parameter.
+-- All the functions that accepted several parameters so far have been
+-- curried functions
+
+-- "->" is naturally right-associative, so "a -> a -> a" means "a -> (a -> a)"
+
+addThree = (+) 3  -- give (+) one argument will return a function
+-- it's equivalent to:
+addThree x = (+) 3 x
+
+addThree 3 -- > 6
+addThree 9 -- > 12
+
+-- another example
+isUpperAlphanum = (`elem` ['A'..'Z'])
+
+-- if you use function as argument, the "->" need parentheses
+-- "applyTwice f" will return a function whose type is "a -> a"
+applyTwice :: (a -> a) -> a -> a
+applyTwice f x = f (f x)
+
+applyTwice (+ 3) 10 -- > 16
+applyTwice (++ " HAHA") "HEY" -- > "HEY HAHA HAHA"
+applyTwice ("HAHA " ++) "HEY" -- > "HAHA HAHA HEY"
+applyTwice (3:) [1] -- > [3,3,1]
+
+-- a handy function "zipWith"
+zipWith (++) ["a","b","c"] ["x","y","z"] -- > ["ax","by","cz"]
+zipWith (zipWith (*)) [[1,2,3],[3,5,6],[2,3,4]] [[3,2,2],[3,4,5],[5,4,3]]
+-- > [[3,4,6],[9,20,30],[10,12,12]]
+
+-- a interesting function: flip. it can be defined as:
+flip' :: (a -> b -> c) -> (b -> a -> c)
+flip' f = g where g x y = f y x
+-- or
+flip' :: (a -> b -> c) -> b -> a -> c
+flip' f y x = f x y
+
+zipWith (/) [1,2,3] [4,5,6] -- > [0.25,0.4,0.5]
+zipWith (flip (/)) [1,2,3] [4,5,6] -- > [4.0,2.5,2.0]
+flip zip "hello" "what" -- > [('w','h'),('h','e'),('a','l'),('t','l')]
+
+-- map
+map (+3) [1,5,3,1,6] -- > [4,8,6,4,9]
+map (++ "!") ["BIFF", "BANG", "POW"] -- > ["BIFF!","BANG!","POW!"]
+map (replicate 3) [3..6] -- > [[3,3,3],[4,4,4],[5,5,5],[6,6,6]]
+map (map (^2)) [[1,2],[3,4,5,6],[7,8]] -- > [[1,4],[9,16,25,36],[49,64]]
+map fst [(1,2),(3,5),(6,3),(2,6),(2,5)] -- > [1,3,6,2,2]
+
+-- filter
+filter (>3) [1,5,3,2,1,6,4,3,2,1] -- > [5,6,4]
+let notNull x = not (null x) in
+    filter notNull [[1,2,3],[],[3,4,5],[2,2],[],[],[]]
+-- > [[1,2,3],[3,4,5],[2,2]]
+filter (`elem` ['a'..'z']) "u LaUgH aT mE BeCaUsE I aM diFfeRent"
+-- > "uagameasadifeent"
+filter (`elem` ['A'..'Z']) "i lauGh At You BecAuse u r aLL the Same"
+-- > "GAYBALLS"
+
+
+-- lambda expression !
+
+-- you can do pattern match in lambda expression
+map (\(a,b) -> a + b) [(1,2),(3,5),(6,3),(2,6),(2,5)] -- > [3,8,9,8,7]
+
+-- due to the way functions are curried by default, these two are equivalent:
+addThree :: (Num a) => a -> a -> a -> a
+addThree x y z = x + y + z
+-- and:
+addThree :: (Num a) => a -> a -> a -> a
+addThree = \x -> \y -> \z -> x + y + z
+
+-- Generally, if you have a function like foo a = bar b a,
+-- you can rewrite it as foo = bar b, because of currying.
+
+-- Folds can be used to implement any function where you traverse a list once,
+-- element by element, and then return something based on that.
+-- Whenever you want to traverse a list to return something,
+-- chances are you want a fold.
+
+-- foldl take (\acc x -> ...), foldr take (\x acc -> xxx)
+
+sum' :: Num a => [a] -> a
+sum' = foldl (+) 0
+
+elem' :: Eq a => a -> [a] -> Bool
+elem' y ys = foldl (\acc x -> if x == y then True else acc) False ys
+
+map' :: (a -> b) -> [a] -> [b]
+map' f xs = foldr (\x acc -> f x : acc) [] xs
+
+filter' :: (a -> Bool) -> [a] -> [a]
+filter' p = foldr (\x acc -> if p x then x : acc else acc) []
+
+-- ! tip
+-- if you take an infinite list at some point and you fold it up from the
+-- right, you'll eventually reach the beginning of the list. However,
+-- if you take an infinite list at some point and you fold it up from the
+-- left,  you'll never reach an end!
+
+-- Another way to picture right and left folds:
+foldr f z [3,4,5,6]
+-- it's equivalent to:
+f 3 (f 4 (f 5 (f 6 z)))
+
+foldl f z [3,4,5,6]
+-- it's equivalent to:
+f (f (f (f z 3) 4) 5) 6
+
+-- scanl and scanr are like foldl and foldr, only they report all the
+-- intermediate accumulator states in the form of a list.
+scanl (+) 0 [3,5,2,1] -- > [0,3,8,10,11]
+scanr (+) 0 [3,5,2,1] -- > [11,8,3,1,0]
+scanl (flip (:)) [] [3,2,1] -- > [[],[3],[2,3],[1,2,3]]
+
+
+-- normal function is left-associative:
+--    (f a b c) is equivalent to (((f a) b) c), 
+-- but function application with $ or . is right-associative.
+
+-- $ (it's infix)
+($) :: (a -> b) -> a -> b
+($) f x = f x
+-- f $ g $ z x is equivalent to f (g (z x))
+sqrt 3 + 4 + 9 -- > 14.732050807568877
+sqrt $ 3 + 4 + 9 -- > 4.0
+
+map ($ 3) [(4+), (10*), (^2), sqrt] -- > [7.0,30.0,9.0,1.7320508075688772]
+-- map (($) 3) [(4+), (10*), (^2), sqrt] will be wrong
+
+-- .
+-- (f . g . z) x is equivalent to f (g (z x))
+(.) :: (b -> c) -> (a -> b) -> a -> c
+(.) f g = \x -> f (g x)
+
+map (\x -> negate (abs x)) [5,-3,-6,7,-3,2,-19,24]
+-- is equivalent to:
+map (negate . abs) [5,-3,-6,7,-3,2,-19,24]
+
+sum (replicate 5 (max 6.7 8.9))
+-- is equivalent to:
+(sum . replicate 5 . max 6.7) 8.9
+
+replicate 100 (product (map (*3) (zipWith max [1,2,3,4,5] [4,5,6,7,8])))
+-- is equivalent to:
+replicate 100 . product . map (*3) . zipWith max [1,2,3,4,5] $ [4,5,6,7,8]
+-- it's just like
+-- (replicate 100 . product . map (*3) . zipWith max [1,2,3,4,5]) $ [4,5,6,7,8]
+
+oddSquareSum = sum (takeWhile (<10000) (filter odd (map (^2) [1..])))
+-- is equivalent to:
+oddSquareSum = sum . takeWhile (<10000) . filter odd . map (^2) $ [1..]
+
+
+------------------------------------------------------------------------------
+-- module
+------------------------------------------------------------------------------
+-- import module
+import Data.List
+-- When you do import Data.List, all the functions that Data.List exports
+-- become available in the global namespace
+
+-- import only some functions from a module:
+import Data.List (nub, sort) -- will only import nub and sort
+
+-- import all functions except some of them:
+import Data.List hiding (nub) -- will not import nub
+
+-- sometimes when the module have function of the same name, you need
+import qualified Data.Map
+-- then when you want to filter in Data.Map, you have to write
+Data.Map.filter
+
+-- also you can:
+import qualified Data.Map as M
+-- then
+M.filter
+
+
+------------------------------------------------------------------------------
+-- types and typeclasses
+------------------------------------------------------------------------------
+-- this is how Bool type is defined in the standard library
+data Bool = False | True
+
+
+-- value constructors
+data Shape = Circle Float Float Float | Rectangle Float Float Float Float
+
+-- then run :t Circle in shell you will get:
+Circle :: Float -> Float -> Float -> Shape
+-- so value constructors are functions like everything else
+
+-- now:
+Circle 1 2 3 -- > No instance for (Show Shape) arising from a use of `print'
+
+-- you need define Shape as
+data Shape = Circle Float Float Float | Rectangle Float Float Float Float deriving (Show)
+
+-- now:
+Circle 1 2 3 -- > Circle 1.0 2.0 3.0
+
+map (Circle 1 2) [4,5,6] -- >
+-- > [Circle 1.0 2.0 4.0,Circle 1.0 2.0 5.0,Circle 1.0 2.0 6.0]
+
+-- example function that use the  type we defined
+surface :: Shape -> Float
+surface (Circle _ _ r) = pi * r^2
+surface (Rectangle x1 y1 x2 y2) = (abs $ x2 - x1) * (abs $ y2 - y1)
+
+surface $ Circle 1 2 3 -- > 28.274334
+
+-- a better definition
+data Point = Point Float Float deriving (Show)
+data Rectangle = Circle Point Float | Rectangle Point Point deriving (Show)
+
+surface :: Shape -> Float
+surface (Circle _ r) = pi * r^2
+surface (Rectangle (Point x1 y1) (Point x2 y2)) = (abs $ x2 - x1) * (abs $ y2 - y1)
+
+surface (Rectangle (Point 0 0) (Point 100 100)) -- > 10000.0
+surface (Circle (Point 0 0) 24) -- > 1809.5574
+
+-- when you want to export some types:
+module Shapes (Point(..), Shape(..), surface) where
+-- By doing Shape(..), we exported all the value constructors for Shape,
+-- It's the same as writing Shape (Rectangle, Circle)
+
+-- record syntax
+data Person = Person {firstName :: String, lastName :: String} deriving (Show)
+-- then:
+-- run :t firstName in shell you will get:
+firstName :: Person -> String
+
+-- see ! haskell automatically made these functions: firstName, lastName
+
+Person {firstName = "wx", lastName = "no"}
+-- > Person {firstName = "wx", lastName = "no"}
+Person "wx" "no"
+-- > Person {firstName = "wx", lastName = "no"}
+
+firstName Person {firstName = "wx", lastName = "no"} -- > "wx"
+
+
+-- type constructors (The a here is the type parameter)
+data Maybe a = Nothing | Just a
+-- because there's a type parameter involved, we call Maybe a type constructor
+
+Just "Haha" -- > Just "Haha"
+Just 10 :: Maybe Double -- > Just 10.0
+
+-- run :t Just "Haha" in shell:
+Just "Haha" :: Maybe [Char]
+-- run :t Nothing in shel
+Nothing :: Maybe a
+
+-- e.g.
+data Car = Car {company :: String, model :: String, year :: Int} deriving (Show)
+-- you can also define it as:
+data Car a b c = Car {company :: a, model :: b, year :: c} deriving (Show)
+
+tellCar :: Show a => Car String String a -> String
+tellCar (Car {company = c, model = m, year = y}) = "This " ++ c ++ " " ++ m ++ "was made in " ++ show y
+
+tellCar (Car "Ford" "Mustang" 1967)
+-- > "This Ford Mustang was made in 1967"
+tellCar (Car "Ford" "Mustang" "nineteen sixty seven")
+-- > "This Ford Mustang was made in \"nineteen sixty seven\""
+
+
+-- Enum typeclass is for things that have predecessors and successors.
+data Day = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday
+           deriving (Eq, Ord, Show, Read, Bounded, Enum)
+
+-- Show & Read
+Wednesday -- > Wednesday
+show Wednesday -- > "Wednesday"
+read "Saturday" :: Day -- > "Saturday"
+
+-- Eq & Ord
+Saturday == Sunday -- > False
+Saturday == Saturday -- > True
+Saturday > Friday -- > True
+Monday `compare` Wednesday -- > LT
+
+-- Bounded
+minBound :: Day -- > Monday
+maxBound :: Day -- > Sunday
+
+-- Enum
+succ Monday -- > Tuesday
+pred Saturday -- > Friday
+[Thursday .. Sunday] -- > [Thursday,Friday,Saturday,Sunday]
+[minBound .. maxBound] :: [Day]
+-- > [Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday]
+
+
+-- type synonyms
+-- we're not actually making anything new (we did that with the data keyword),
+-- but we're just making a synonym for an already existing type.
+type String = [Char]
+
+
+-- ++ is defined like this:
+infixr 5 ++
+(++) :: [a] -> [a] -> [a]
+[] ++ ys = ys
+(x:xs) ++ ys = x:(xs ++ ys)
+
+
+------------------------------------------------------------------------------
+-- IO
+------------------------------------------------------------------------------
+-- print is just like putStrLn . show
+

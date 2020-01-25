@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<style>
+.container {
+  border: 2px solid green;
+  width: 200px;
+  height: 800px;
+  margin-left: 20px;
+  overflow: auto;
+}
+
+.obj {
+  background: blue;
+  color: white;
+
+  float: left;
+  margin: 2px;
+}
+
+/**
+ * Both `absolute` and `fixed` use
+ *  `top`, `bottom`, `left`, `right` to decide their position.
+ * But   `fixed`    means it's position on `window`    won't change
+ * while `absolute` means it's position on it's parent won't change
+ *
+ * You may need to resize you browser to see the result
+ */
+#o1 {
+  position: static;
+  left: 0;
+}
+#o2 {
+  position: relative;
+  left: 0;
+}
+#o3 {
+  position: absolute;
+  left: 0;
+}
+#o4 {
+  position: fixed;
+  left: 0;
+}
+
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="obj" id="o3">Object3</div><br><br>
+  <div class="obj" id="o4">Object4</div><br><br>
+  <div class="obj" id="o1">Object1</div><br><br>
+  <div class="obj" id="o2">Object2</div><br><br>
+</div>
+<script>
+var container = document.querySelector(".container");
+
+for (var i = 0; i < 100; i++) {
+  var d = document.createElement("div");
+  d.setAttribute("class", "obj");
+  d.innerHTML = "place holder" + i;
+  container.appendChild(d);
+}
+</script>
+
+</body>
+</html>
+

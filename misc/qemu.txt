@@ -1,0 +1,17 @@
+## vim: ft=sh :
+
+## create a new image, qcow is the disk format for qemu
+qemu-img create -f qcow winxp.img 8G
+
+## install new system
+## -boot with `c':hard-drive(default), `d':CD-ROM, `a':floopy-disk
+## `-m' means memory
+qemu-system-i386 -hda winxp.img -m 512M -cdrom ~/test.iso -boot d
+
+## boot
+qemu-system-i386 -hda winxp.img -m 512M
+
+## with network, use -user-net, just like 'nat' in vmware
+qemu-system-i386 -hda winxp.img -user-net
+
+

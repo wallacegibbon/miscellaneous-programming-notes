@@ -1,0 +1,115 @@
+## vim: ft=elixir :
+
+## Erlang Supevisor need the `init` function to return data in this structure:
+## Some examples:
+##  {ok, {{one_for_all, 0, 1}, []}}                         %% rabbitmq
+##
+##  {ok, {{one_for_all, 0, 1}, ChildSpecs}}                 %% Yaws
+##
+##  {ok, {{one_for_one, 10, 1},                             %% ejabberd
+##        [Hooks, GlobalRouter, Cluster, ..., Listener]}}
+##
+
+## Some utils for Supervisor to help create such data:
+child = Supervisor.Spec.worker ModuleName, [:arg1, :arg2, [name: :w]]
+#> {ModuleName, {ModuleName, :start_link, [:arg1, :arg2, [name: :w]]},
+#   :permanent, 5000, :worker, [ModuleName]}
+
+## the `{ModuleName, :start_link, [:arg1, :arg2, [name: :w]]}` stands for:
+ModuleName.start_link :arg1, :arg2, name: :w
+
+Supervisor.Spec.supervise [child], strategy: :one_for_one
+#> {:ok,
+#   {{:one_for_one, 3, 5},
+#    [{ModuleName, {ModuleName, :start_link, [:arg1, :arg2, [name: :w]]},
+#      :permanent, 5000, :worker, [ModuleName]}]}}
+
+## the `3` and `5` is MaxR and MaxT, which means if restarted for 3 times in
+## 5 (ms or s, not sure).
+## this two value is for avoiding too rapid restarting.
+
+## Usually, you will use supervisor on `genserver` or `another supervisor`.
+## You can also use it on normal modules, but need some special tips:
+## 1. The entry function need to return {:ok, pid}.
+##    In the example above, the entry function is:
+##      ModuleName.start_link(:arg1, :arg2, name: :w)
+## 2. In the entry function, you need to start a new process with
+##    `:proc_lib.start_link` or `:proc_lib.spawn_link`, you can NOT use
+##    `:erlang.spawn_link`, or the restarting will not happen.
+
+## `:proc_lib.start_link` will blocked until the child process initialized.
+## `:proc_lib.spawn_link` will return pid immediately.
+#
+## `spawn_link` just return pid, while `start_link` return {:ok, pid}
+
+## the inner difference between `spawn_link` and `:proc_lib.spawn_link`:
+##  there will be more information on the created process when you use
+##  proc_lib. like "initial call", "ancestors"
+
+## A real code example in erlang/OTP.
+## Code snippet of stdlib/src/proc_lib.erl
+#
+#   spawn(F) when is_function(F) ->
+#     Parent = get_my_name(),
+#     Ancestors = get_ancestors(),
+#     erlang:spawn(?MODULE, init_p, [Parent, Ancestors, F]).
+#
+#   init_p(Parent, Ancestors, Fun) when is_function(Fun) ->
+#     put('$ancestors', [Parent | Ancestors]),
+#     {module, Mod} = erlang:fun_info(Fun, module),
+#     {name, Name} = erlang:fun_info(Fun, name),
+#     {arity, Arity} = erlang:fun_info(Fun, arity),
+#     put('$initial_call', {Mod, Name, Arity}),
+#     try
+#       Fun()
+#     catch
+#       Class:Reason ->
+#         exit_p(Class, Reason)
+#     end.
+
+## As you see, `:proc_lib.spawn` called `:erlang.spawn`, and set some process
+## variable. Then just run the target function.
+## Yes, the extra info is stored in process dictionary. Which is necessary for
+## the supervision tree.
+
+## to get process info, you can use `Process.info` or `:erlang.process_info`
+## the `proc_lib` will give more info, so you can see the difference.
+a = spawn fn -> receive do after 100000 -> :ok end end
+#> #PID<0.157.0>
+b = :proc_lib.spawn fn -> receive do after 100000 -> :ok end end
+#> #PID<0.159.0>
+
+Process.info a
+#> [current_function: {:prim_eval, :receive, 2},
+#   initial_call: {:erlang, :apply, 2}, status: :waiting,
+#   message_queue_len: 0,
+#   messages: [], links: [],
+#   dictionary: [],
+#   trap_exit: false,
+#   error_handler: :error_handler, priority: :normal,
+#   group_leader: #PID<0.51.0>,
+#   total_heap_size: 233, heap_size: 233, stack_size: 9, reductions: 18,
+#   garbage_collection:
+#    [max_heap_size: %{error_logger: true, kill: true, size: 0},
+#     min_bin_vheap_size: 46422, min_heap_size: 233, fullsweep_after: 65535,
+#     minor_gcs: 0],
+#   suspending: []]
+
+Process.info b
+#> [current_function: {:prim_eval, :receive, 2},
+#   initial_call: {:proc_lib, :init_p, 3}, status: :waiting,
+#   message_queue_len: 0,
+#   messages: [], links: [],
+#   dictionary: ["$initial_call": {:erl_eval, :"-expr/5-fun-3-", 0},
+#                "$ancestors": [#PID<0.81.0>]],
+#   trap_exit: false,
+#   error_handler: :error_handler, priority: :normal,
+#   group_leader: #PID<0.51.0>,
+#   total_heap_size: 233, heap_size: 233, stack_size: 12, reductions: 23,
+#   garbage_collection:
+#    [max_heap_size: %{error_logger: true, kill: true, size: 0},
+#     min_bin_vheap_size: 46422, min_heap_size: 233, fullsweep_after: 65535,
+#     minor_gcs: 0],
+#   suspending: []]
+
+

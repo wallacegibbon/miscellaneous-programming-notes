@@ -1,0 +1,12 @@
+## vim: ft=python :
+
+## calendar
+## return weekday. Wednesday, 0-6 ~ Mon-Sun
+calendar.weekday(2015, 6, 17)
+#> 2
+
+## check leap year
+calendar.isleap(2015)
+#> False
+
+

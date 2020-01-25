@@ -1,0 +1,1164 @@
+# -*- mode: sh; -*-
+# vim: ft=sh :
+
+
+# special variable for bash: $$, $!, $?, $-, $*, $@, $#, $0, $1~$n
+
+# $$ stores the PID of current script (both in bash and perl)
+
+# $! stores the PID of the last background process, (end with &)
+
+# $? stores the exit code of the last process (the return value)
+
+# $- stores the all flags of `set'
+
+# $* stores arguments list like "$1 $2 $3... $n"
+
+# $@ stores arguments list like "$1" "$2" "$3"... "$n"
+
+# $# stores how many arguments were passed in
+
+# $0 stores the shell script name
+
+# $n the nth argument
+
+
+
+# `etc': etcetera, `rc': run command, `tty': teletype
+
+# the most import 8 directories for Linux
+# bin sbin lib dev etc proc sys usr
+
+# > and < do not have to be at the end of a command, they can be anywhere
+# for example, the following commands works the same way:
+echo tt > testfile
+> testfile echo tt
+
+# so do these two
+cat < inputfile
+< inputfile cat
+
+# when use `&&' along with `>':
+who && date > /tmp/a
+# only the output of `date' will be redirected to /tmp/a
+
+# command `write' and `mesg [yn]' is not that necessary if you are root, you
+# can just write to the tty to do the same thing for example, write can be
+# replaced:
+write wx pts/2
+echo this is what i want to write to pts/2 > /dev/pts/2
+
+# and the second one do not need to make sure `mesg' is `y', but if you are
+# not root, you can write to you own pts only
+
+# do not use xargs in interactive command like vi and top, the BSD version
+# xargs support that but most xargs in Linux do not support it
+
+# run command in a new xterm, sed use -e just like xterm
+xterm -e command...  
+
+# run command in a new shell, python use -c just like sh
+sh -c 'command string' 
+
+# these commands use `-e' to execute program:
+  perl, node(nodejs), xterm, sed,
+
+# these commands use `-c' to execute program:
+  python, shell,
+
+# xterm set geometry in command line
+xterm -geometry 80x20+1300+600
+
+# convert ANSI Chinese to UTF-8
+iconv -f GB2312 -t UTF-8 readme.txt -o readme1.txt
+
+# use xterm with vim instead of gvim
+xterm -geometry 80x45+150+0 -e vim
+
+
+## see all console fonts available
+ls /usr/share/consolefonts/
+## you can set the font immediately with `setfont'
+## e.g. use /usr/share/consolefonts/sun12x22.psfu.gz
+setfont sun12x22 -m 8859-2
+## the `-m' means `font map', it's not necessary, setfont can use the default one
+## you can add this to /etc/vconsole.conf to change the default font:
+FONT=sun12x22
+FONT_MAP=8859-2
+
+
+## On Debian, you can configure the console font like this:
+sudo dpkg-reconfigure console-setup
+
+
+
+## to install X fonts, copy font files to one of the following path:
+## /usr/share/fonts
+## /usr/share/X11/fonts
+## /usr/local/share/fonts
+## ~/.fonts
+
+# then run:
+fc-cache -fv
+
+## the X window font description:
+## e.g.
+-adobe-courier-medium-o-normal--14-140-75-75-m-90-iso8859-1
+## each field means (in order):
+## foundry (e.g. adobe, ...)
+## family (e.g. courier...)
+## weight (e.g. bold, delicate, medium, regular...)
+## style (e.g. i: italic, o: oblique, r: roman, ri: reverse italic...)
+## line width (e.g. normal, narrow, bold, semicondensed, wide...)
+## extra style (e.g. decorated, fs, sans, serif, xl serif... just left it empty)
+## pixel size
+## point size
+## x & y
+## space ( I don't know, just write "m")
+## average width
+## encoding
+
+
+## install monaco font:
+sudo mkdir -p /usr/share/fonts/truetype/custom
+wget -c https://github.com/cstrap/monaco-font/raw/master/Monaco_Linux.ttf
+sudo cp Monaco_Linux.ttf /usr/share/fonts/truetype/custom/
+sudo fc-cache -fv
+
+
+## commands to get the current keymap:
+dumpkeys
+xmodmap -pke
+
+## command to get current keyboard scancode
+showkey
+
+## to get the keycode, use `xev` (x event)
+xev
+
+## with the keycode, you can change "/usr/share/X11/xkb/keycodes/evdev"
+## to update your keyboard layout.
+
+
+## `xmodmap` is only recommended for the simplest tasks. For more complex tasks,
+## you need `xkb` (X KeyBoard extension), see this site for details:
+## > https://wiki.archlinux.org/index.php/Xmodmap
+
+
+## change keyboard layout in ubuntu (for XWindow only)
+sudo vi /etc/default/keyboard
+## change the XKBOPTIONS to be:
+XKBOPTIONS="lv3:ralt_alt,compose:menu,ctrl:nocaps"
+
+## or simply
+XKBOPTIONS="ctrl:nocaps"
+
+## then run: (no need to restart your machine)
+sudo dpkg-reconfigure keyboard-configuration
+
+
+## ubuntu dash icon and related settings path:
+## /usr/share/applications/
+
+
+## From ubuntu16.04, you can change the position of the launcher to bottom
+gsettings set com.canonical.Unity.Launcher launcher-position Bottom
+
+
+## use external vga
+xrandr
+xrandr --output VGA1 --auto
+xrandr --output VGA1 --mode 1024x768
+xrandr --output VGA1 --auto --output LVDS1 --off
+xrandr --output VGA1 --off
+
+
+## ACPI (Advanced Configuration and Power Interface)
+## acpi can show battery status, cpu temperature and other information
+acpi    #> Battery 0: Unknown, 97%
+acpi -b #> Battery 0: Unknown, 97% (the default option)
+acpi -a #> Adapter 0: on-line
+##...(`man acpi')
+
+
+## sh environment variable RANDOM: random number
+echo ${RANDOM}
+
+
+## XON XOFF
+##  Ctrl-s: xoff --> disable stdin of the terminal
+##  Ctrl-q: xon  -->  enable stdin of the terminal
+## enable XON XOFF:
+stty ixon
+## disable XON XOFF:
+stty -ixon
+
+
+## install flash player
+cp libflashplayer.so /usr/lib/mozilla/plugins/
+
+
+## mp3 -> ogg
+mpg321 sample.mp3 -w sample.wav && oggenc sample.wav -o sample.ogg
+
+
+## grep show line number: -n
+## show contents before and after the searching string: -B1 -A1 
+grep 'pattern' FILENAME -n -B1 -A1
+## show `x' line before AND after the search result
+grep 'pattern' FILENAME -x
+## e.g.
+grep 'pattern' FILENAME -3
+## is same as :
+grep 'pattern' FILENAME -B3 -A3
+
+
+## grep can show the matched only:
+echo hello,world | grep -o 'o.*o' #> o,wo
+
+
+# use bc command to calculate decimal, scale=x is the way
+echo 'scale=2;3/2;5/4;2^3scale=0;3%2' | bc
+#> 1.50
+#  1.25
+#  8
+#  1
+
+
+# change host name
+# 2 files should be changed: /etc/hostname /etc/hosts.
+
+# show memory usage
+free    # `free -h' will show a more readable format
+# used = total - free - cache - buffers
+# use `man free' to see what is `cache' and `buffers'
+
+
+# utmp: info about user
+who     # /var/log/utmp
+users   # /var/log/utmp
+w       # /var/log/utmp
+# wtmp: login & logout
+last    # /var/log/wtmp
+
+# show boot history
+last | grep reboot
+# last depend on /var/log/wtmp, wtmp will delete old data, so if you want to
+# store login data for a long time, store it in other files.
+
+# the next command can also show how long you machine has been running
+uptime
+
+# show login history
+# local
+last | grep tty1
+# ssh
+last | grep pts
+
+# "tac" <===> the reverse of "cat"
+
+# find chinese file names
+ls -a | sed -n -e '/^[^a-zA-Z0-9_.]/p'
+# deleted a chinese folder
+ls -a | sed -n -e '/^[^a-zA-Z0-9_.]/p' | xargs rm -r
+# grep can do the same thing
+ls -a | grep '^[^a-zA-Z0-9_.]' | xargs rm -r
+
+# base board information:
+dmidecode --type 2
+# DMI means : Desktop Management Interface
+
+# disk information
+smartctl -a /dev/sda
+
+# set up serial port to login Linux
+# in file `/etc/inittab':
+# T0:23:respawn:/sbin/getty -L ttyS0 115200 vt100
+# T4:23:respawn:/sbin/getty -L ttyUSB0 115200 vt100
+
+# login through serial port with picocom(more convenient than minicom)
+picocom /dev/ttyUSB0 --baud 115200
+
+# A better solution: you can use `screen` (not sure whether `tmux` works)
+screen /dev/ttyUSB0 115200
+
+
+# the content of /etc/passwd(delete the spaces around `:')
+user_name : passwd : UID : GID : notes_or_info : home_directory : shell
+# when the passwd is `x', means real passwd is in the /etc/shadow file
+# e.g.
+root:x:0:0:root:/root:/bin/bash
+
+
+# the content of /etc/group(delete the spaces around `:')
+group_name : passwd : GID : user_list
+# e.g.
+bin:x:1:daemon
+
+
+# the content of /etc/shadow(delete the spaces around `:')
+user_name : passwd : t1 : t2 : t3 : t4 : t5 : t6 : reserved
+# t1: the latest time you change your passwd.(seconds, not days)
+# t2: days you can not change your passwd
+# t3: days you need to change your passwd
+# t4: days to warn you that your passwd is about to be obsolete.
+# t5: days you can be forgiven if you didn not change passwd in time.
+# t6: time when the user become obsolete.(seconds, not days)
+# e.g.
+root:$6$6.TB...very.long...oxySIcYo.:16688:0:99999:7:::
+
+
+# add wx to group of ttyS0 or ttyUSB0 to use serial port
+gpasswd --add wx dialout
+# then logout and login, check with "groups"
+
+# you can use `ls -l /dev/ttyUSB*' to check whether or not the ttyUSB* is set
+# as tty now. the group will stay as "dialout" if failed, and "tty" if succeed
+# it may take some time for the ttyUSB* to become a tty from a dialout
+
+# show enabled tty(can be used to list serial port)
+dmesg | grep tty
+
+
+# `dmesg' print or control the kernel ring buffer. read file `/var/log/kern.log'
+# will get the kernel log, too.
+# if you plug in a use-serial(e.g. ch341), you can see the information with
+# `dmesg' or read the `/var/log/kern.log'
+
+
+# try to connect to raspberry pi with a while loop
+# these are WRONG examples:
+while test `xterm -e ssh 192.168.1.252`; do echo; done;
+while xterm -e ssh 192.168.1.252; do echo; done;
+# because ssh might fail, but xterm will always succeed, and the test
+# will result in `true'.
+
+# capture screenshot
+scrot
+scrot -s     # select a rectangle with the mouse
+scrot -d 10  # delay 10 seconds and capture
+scrot -cd 10 # delay 10 seconds and capture(with countdown)
+
+
+# find execute file path through PID
+# /proc/PIDNUMBER/exe is a symbolic link to the running program
+# e.g.
+ls -l /proc/7041/exe  #> ... /proc/7041/exe -> /usr/bin/vim.basic
+
+# `kill' simply send signal to a process. It's not just kill a process
+# list supported signals
+kill -l
+# the default signal for `kill' is SIGTERM, if you want to use SIGKILL, use:
+kill -9
+# and you can stop a process use SIGTSTP(20), too.
+# e.g. you have a python shell running(pid: 2950)
+kill -20 2950
+# the python shell will be stopped, use `fg' to return to the py shell.
+# but do this to vi will mess up the terminal of vi
+
+# `kill -0' do not send signal
+# you can use `kill -0 somepid' to check whether or not a process exists.
+# and you can use `ps -e | grep thepid' to do the same thing, but `kill -0'
+# is more efficient.
+# assume a bash process's PID is 2310, and no program with PID 8888
+kill -0 2310 2> /dev/null
+echo $?   #> 0
+kill -0 8888 2> /dev/null
+echo $?   #> 1
+
+# but, only root can do this with PID 1:
+kill -0 1 2> /dev/null
+echo $?   #> 1
+sudo kill -0 1 2> /dev/null
+echo $?   #> 0
+
+
+# the compressed result of gzip is related with the filename:
+date > date1.txt && cp date1.txt date2.txt && diff date1.txt date2.txt
+#> nothing output, date1.txt and date2.txt are the same
+gzip date1.txt && gzip date2.txt && diff date1.txt.gz date2.txt.gz
+#> Binary files date1.txt.gz and date2.txt.gz differ
+
+# but the result of bzip2 have no relationship with the filename
+date > date1.txt && cp date1.txt date2.txt && diff date1.txt date2.txt
+#> nothing output, date1.txt and date2.txt are the same
+bzip2 date1.txt && bzip2 date2.txt && diff date1.txt.bz2 date2.txt.bz2
+#> nothing output, date1.txt.bz2 and date2.txt.bz2 are the same
+
+# use gzip with pipe, binary data can also put to pipe though `cat'
+date > t.txt
+cat t.txt
+#> Wed Mar 11 15:09:33 CST 2015
+cat t.txt | gzip > t.txt.gz
+cat t.txt.gz
+#> BINARY STRING, WILL MESS UP `diff'(so does git, because `git' calls `diff'),
+#  SHOULD BE WRITTEN HERE 
+cat t.txt.gz | gzip -d
+#> Wed Mar 11 15:09:33 CST 2015
+
+# show cpu info
+cat /proc/cpuinfo
+
+# show system info (you can know your machine is 32bit or 64bit)
+uname -a
+# this can see some related info, too:
+cat /proc/version
+
+# There is another way to check 32/64 bit. You just need to check the details
+# on one of you executable:
+file /bin/bash
+
+
+# show distribution info
+cat /etc/issue
+
+# enable vsftpd start on boot in centos
+chkconfig --level 3 vsftpd on
+# the default runlevel of centos is 3(it's 2 for debian)
+
+
+# use top with a certain PID
+top -p PIDNUMBER
+# type `H' will show how many threads are running, or pass H as argument
+top -H -p PIDNUMBER
+# use top in batch mode(not the interactive curses mode)
+top -b
+
+# "play" the kernel use `aplay'(aplay and arecord are part of alsa utils)
+cat /boot/kernel.img | aplay
+
+
+# tar. c:create, x:extract
+# cf -> .tar,  jcf -> .tar.bz2,  zcf -> .tar.gz Jcf -> .tar.xz
+# xf           jxf               zxf            Jxf
+tar cf torrents.tar debian*.iso.torrent openSUSE*.iso.torrent
+tar xf torrents.tar -C /tmp # -C: change directory
+
+# with openssl, you can encript files
+# the `-` means stdout or stdin
+# compress with gzip and encrypt with openssl
+tar zcf - mydir | openssl des3 -salt -k yourpassword | dd of=mydir.des3
+# decrypt and decompress
+dd if=mydir.des3 | openssl des3 -d -k yourpassword | tar zxf -
+
+
+# `echo' will print a "\n" automaticlly, `printf' will not
+echo -n blah  # `-n': disable the newline
+
+echo -e # `-e': enable interpretation of backslash escapes
+echo -e '\033[34m'  # will change the console to blue
+echo    '\033[34m'  # will simply show \033[34m
+
+echo -e '\033[?25l' # hide cursor
+echo -e '\033[?25h' # show cursor
+
+echo -n -e '\033[?25l' > /dev/tty2  # hide de cursor of tty2 ;)
+
+
+# netcat(nc)
+## send 'hello\n' through tcp to local port 8000
+echo hello | nc localhost 8000
+
+
+# check max socket connection number
+cat /proc/sys/net/core/somaxconn
+
+# check max file descriptor number
+cat /proc/sys/fs/file-max
+
+
+# show details of running processes(full format listing)
+ps -f
+# if you want to see `ppid' of a program, use this command
+
+# user-defined format listing
+ps -o pid,cmd,user
+
+# `ps -e' is same as `ps -ax'
+# standard syntax   : ps -e
+# BSD syntax        : ps -ax
+
+
+# `pkg-config' usually works with gcc
+pkg-config --cflags python3 #> -I/usr/include/python3.2mu
+pkg-config --libs python3   #> -lpython3.2mu
+gcc -o test test.c $(pkg-config --libs --cflags libpng)
+
+# `pkg-config' will search /usr/lib/pkgconfig by default, if you want to add
+# other directories, export the env variable `PKG_CONFIG_PATH':
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+
+# delete a environment vairable
+unset variablename
+
+
+# the `/etc/rc.local' runs before `/etc/profile', if you add a daemon in
+# rc.local, and the daemon depend on an environment variable, you should set
+# the variable in rc.local.
+
+# rc.local have to be executable !! (chmod +x)
+
+
+# print variable in Makefile
+$(warning $(VAIRABLENAME))
+# e.g.
+$(warning $<)
+$(warning $(CFLAGS))
+
+
+# rcN.d files
+# `[SK][0-9]{2}cmdname', the less the number is, the earlier it runs
+S04rc.local # same as: /etc/init.d/rc.local start
+# `/etc/init.d/rc.local' is a different file from `/etc/rc.local'
+K01lightdm  # same as: /etc/init.d/lightdm stop
+
+# search what package the command belongs to:
+# dpkg:
+dpkg -S /sbin/init  #> systemd-sysv: /sbin/init (in debian 8)
+# rpm
+rpm -qf /sbin/init  #> SysVinit (centos 5.10)
+
+
+# list other files in this package(name with path):
+# dpkg:
+dpkg -L systemd-sysv # you will see /sbin/init, /sbin/halt, /sbin/runlevel...
+# rpm:
+rpm -ql SysVinit
+
+
+# start ibus as daemon
+ibus-daemon -xd
+# restart the ibus-daemon, replace the old one
+ibus-daemon -xdr
+# this can fix the full-pinyin -> double-pinyin problem
+
+
+# list available video output
+mplayer -vo help
+# audio output
+mplayer -ao help
+
+# play video in console with mplayer, need `fbdev' or `fbdev2' supported
+mplayer -ao alsa -vo fbdev2 -vf scale=1024:768 test.mp4
+# `-vo fbdev' use framebuffer
+
+# save frames to jpeg file
+mplayer -vo jpeg test.mp4
+
+# mplayer support video filter. e.g. if you want to rotate the video 90 degree
+mplayer -vf rotate=1 test.mp4
+
+# to rotate 270 degree
+mplayer -vf rotate=2 test.mp4
+
+
+# mplayer is not the only frame buffer player, you can use fbxine, too.
+apt-get install xine-console
+fbxine -V fb -A alsa test.mp4 # `-V fb' is not necessary
+
+# fbi package(contains `fbi' and `fbs') can handle picture and pdf
+fbi -a test.jpg # -a: autozoom
+fbgs -c -fp 10 -lp 11 test.pdf # -c: color, -fp: first page, -lp: last page
+
+# get audio from video file
+mencoder -oac mp3lame -ovc copy -of rawaudio a.mp4 -o a.mp3
+
+
+## for pdf file reading, `mupdf' looks better than `xpdf'
+
+
+## to format a disk
+cfdisk
+## you will need to restart system to renew the partition record, or you can
+## just use partprobe
+partprobe
+## it's in `parted' package
+apt-get install parted
+
+## create filesystem
+mkfs -v -t ext4 /dev/sda3
+## make swap
+mkswap /dev/sda3
+
+## install grub
+grub-install /dev/sda
+
+## update grub. `update-grub' is a script in debian, it calls `grub-mkconfig'
+grub-mkconfig -o /boot/grub/grub.cfg
+
+## grub command for detecting display possibilities:
+## for grub-pc
+vbeinfo
+## for grub-efi
+videoinfo
+
+## to change the grub resolution (for high dpi screen), add this lines to
+## /etc/default/grub, and run update-grub.
+##   (the 800x600 should be in the list of grub's `videoinfo` command)
+GRUB_GFXMODE=800x600x32
+
+## if you want linux keep the gfxmode, do this:
+GRUB_GFXPAYLOAD_LINUX=keep
+
+
+## for debian, you can change the grub theme by editing this file:
+##    /etc/grub.d/05_debian_theme
+
+
+## To change the default console font size, you need to change the linux
+## startup argument.
+## For example, the resolution of your surface pro is 2736x1824, which is too
+## much for a linux console. You can edit the /etc/default/grub to be:
+GRUB_CMDLINE_LINUX_DEFAULT="video=1368x912M@60m"
+
+## or
+GRUB_CMDLINE_LINUX_DEFAULT="video=912x608@60m"
+
+
+# when compiling gcc, glibc, binutils, --build, --host, --target
+# e.g. you are in you thinkpad laptop, and you want to build a gcc that
+# runs on ppc but compile for arm, then
+--build=i686-pc-linux-gnu
+--host=ppc-xxx
+--target=arm-xxx
+
+
+# '{' and '}' with path:
+mv /tmp/{test1.txt,test2.txt}
+# is same as
+mv /tmp/test1.txt /tmp/test2.txt
+# this works when you handle file in the same path, another example:
+ln -sv /tools/bin/{tclsh8.6,tclsh}
+# although this is not necessary, you can just use:
+ln -sv tclsh8.6 /tools/bin/tclsh
+# ln will find tclsh8.6 throught $PATH
+#
+# to compare the difference of /tmp/a and /tmp/a~
+diff /tmp/a{,~}
+
+
+# redirect stderr to stdout, see the difference of the following 2 commands:
+cd /tmp/no_such_dir | xargs echo blah..
+cd /tmp/no_such_dir 2>&1 | xargs echo blah.. # no space between `>' and `&'
+# 2>1 will make the stderr into file named `1', so shell need you to write &1
+
+# redirect stdout to stderr, see difference:
+echo hi >&2 | xargs echo blah...
+echo hi | xargs echo blah...
+
+# &> : redirect both stderr and stdout
+ls /tmp /tmp/inexistent 2> /dev/null  # show `/tmp:'
+ls /tmp /tmp/inexistent  > /dev/null  # show `ls: cannot access /tmp/in...'
+ls /tmp /tmp/inexistent &> /dev/null  # show nothing
+
+# if you want to redirect both stdout and stderr to /dev/null
+someprogram_create_out_and_err > /dev/null 2>&1   # right !
+someprogram_create_out_and_err 2>&1 > /dev/null   # wrong !
+# I don't know the reason.
+
+
+# readlink can get the target of a symlink
+readlink /etc/rc1.d/K01atd  #> ../init.d/atd
+
+
+# !! `[' is a command in /usr/bin or /bin
+ls /usr/bin/[
+
+
+# xmlwf: check whether or not xml documents are well formed
+echo '<a>hi</a>' | xmlwf  # (ok, no output)
+echo '<a>hi</a' | xmlwf   # STDIN:1:5: unclosed token
+echo '<a>hi' | xmlwf      # STDIN:2:0: no element found
+
+ 
+# scripts in /etc/init.d/
+# beside `start', `stop', `restart', `reload', there is a `status' option
+# `status' can tell if the service is running and with which PIDs 
+/etc/init.d/acpid status
+
+
+# cut -c1,8		# only 1 and 8
+# cut -c1-8		# from 1 to 8
+# cut -c1-		# from 1 to the last character
+
+# cut with `-f` to choose field
+echo a/b/c/d/e.json | cut -d / -f 1,3,5
+#> a/c/e.json
+echo /a/b/c/d/e.json | cut -d / -f 1,3,5
+#> /b/d
+
+
+
+# you can use `xargs dirname' for multiple times
+echo a/b/c/d/e | xargs dirname  #> a/b/c/d
+echo a/b/c/d/e | xargs dirname | xargs dirname  #> a/b/c
+
+
+# always combine `sort' with `uniq'
+# e.g. find all directorys that contains jpeg files
+find /home -name *.jpg | xargs dirname | sort | uniq
+
+
+# use `find' with regular expression:
+# to find all `errno' related header file:
+find / -name 'errno*.h'
+# or
+find / -regex '.*errno.*\.h'
+# -regex will match abs path, so the '.*' before errno is necessary
+
+
+# find `errno' related header files
+find /usr -name 'errno*.h'
+# the pattern of `find' is different from `grep', it's not regular expression,
+# but a shell like pattern match
+
+
+# `-type f' will find all normal files
+# e.g. strip all binaries in /bin, /sbin, /usr/bin/, /usr/sbin/, ...
+find /{,usr/}{bin,lib,sbin} -type f -exec strip --strip-unneeded {} \;
+
+# xargs -i works, too
+find . -name '*.svg' | xargs -i cp {} /tmp/
+
+
+# `-size' can filter files in a certain size
+# e.g. delete files which is bigger than 20KB and smaller than 100KB
+find . -size -100k -size +20k -exec rm {} \;
+
+
+# find the definition of `EXIT_FAILURE'
+grep 'define.*EXIT_FAILURE' -r /usr/include
+
+
+
+# assign LC_ALL before calling `locale' command will have interesting result:
+LC_ALL=en_US.iso88591 locale charmap  #> ISO-8859-1
+LC_ALL=en_US.iso88591 locale language #> English
+
+
+# the way shell deal with assignment before command (kind of `local' variable)
+# e.g.
+PATH=/a/b/c echo $PATH
+# the order:
+# 1. expand $PATH into its current value, assume it is `/c/d/e'
+# 2. execute `echo /c/d/e' in the environment where PATH equals `/a/b/c'
+#
+# because the expanding process is before the running time of echo command,
+# echo will only show the old PATH
+#
+# another example
+var=hello
+ttt(){ echo $var;}
+var=5 ttt   #> 5
+ttt         #> hello (not affected by the previous `var=5')
+echo $var   #> hello
+
+
+# show uuid of disks, just check /dev/disk/by-uuid/
+ls -l /dev/disk/by-uuid/ | awk '{print $9"\t"$10"\t"$11}'
+
+
+# get the dimensions:
+stty size
+
+
+# terminal position control, use '\033[xxG' and '\033[xxA'
+echo -n -e '\033[10Ghello, world' #> print 'hello, world' start at column 10
+echo -n -e '\033[3Ahello, world'  #> up 3 lines and print 'hello, world'
+
+
+# in grub.cfg
+menuentry "somename" { # the `{' have to be in the same line as menuentry
+  linux ...
+} 
+
+# to select a boot image:
+linux /vmlinuz-3.19 root=/dev/sda3 ro
+# or use UUID
+linux /vmlinuz-3.19 root=UUID=xxx-xxx.... ro
+
+
+# change tty, type Alt+Fn, or just use `chvt'
+chvt 1  #> same as Alt+F1
+# 1 CONSOLE <-> 63 VT (tty1-tty63), you can use keyboard change from
+# tty1 to tty6 (or more, if you change the /etc/inittab).
+# chvt can change among the 63 ttys.
+
+# the `tty0' do exists, but it's a logical tty, it means the current tty.
+echo hello > /dev/tty0  # will alway show `hello' in the tty you are in.
+
+# `/dev/vcs' is just like `dev/tty0', it means the the current screen.
+echo hello > /dev/vcs   # will always show `hello' in the screen you are in.
+
+# text that redirected to `vcs' will show at the top of the screen.
+# in tmux, the `> vcs' works the same way.
+
+
+# `read' can take multiple arguements, but your input have to be separated
+# by space, not column or something.
+read a b c  #> type `1 2 3'
+echo $a     #> 1
+echo $b     #> 2
+#
+read a b c  #> type `1,2,3'
+echo $a     #> 1,2,3
+echo $b     #> (nothing)
+
+# read from a file instead of the stdin
+read a b c < /tmp/a.txt       #> works !
+cat /tmp/a.txt | read a b c   #> not working
+
+# THE REASON: a pipe will create a sub-process, the assignment `read' is
+# done in the sub-process, didn't affect the parent process.
+# do NOT do assignment with a pipe
+a=blah
+echo "hello world" | { read a b; }
+echo $a
+#> blah
+
+echo "hello world" | { read a b; echo $a; }
+#> hello  # the `read' assignment works !
+
+echo $a
+#> blah   # the `read' didn't affect the `a' in main process
+
+# the { ... } is necessary, or the `;' will end the chain
+echo "hello world" | read a b; echo $a;
+#> blah   # in this case, `echo $a' is not in the pipe chain
+
+
+# use `{' and `}' to execute multile commands:
+{ echo hi; a=1; b=2; }
+#> hi
+echo $a $b    #> 1 2
+# see, `{' and `}' will not create a `sub-process' or `local name space'
+
+
+# to see if a directory is a mountpoint, use the command `mountpoint'
+mountpoint /
+#> / is a mountpoint
+mountpoint / > /dev/null && echo yeah
+#> yeah
+mountpoint /tmp > /dev/null && echo yeah
+#> (nothing)
+
+
+# to get the pid of a certain process: `pidof'
+pidof chromium
+#> 3183 2639 1914 1824 1814 1797 1795 1789
+pidof chromium | xargs kill
+# is same as
+pkill chromium
+
+
+# use `ldd' to print the shared library dependencies of a program
+# e.g.
+ldd /bin/sh # this will show what `.so' files that `sh' need.
+# on Mac, use `otool':
+otool -L /bin/sh
+
+
+# if the `/proc/modules' exists, the kernel have module support
+
+
+type -p   # is just like `which'
+# you can use this to take the place of `which'
+cat > /usr/bin/which << "EOF"
+#!/bin/bash
+type -pa "$@" | head -n 1 ; exit ${PIPESTATUS[0]}
+EOF
+chmod -v 755 /usr/bin/which
+chown -v root:root /usr/bin/which
+
+# `/etc/mtab' is similar to `/etc/fstab', but it is automatically udpated
+# by the mount command
+cat /etc/mtab | wc -l #> 7
+mount /dev/sda8 /mnt
+cat /etc/mtab | wc -l #> 8
+
+
+# mount `-o' option
+# e.g. change the owner of the mounted directory
+mount /dev/sda3 /mnt -o uid=1000
+
+
+# `/run' is a tmpfs, `/dev/shm' is also a tmpfs(debian 8 at least),
+# and you can create your own tmpfs by hand.
+# yes, there can be many tmpfs at the same time
+mount -t tmpfs -o size=20m tmpfs /tmp
+
+
+# get the size of the terminal, use LINES, COLUMNS
+echo columns:$COLUMNS, lines:$LINES   #> columns:128, lines:48
+
+
+# information about console. (the escape sequences)
+man console_codes
+
+
+# if you want to add keyword highlight to vim, e.g. add `u8', `s8' highlight
+# for vim, just change this file:
+vi /usr/share/vim/vim74/syntax/c.vim
+
+
+# gcc can output the header file dependencies of the target file
+# this will list all header it depends:
+gcc -M test.c
+# this will not list header files that are found in system header directories:
+gcc -MM test.c
+
+
+# the `/dev/sda1' or `/dev/ttyS0' is NOT what kernel use to indicate devices.
+# the kernel use `major' and `minor' number.
+ls -l /dev/ttyUSB*
+#> crw-rw---- 1 root dialout 188, 0 Sep 25 10:25 /dev/ttyUSB0
+#                             ^   ^
+#                          major  minor
+
+# another example
+ls -l /dev/sda*
+#> brw-rw---- 1 root disk 8, 0 Sep 25 09:08 /dev/sda
+#  brw-rw---- 1 root disk 8, 1 Sep 25 09:08 /dev/sda1
+#  brw-rw---- 1 root disk 8, 2 Sep 25 09:08 /dev/sda2
+
+
+# modinfo will show module info, even the module is NOT loaded.
+
+
+# `/boot/System.map' is generated by `nm'
+
+
+# udev rules are stored in the following 3 directories:
+/lib/udev/rules.d/
+/run/udev/rules.d/
+/etc/udev/rules.d/
+
+# see udev information:
+udevadm info /dev/ttyUSB0
+# the first character is the type, (e.g. lines start with a `E' is ENV)
+
+# you can write this in rule files:
+ENV{ID_USB_DRIVER}=="ch341", SYMLINK+="ch340_1"
+ENV{ID_USB_DRIVER}=="cp210x", SYMLINK+="cp2102_1"
+# or:
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="ch340_1"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="cp2102_1"
+# it is `ATTRS', not `ATTR', the miss of `S' will make a wrong symlink
+
+
+# to allow non-root user to use usbasp, add this to rules:
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="05dc", MODE="0666"
+
+
+# linux kernel compiling, the menuconfig is default to x86, for architecture,
+# you need to specify the two env variable: ARCH PLATFORM
+# e.g.
+ARCH=arm PLATFORM=s3c2410 make menuconfig
+
+
+# `du' command use `-dN' or `--max-depth=N' to control the level(or depth)
+# e.g. list directory size of the current directory
+du -h -d1 .   # without the `-d1', all directories will be shown recursively
+
+
+# `ld -verbose' will print the default ld script
+
+
+# the `yes' command will write `y' to standard output before it is terminated.
+#     `yes 1 2 3' will write `1 2 3' instead
+
+
+# when you changed the `/etc/ld.so.conf', you need to update `/etc/ld.so.cache'
+# by executing `ldconfig' as the root user.
+
+
+# /etc/profile, ~/.bash_profile only execute when a user login. it execute
+# ONLY ONCE. you have to relogin to get them executed again.
+
+
+# non-interactive shell do NOT load any files like .bahsrc, profile, etc.
+
+
+# the `source'(derived from csh) and `.'(derived from sh) will execute a
+# script in the current environment instead of run it in a sub-process.
+# so in ~/.bash_profile, you have to wirte
+source $HOME/.bashrc
+# or
+. $HOME/.bashrc
+# you can NOT write
+bash $HOME/.bashrc
+
+
+## the `export' can only pass the variable to it's child processes,
+## the parent process and all other unrelated process will not be affected.
+## and without `export', even the child process will not be affected.
+## (tested with multiple xterms)
+## so the environment variable is not real `global',
+## it's passed in a single direction, only seen by it's child processes.
+
+
+
+## md5 check
+md5sum -c md5filename
+# the md5filename contains contents like:
+#       1a05fb...(md5 values)...c025   someprog-1.1.0.tar.gz
+
+## sha256 check
+shasum -a 256 -c shasumfilename
+
+## gnupg check
+gpg --verify emacs-26.2.tar.gz.sig emacs-26.2.tar.gz
+
+# before that, you may need to import the public key into your public keyring
+gpg --import gnu-keyring.gpg
+
+
+
+## `bash -e' will start a subshell that will exit if any command returns a value
+## other than 0, you can use `bash -e' in the auto-build process
+## e.g.
+cd /ttt; cd ddd;
+#> -bash: cd: /ttt: No such file or directory
+#> -bash: cd: /ddd: No such file or directory
+
+bash -e
+cd /ttt; cd ddd;
+#> -bash: cd: /ttt: No such file or directory
+
+# the first error make the subshell exit
+
+
+# `/etc/inputrc' is the initialize file of readline.
+# `set horizontal-scroll-mode Off' is the default option, if you want to use it,
+# you have to set it on, and restart the program that uses readline.
+# but trust me, set it Off.
+# you can make all program that uses `readline' in vi-mode !
+# in /etc/inputrc, add this:
+set editing-mode vi
+# then python shell will use keybinding, too.
+
+# ~/.inputrc works, too.
+
+# some other options that is less important
+tab: complete
+set completion-ignore-case on
+set blink-matching-paren on
+
+
+# when you use `set -o vi', you may lost the function of complete(TAB)
+# you can check it with:
+bind -q complete
+# if it's really not bounded, you can bound it with:
+bind '"\C-i": complete'
+# the same way:
+bind '"\C-l": clear-screen'
+
+
+# stop the screen saver
+setterm -blank 0 # start: setterm -blank 1 # start screen saver in 1 minute
+# in X window
+xset s off  # this doesn't work alone
+# you have to close power management the same time
+xset -dpms  # start: xset +dpms
+
+
+# rlwrap: readline wrapper
+# this command can help program that does not support readline to use
+# readline's functionality
+rlwrap -a erl   #erl  use readline key binding instead of emacs binding now
+rlwrap -a ghci  #ghci use readline key binding now
+
+# on mac os x, you need:
+rlwrap -a blah erl
+
+# because
+#> rlwrap: warning: on this system, the getopt() library function doesn't
+#  grok optional arguments, so 'erl' is taken as an argument to the -a option
+#  Is this what you meant? If not, please provide an argument
+
+
+
+# when a directory exists, mkdir will return false, but the `-p` option make it
+# return true even the target directory exists.
+if `mkdir /tmp`; then echo true; else echo false; fi
+#> mkdir: cannot create directory ‘/tmp’: File exists
+#  false
+if `mkdir -p /tmp`; then echo true; else echo false; fi
+#> true
+
+
+## to support exfat, you need to install exfat-fuse
+sudo apt-get install exfat-fuse
+
+
+## screen record tool
+## create gif, `-d` means record time, `-w`: width, `-h`: height
+byzanz-record -d 30 -x 0 -y 20 -w 740 -h 480 test.gif
+
+
+## /dev/zero is a special file, when you read it, it always return 0
+
+## swap control
+# create an 1GB empty file (for swap).
+dd if=/dev/zero of=./testswap bs=512 count=2000000
+file testswap
+#> testswap: data
+
+# transform this normal file into a swap file
+mkswap ./testswap
+file testswap
+#> testswap: Linux/i386 swap file (new style), version 1 (4K pages), size 249999 pages, no label, UUID=fcabb152-524b-4a94-95ca-208496665895
+
+# check swap size
+cat /proc/swaps
+#> Filename                 Type            Size    Used    Priority
+#  /dev/dm-1                partition       839676  50456   -1
+
+# use the new area into swap pool
+swapon ./testswap
+# check again
+cat /proc/swaps
+#> Filename                 Type            Size    Used    Priority
+#  /dev/dm-1                partition       839676  50328   -1
+#  /home/wx/testswap        file            999996  0       -2
+
+# remove it from swap pool
+swapoff ./testswap
+
+cat /proc/swaps
+##> Filename                 Type            Size    Used    Priority
+##  /dev/dm-1                partition       839676  50456   -1
+
+## use `tail` command to monitor the file. when new content is appended,
+## you will see it.
+tail -f /tmp/a.txt
+
+## change from non-root user to root, you have two way
+## this may not working sometimes:
+su root
+## this will always work
+sudo -i
+
+## make process auto-start or non-auto-start with `systemd`
+## make it start on boot
+sudo systemctl enable nginx
+
+## every time you change the systemd's xxx.service file, you need to use
+## `systemctl enable xxx` to refresh it
+
+## to start nginx with systemd (need to `enable` to install first)
+sudo systemctl start nginx
+
+## to stop it
+sudo systemctl stop nginx
+
+## To disable it:
+sudo systemctl disable nginx
+
+## show the dependencies of a service
+##  (e.g sys-subsystem-net-devices-multi-user.device)
+systemctl show -p WantedBy,RequiredBy sys-subsystem-net-devices-multi-user.device
+
+## show all enabled units
+systemctl list-unit-files --state enabled

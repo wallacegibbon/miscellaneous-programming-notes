@@ -1,0 +1,33 @@
+<style>
+.article-container {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+
+  overflow: scroll;
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.article {
+  width: 700px;
+  margin: 10px auto auto;
+  background-color: white;
+}
+</style>
+
+This is context outside of container
+<div class="article-container">
+  <div class="article"></div>
+</div>
+
+<script>
+var article = document.querySelector(".article");
+
+for (var i = 0; i < 100; i++) {
+  var h = document.createElement("h3");
+  h.innerHTML = "hello " + i;
+  article.appendChild(h);
+}
+</script>

@@ -1,0 +1,35 @@
+## vim: ft=sh :
+
+## to use nginx as proxy, just add this to `/etc/nginx/sites-available/default`
+## then your app server just need to listen 127.0.0.1:8000, much safer !
+location /patha/ {
+  proxy_pass http://127.0.0.1:8000;
+}
+
+## WARNNING !!!
+##
+## On the `location` part,
+##  if you write `/patha`
+##  request "http://my.server.name/patha/blah" will be redirected to
+##          "http://127.0.0.1:8000/patha//blah"
+##  if you write `/patha/`
+##  request "http://my.server.name/patha/blah" will be redirected to
+##          "http://127.0.0.1:8000/patha/blah"
+##
+## On the `proxy_pass` part,
+##  if you write `proxy_pass http://127.0.0.1:8000`,
+##  request "http://my.server.name/patha" will be redirected to
+##          "http://127.0.0.1:8000/patha"
+##  if you write `proxy_pass http://127.0.0.1:8000/`,
+##  request "http://my.server.name/patha" will be redirected to
+##          "http://127.0.0.1:8000/"
+
+
+
+## Rewrite http to https:
+server {
+  listen 80;
+  rewrite ^(.*)$ https://$host$1 permanent;
+}
+
+

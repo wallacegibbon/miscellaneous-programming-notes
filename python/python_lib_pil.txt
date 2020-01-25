@@ -1,0 +1,63 @@
+## vim: ft=python :
+
+
+## PIL notes
+## if you create a picture with `PIL.Image.new', you'd better specify the
+## background color, like:
+Image.new("L", (500, 500), color="white")
+## or the background will be black. The `line' method will draw black
+## lines by default. So you will see nothing but a black picture if you just
+## draw a line on the new-created picture.
+## but if you just copy all pixels from one picture to another, it doesn't
+## matter what the default background color is, because all pixels will
+## be overwritten anyway.
+
+## the 3 basic attribute for an Image object
+img = Image.open("./test.jpg")
+print(img.format, img.size, img.mode)
+#> JPEG (100, 100) RGB
+
+## read and set pixels
+img.getpixel((col, row))    # returns an int or a tuple of 3 int (RGB)
+img.putpixel((col, row), pixelval)
+
+## read & set ALL pixels
+img.getdata()
+img.putdata(pixellist)
+
+img.getdata()
+#> <ImagingCore object at 0x00D05BA0>
+
+list(img.getdata()) # not sequenced. e.g. [(67, 94, 121), (66, 93, 22)...]
+
+len(list(img.getdata()))
+#> 10000
+
+
+
+## create image from bytes:
+Image.frombytes("RGB", size, pixelbytes)
+#> <PIL.Image.Image image mode=RGB size=100x100 at 0x-------->
+# the `size` should be a tuple of int, pixels should be instance of `bytes`. e.g.
+Image.frombytes("RGBA", (1024, 768), pixels)
+
+
+## convert a image to raw pixels(bytes)
+img.tobytes()
+
+len(img.tobytes())
+#> 30000
+
+# `Image.frombytes()' is a static method, just like `Image.merge()'
+
+## NOT all picture or devices use R . G . B :
+## camera, bmp use B.G.R, but jpg, png use R.G.B
+
+## so you need to conver rgb -> bgr ! (use `split' and `merge')
+r, g, b = img.split()
+
+Image.merge("RGB", (b, g, r))
+#> <PIL.Image.Image image mode=RGB size=100x100 at 0xB6FBC16C>
+
+
+

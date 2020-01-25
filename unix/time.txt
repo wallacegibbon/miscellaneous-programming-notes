@@ -1,0 +1,45 @@
+# vim: ft=sh :
+
+# show date in seconds since 1970-01-01 00:00:00 UTC
+date +%s
+
+# show current timezone
+date -R
+
+# show hardware clock
+hwclock --localtime
+
+# Linux treate the hardware clock as UTC while Windows treate it as local time
+# e.g.  set time to 11:12:13
+date --set="11:12:13" # or simpler: date -s 11:12:13
+# synchronize hardware clock to system clock
+hwclock --systohc
+# if you have a Windows installed in the same computer, the time on Windows
+# will go wrong(8 hours earlier in Beijing, China),
+# because Windows treat the CMOS time as local time, while Linux treat it as
+# UTC.
+
+# atime, ctime, mtime
+# a save operation(e.g. :w in vi) will change mtime and ctime.
+# even the content did NOT change
+# use `mv' will only change ctime.
+# mtime is a subset of ctime
+# mtime: modify time
+ls -l
+# ctime: change time
+ls -lc
+# atime: access time
+# read operation will change atime, write will not.
+# e.g. date >> test.txt will NOT change atime(test.txt already exist)
+ls -lu
+
+# change timezone
+export TZ='Asia/Shanghai'
+# after this, the `date' command will show local time instead of UTC
+
+
+# to get precise time, you need NTP:
+# but ntpdate will not work as expected, while ntpd does
+systemctl start ntpd # systemd way
+
+

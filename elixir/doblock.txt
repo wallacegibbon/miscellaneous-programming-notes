@@ -1,0 +1,91 @@
+## vim: ft=elixir :
+
+
+## do/end blocks are a syntactic convenience built on top of the keywords one.
+## that why do/end blocks do not require a comma between the previous argument
+## and the block. They are useful exactly because they remove the verbosity
+## when writting blocks of code.
+## "do ... end" is same as "do: ..."
+
+## these are equivalent:
+if true do
+  a = 1 + 2
+  a + 10
+end
+##=================
+if true, do: (
+  a = 1 + 2
+  a + 10
+)
+
+
+## here are more examples on do/end block
+quote do
+  a do
+    :b
+  end
+end
+#> {:a, [], [[do: :b]]}
+
+quote do
+  a do: :b
+end
+#> {:a, [], [[do: :b]]}
+
+
+quote do
+  a do
+    :a
+    :b
+  end
+end
+#> {:a, [], [[do: {:__block__, [], [:a, :b]}]]}
+
+quote do
+  a do: (:a; :b)
+end
+#> {:a, [], [[do: {:__block__, [], [:a, :b]}]]}
+
+quote do
+  a 1, 2, 3 do
+    :a
+  end
+end
+#> {:a, [], [1, 2, 3, [do: :a]]}
+
+quote do
+  defimpl Blank, for: List do
+  end
+end
+#> {:defimpl, [context: Elixir, import: Kernel],
+#   [{:__aliases__, [alias: false], [:Blank]},
+#    [for: {:__aliases__, [alias: false], [:List]}], [do: nil]]}
+
+quote do
+  def a(c, 2) when c > 2, do: :ok
+  def a(c, 2) when c > 1, do: :ok
+end
+#> {:__block__, [],
+#   [{:def, [context: Elixir, import: Kernel],
+#     [{:when, [context: Elixir],
+#       [{:a, [], [{:c, [], Elixir}, 2]},
+#        {:>, [context: Elixir, import: Kernel], [{:c, [], Elixir}, 2]}]},
+#      [do: :ok]]},
+#    {:def, [context: Elixir, import: Kernel],
+#     [{:when, [context: Elixir],
+#       [{:a, [], [{:c, [], Elixir}, 2]},
+#        {:>, [context: Elixir, import: Kernel], [{:c, [], Elixir}, 1]}]},
+#      [do: :ok]]}]}
+
+quote do
+  def a c, 2 when c > 3, do: :ok
+end
+#> {:def, [context: Elixir, import: Kernel],
+#   [{:a, [context: Elixir],
+#     [{:c, [], Elixir},
+#      {:when, [],
+#       [2, {:>, [context: Elixir, import: Kernel], [{:c, [], Elixir}, 3]}]},
+#      [do: :ok]]}]}
+
+
+

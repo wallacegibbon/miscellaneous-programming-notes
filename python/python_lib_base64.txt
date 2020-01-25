@@ -1,0 +1,13 @@
+## vim: ft=python :
+
+## base64
+base64.b64encode(b"abcdef")
+#> b'YWJjZGVm'
+
+## b64decode will just ignore unknown characters
+base64.b64decode(b'YWJjZGVm')
+#> b'abcdef'
+base64.b64decode(b'YWJ   ** ? \r \n  jZGVm')
+#> b'abcdef'
+
+

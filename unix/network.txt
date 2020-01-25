@@ -1,0 +1,392 @@
+# -*- mode: sh; -*-
+# vim: ft=sh :
+
+
+#-----------------------------------------------------------------------------
+# the `heartbleed-bug`: openssl 1.0.1   ~   openssl 1.0.1f
+# check your ssl version
+openssl version -a
+#> OpenSSL 1.0.1f 6 Jan 2014
+#  built on: Mon May  2 16:53:18 UTC 2016
+#  ...
+
+
+# on debian, you can checkout change log of openssl
+apt-get changelog openssl
+
+# you're secure if you see this:
+# openssl (1.0.1f-1ubuntu2) trusty; urgency=medium
+#
+#   * SECURITY UPDATE: side-channel attack on Montgomery ladder implementation
+#     - debian/patches/CVE-2014-0076.patch: add and use constant time swap in
+#       crypto/bn/bn.h, crypto/bn/bn_lib.c, crypto/ec/ec2_mult.c,
+#       util/libeay.num.
+#     - CVE-2014-0076
+#   * SECURITY UPDATE: memory disclosure in TLS heartbeat extension
+#     - debian/patches/CVE-2014-0160.patch: use correct lengths in
+#       ssl/d1_both.c, ssl/t1_lib.c.
+#     - CVE-2014-0160
+
+# -- Marc Deslauriers ... Mon, 07 Apr 2014 15:37:53 -0400
+# ...
+
+
+#-----------------------------------------------------------------------------
+# net-tools *VS*  iproute2
+arp -na               ip neigh
+vconfig               ip link                          
+ifconfig              ip link
+ifconfig -a           ip addr
+ifconfig -s           ip -s link
+ifconfig eth0 up      ip link set up dev eth0
+netstat               ss
+netstat -i            ip -s link
+netstat -g            ip maddr
+netstat -l            ss -l
+netstat -r            ip route
+route -n              ip route
+route add             ip route add
+route del             ip route del
+
+ipmaddr               ip maddr
+iptunnel              ip tunnel
+ifconfig --help       ip help
+
+# `show' is the default operation:
+#   `ip route show' is same as `ip route'
+#   `ip addr show' is same as `ip addr'
+
+
+
+#-----------------------------------------------------------------------------
+# enable/disable interface
+ifconfig eth1 up
+ifconfig eth1 down
+# or
+ip link set up dev eth1
+ip link set down dev eth1
+
+# set fake mac address
+ifconfig eth0 hw ether '08:00:27:75:2a:66'
+# or
+ip link set address '08:00:27:75:2a:67' dev eth0
+
+
+#-----------------------------------------------------------------------------
+# add/delete ip address
+# ifconfig can NOT assign multiple ip address to one interface
+
+ifconfig wlan0 192.168.1.252 netmask 255.255.255.0  #add
+ifconfig wlan0 192.168.1.252/24 #add
+ifconfig wlan0 0  #del
+# or
+ip addr add 192.168.1.190/24 dev wlan0
+ip addr del 192.168.1.190/24 dev wlan0
+
+# ipv6
+ifconfig eth1 inet6 add 2002:0db5:0:f102::1/64
+ifconfig eth1 inet6 del 2002:0db5:0:f102::1/64
+# or
+ip -6 addr add 2002:0db5:0:f102::1/64 dev eth1
+ip -6 addr del 2002:0db5:0:f102::1/64 dev eth1
+
+
+#-----------------------------------------------------------------------------
+# set gateway
+
+# default gateway
+route add default gw 192.168.1.1 dev eth0
+# or
+ip route add default via 192.168.1.1 dev eth0
+ip route del default via 192.168.1.1 dev eth0
+
+# static gateway
+route add -net 192.168.1.0/24 gw 192.168.1.1 dev eth0
+route del -net 192.168.1.0/24
+# or
+ip route add 192.168.1.0/24 via 192.168.1.1 dev eth0
+ip route del 192.168.1.0/24
+
+
+#-----------------------------------------------------------------------------
+# `arp': show IP <--> MAC map, doesn't show the local machine, only show
+# machines in the same local-netwrok, including the router itself.
+# "arp -a"  works on MS Windows, too.
+
+# show arp table
+arp -an
+# or
+ip neigh
+
+# add/del static arp
+arp -s 192.168.1.100 '00:0c:29:c0:5a:ef'
+arp -d 192.168.1.100
+# or
+ip neigh add 192.168.1.100 lladdr '00:0c:29:c0:5a:ef' dev eth0
+ip neigh del 192.168.1.100 dev eth0
+
+#-----------------------------------------------------------------------------
+# multicast show/set
+
+# show
+ipmaddr show dev eth0
+# or
+ip maddr show dev eth0
+
+# add/del
+ipmaddr add '33:44:00:00:00:01' dev eth0
+ipmaddr del '33:44:00:00:00:01' dev eth0
+# or
+ip maddr add '33:44:00:00:00:01' dev eth0
+ip maddr del '33:44:00:00:00:01' dev eth0
+
+
+#-----------------------------------------------------------------------------
+# check gateway
+
+netstat -r  # display "routing table"(both on Linux and Windows)
+netstat -rn # the "n" show "default" as "0.0.0.0"
+route -n # or ip route show
+# or
+ip route show
+
+
+#-----------------------------------------------------------------------------
+# the `netstat' command option is different between Linux and Windows
+# on both Windows and Linux: `-a': all ports, `-n': numeric
+# but to show PID: Linux: `-p', Windows: `-o'
+# * netstat show `local-address' before `foreign-address' *
+
+# see local port 8000 details
+netstat -napt | grep 8000
+# sum all established connections
+netstat -napt | grep ESTABLISHED | wc -l
+
+
+#-----------------------------------------------------------------------------
+# get a ip through DHCP manually
+dhclient eth0
+
+#-----------------------------------------------------------------------------
+# dns query, the `-q` is same as `-type`, and works on both linux and windows
+nslookup baidu.com
+# which is same as
+nslookup -type=a baidu.com
+# or
+nslookup -q=a baidu.com
+
+# you can also query mx record
+nslookup -type=mx baidu.com
+# or
+nslookup -q=mx baidu.com
+
+
+#-----------------------------------------------------------------------------
+# traceroute can show all node you have passed
+#  (123.125.114.144 is one of baidu's ip
+traceroute 123.125.114.144
+#> 1  192.168.1.1  0.616ms  0.309ms  1.057ms
+#  2  59.174.96.1  18.750ms  17.346ms  19.355ms 
+# ...
+
+
+#-----------------------------------------------------------------------------
+# to use WIFI in your Thinkpad X61, you will need the:
+#    `/lib/firmware/iwlwifi-4965-2.ucode'
+# in debian, you can:
+apt-get install firmware-iwlwifi
+
+
+#-----------------------------------------------------------------------------
+# wireless-tools usage:
+
+# show all wireless available
+iwlist wlan0 scan
+
+# to connect to a AP:
+# AP that do NOT need password:
+iwconfig wlan0 essid "linksys"
+#udhcpc -i wlan0
+
+# AP that need password (WEP only)
+iwconfig wlan0 key "xxxxxxxxxx"
+iwconfig wlan0 key open
+iwconfig wlan0 essid "linksys"
+#udhcpc -i wlan0
+
+
+#-----------------------------------------------------------------------------
+# wpa_supplicant implements a control interface(`UNIX domain socket' on linux,
+# and `UDP socket' on windows)
+echo ctrl_interface=/var/run/wpa_supplicant > \
+  /etc/sysconfig/wpa_supplicant-wifi0.conf
+wpa_passphrase SSID SECRET_PASSWORD >> \
+  /etc/sysconfig/wpa_supplicant-wifi0.conf
+
+wpa_supplicant -Dnl80211 -iwlan0 -c/etc/sysconfig/wpa_supplicant-wifi0.conf -B
+# -i: interface, -D: driver, -c: config, -B: background
+
+# `nl80211' and `wext'(wireless extensions) are the two standard driver
+# interface for linux wireless. `wext' is replaced by `nl80211' now.
+
+# you can use `wpa_cli' to scan available wireless networks
+wpa_cli -p/var/run/wpa_supplicant/ scan
+wpa_cli -p/var/run/wpa_supplicant/ scan_result
+# the `scan' and `show' are 2 parts
+
+
+#-----------------------------------------------------------------------------
+# firewall -- ufw (uncomplicated firewall)
+ufw status       # show status
+ufw enable       # enable firewall
+ufw disable      # disable firewall
+ufw allow 8000   # allow port 8000
+ufw deny 8000    # deny port 8000
+
+
+#-----------------------------------------------------------------------------
+# WGET
+# use wget to download all url in file: wget-list
+
+wget -i wget-list
+# if the download is interrupted, restart wget with -c will ignore files that
+# have already been downloaded
+wget -ic wget-list
+
+# many program use `-' as stdin, so does wget:
+wget -i -   # will look stdin as wget-list
+
+# you can specify a base url for wget
+wget t.tar.gz -B http://blah.com/  # will download http://blah.com/t.tar.gz
+
+# download from file list from a base url
+wget -i lst.txt -B http://blah.com/
+
+# combine the two skills:
+wget -i - -B http://blah.com
+
+
+# download the whole site(recursively):
+wget -r -np -k -p http://somesite.com/
+
+
+#-----------------------------------------------------------------------------
+# netcat(nc) can serve as server, `-l': listen mode, `-o': hex dump
+nc -l -p 8000 -o /dev/stdout
+
+
+#-----------------------------------------------------------------------------
+# console browser toggle page source: links->`\', w3m->`v'
+
+# check current ip
+links http://www.baidu.com/s?wd=ip
+links http://www.bing.com/search?q=ip
+
+links -dump -width 120 test.html # the default width is 80
+# or `lynx -dump -width 120 test.html'  # lynx have the same options
+# or `w3m -dump -cols 120 test.html'
+
+
+# some "w3m" tips:
+# to download a file in w3m, just move to the link, and type <Esc> <Enter>.
+# to change between tabs, type "s", select tab and enter.
+
+
+#-----------------------------------------------------------------------------
+# dpkg source.list
+# deb     http://mirrors.163.com/debian/ wheezy main non-free contrib
+# deb-src http://mirrors.163.com/debian/ wheezy main non-free contrib
+# `-----' `---------------------------'  `----' `-------------------'
+#  type              url                   dir1    dirs under dir1
+#-----------------------------------------------------------------------------
+
+
+#-----------------------------------------------------------------------------
+# ssh related programs use `<name>@<host>:<directory>` format
+
+# e.g.
+ssh       nam@192.168.1.252
+scp       nam@192.168.1.241:/root/web/blah.log ./blah.log
+git clone git@some.site.com:yourname/prj.git
+
+# SFTP is part of SSH, the default port is 22.
+# scp to select a special port, use `-P' as first argument
+scp -P 232 ./t.tar.gz root@192.168.1.222:/tmp/
+
+# for ssh, it's not `-P` but `-p'
+ssh -p 232 guest@blahblah.com
+
+
+# create local tunnel
+ssh -L localhost:8888:google.com:80 admin@r1.r2.r3.r4
+# or simply
+ssh -L 8888:google.com:80 admin@r1.r2.r3.r4
+# then you can `telnet localhost 8888`, and access to google.com.
+# ! use telnet to send "GET /", don't use curl or w3m directly,
+#   it will do extra things and get confusing result.
+
+# if you want the ssh run background, use `-fN`
+ssh -fNL 8888:google.com:80 admin@r1.r2.r3.r4
+
+
+# dynamic proxy !!
+ssh -D localhost:12345 guest@madmuggle.com
+# or simply
+ssh -D 12345 guest@madmuggle.com
+
+# again, if you want ssh run background, use `-fN`
+ssh -fND 12345 guest@madmuggle.com
+
+
+## To login ssh server with public ssh key, you need to edit "~/.ssh/authorized_keys"
+## and add your public key to that file.
+## !!! And make sure the directory permission of "~/.ssh" is 700
+ls -ld .ssh
+#> drwx------ 2 wx wx 4096 Sep 24 11:29 .ssh
+
+
+#-----------------------------------------------------------------------------
+# use curl to send post request
+
+## http is the default protocol, so
+##  `curl a.com` is same as `curl http://a.com`
+
+# `-d` means data
+curl localhost:8000 -d "hahahah, this is the data"
+
+# If you start the data with the letter @, the rest should be a file name
+# to read the data from, or - if you want curl to read the data from stdin.
+
+# e.g. push a file to couchdb
+curl localhost:5984/basic/_design/example -d @mydesign.json
+
+# use html form with `-F`
+curl localhost:8000 -F "name=@date.txt; type=text/plain"
+# it's same as <type="text" name="name">
+
+# curl can show the header of http respose, just use `-i` (--include)
+curl baidu.com -i
+
+# curl can also specify protocol use `-X`. (`GET` is the default option)
+curl localhost:5984/blah -X PUT
+curl localhost:5984/blah -X DELETE
+
+# specify a header use `-H`
+curl localhost:5984/blah -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"name": "blah1"}'
+
+#-----------------------------------------------------------------------------
+# `iperf`: test network interface performance
+
+# e.g. (ping-90ms.online.net is a public iperf3 server for test)
+iperf -c ping-90ms.online.net
+#> ------------------------------------------------------------
+#  Client connecting to ping-90ms.online.net, TCP port 5001
+#  TCP window size: 85.0 KByte (default)
+#  ------------------------------------------------------------
+#  [  3] local 47.90.63.66 port 60966 connected with 62.210.18.41 port 5001
+#  [ ID] Interval       Transfer     Bandwidth
+#  [  3]  0.0-12.2 sec  2.38 MBytes  1.63 Mbits/sec
+
+

@@ -1,0 +1,49 @@
+## -*- mode: sh; -*-
+
+## find more information on arch wiki:
+##   https://wiki.archlinux.org/index.php/Bluetooth_keyboard
+
+## before `bluetoothctl', there is the `hciconfig' and `hcitool' commands which
+## are legacy now.
+
+
+## `bluetoothctl' command will start a special shell for configuring bluetooth
+bluetoothctl
+
+## in this shell, you can do operations like scan, pair, connect...
+
+
+
+## e.g. (connecting a bluetooth keyboard)
+
+## (inside the bluetoothctl shell)
+
+power on
+#> Changing power on succeeded
+#  [CHG] Controller 06:05:04:03:02:01 Powered: yes
+
+agent KeyboardOnly
+#> Agent registered
+
+default-agent
+#> Default agent request successful
+
+pairable on
+#> Changing pairable on succeeded
+
+scan on
+#> Discovery started
+#  ...
+#  (the list of discovered bluetooth devices)
+
+pair 01:02:03:04:05:06
+#> Pairing successful
+
+trust 01:02:03:04:05:06
+#> Trusted
+
+connect 01:02:03:04:05:06
+#> Connection successful
+
+quit
+

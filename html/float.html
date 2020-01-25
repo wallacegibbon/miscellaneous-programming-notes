@@ -1,0 +1,30 @@
+<!--
+`float: right/left` is NOT like `position:absolute/fixed`, element will not
+override each other by default.
+-->
+<style>
+.a {
+  width: 800px;
+  background-color: green;
+}
+.b {
+  float: right;
+  width: 510px;
+  background-color: orange;
+}
+</style>
+
+<div class="b"></div>
+<div class="a"></div>
+
+<script>
+function makeString(str, time) {
+  var result = "";
+  for (var i = 0; i < time; i++)
+    result += str;
+  return result;
+}
+
+document.querySelector(".a").innerHTML = makeString("abcde ", 200);
+document.querySelector(".b").innerHTML = makeString("12345 ", 50);
+</script>

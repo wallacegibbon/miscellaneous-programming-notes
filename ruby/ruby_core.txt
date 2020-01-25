@@ -1,0 +1,117 @@
+## vim: ft=ruby :
+
+## is the same object? just like `is' in python, use `equal?'
+'a'.equal? 'a'
+#> => false
+1.equal? 1
+#> => true
+
+## if you just want to know value equal?, use `==' or `.eql?'
+1 == 1.0
+#> => true
+## `eql?' need same value AND SAME CLASS(1 and 1.0 are not the same class)
+1.eql? 1.0
+#> => false
+1.class
+#> Fixnum
+1.0.class
+#> Float
+
+
+## `defined?' is a special operator in ruby, check if symbol is defined
+defined? a
+#> => nil
+a = 3
+defined? a
+#> => "local-variable"
+defined? $_
+#> => "global-variable"
+defined? puts
+#> => "method"
+
+
+## `p', `puts' and `print', they are different
+p "abc\nd"
+#> "abc\nd"
+#> => "abc\nd"
+puts "abc\nd"
+#> abc
+#> d
+#> => nil
+print "abc\nd"
+#> abc
+#> d=> nil
+
+
+## check object type, use class, check super class, use superclass
+[].class
+#> => Array
+[].class.class
+#> => Class
+[].class.class.class
+#> => Class
+#...
+[].class.superclass
+#> => Object
+[].class.superclass.superclass
+#> => BasicObject
+[].class.superclass.superclass.superclass
+#> => nil
+[].class.superclass.superclass.superclass.superclass
+#> NoMethodError: undefined method `superclass' for nil:NilClass
+{}.class
+#> => Hash
+{}.class.superclass
+#> => Object
+#...
+
+
+## test whether an element exist in a Array or Hash, use `include?'
+{1=>2, 3=>4}.include? 3
+#> => true
+{1=>2, 3=>4}.include? 4
+#> => false
+
+[1, 2, 3].include? 2
+#> => true
+[1, 2, 3].include? 4
+#> => false
+
+
+## here document
+puts <<test  # the `<<' and `test' cannot have space between them
+this is here document, just like shell and perl
+ruby is convenient
+test
+#> this is here document, just like shell and perl
+#> ruby is convenient
+#> => nil
+<<t
+this is a here
+document
+t
+#> => "this is a here\ndocument\n"
+
+
+## another way to do comments
+=begin
+this is comment, too, just like /* */ in c language
+=end
+
+
+## special way to manipulate Array
+## you don't need to miss `set' in python so much
+[1, 2, 2, 2, 2, 2, 3, 3, 3] & [1, 2, 2, 2, 2]
+#> => [1, 2, 3]
+[1, 2, 2, 2, 2, 2, 3, 3, 3] | [1, 2, 2, 2, 2]
+#> => [1, 2]
+## ruby support more than `+', but also `-'
+[1, 2, 3] + [4, 5]
+#> => [1, 2, 3, 4, 5]
+[1, 2, 3, 4, 5] - [3, 5]
+#> => [1, 2, 4]
+## use `<<' just like `append' in python
+[1, 2, 3] << 3
+#> => [1, 2, 3, 3]
+
+

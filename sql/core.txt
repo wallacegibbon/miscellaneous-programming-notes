@@ -1,0 +1,60 @@
+-- vim: ft=sql :
+
+-- create a table
+create table t1(id integer primary key, value text);
+
+-- add new column to a table
+alter table t1 add column email text;
+-- rename table
+alter table t1 rename to t2;
+
+-- write data to the table
+insert into t1(id, value) values(1, "Harry");
+
+-- change existing data
+update youngjustice set power="strength" where name="Connar";
+
+-- (t1, t2, t3 , ) --> Error
+-- unlike python, the `,` before `)` is not allowed
+
+-- delete existing data
+delete from youngjustice where name="Roy";
+
+-- delete all data in a table
+delete from tablename;
+-- `delete from table_name` will clear all data in the database, but will not
+-- delete the table itself.
+
+-- if you want to delete the whole table, use:
+drop table tablename;
+
+-- QUERY
+select id from company;
+-- is same as
+select company.id from company;
+
+-- select from multiple tables, table name needed in this case
+select company.id, department.id from company, department;
+
+-- between
+select name, age from company where age between 20 and 30 ;
+-- in
+select name, age from company where age in (23, 25);
+
+-- limit
+select * from company limit 3;
+
+-- order by
+-- asc(ascending) & desc(descending), asc is the default
+select * from company order by salary;
+select * from company order by salary desc;
+
+-- null
+update company set address=null where id=2;
+
+-- select non-null line(use `is` not `=`)
+select * from company where address is null;
+
+-- alias (from .. as ..)
+select c.name, c.age, d.dept from company as c, department as d;
+

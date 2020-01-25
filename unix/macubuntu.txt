@@ -1,0 +1,39 @@
+## vim: ft=sh :
+
+##############################################################################
+## The keyboard layout will be a big problem you will face after installing
+## ubuntu16.04 on macbook retina 13inch 2015 early.
+
+## the "`" will always go wrong, and "xmodmap" can only solve this problem for
+## a while.
+
+
+##############################################################################
+## This is the best solution
+
+## First, run: (verbose levels range from 0(least verbose) to 10(most verbose))
+setxkbmap -print -verbose 10
+#> ...
+#  Trying to load rules file /usr/share/X11/xkb/rules/evdev...
+#  ...
+
+## Change file "/usr/share/X11/xkb/rules/evdev" directly. Just rebind these:
+## <TLDE> = 94;
+## <LALT> = 133;
+## <RALT> = 134;
+## <LWIN> = 64;
+## <RWIN> = 108;
+
+## then run:
+sudo dpkg-reconfigure keyboard-configuration
+
+## the keyboard will now be perfect.
+
+## BTW, the keycode "94" is founded with xmodmap run `xmodmap -pke` and find
+## "grave" or "tilde", you will know it.
+
+## `evdev` is a generic input event interface in the Linux kernel. It
+## generalizes raw input events from device drivers and make them available
+## through character devices in the /dev/input directory
+
+

@@ -1,0 +1,95 @@
+## vim: ft=python :
+
+## jinja2
+## use the default environment
+t = jinja2.Template("Hello, {{name}}")
+t.render(name="world")
+#> 'Hello, world'
+
+## create an environment
+env = jinja2.Environment()
+t = env.from_string("Hello, {{name}}")
+t.render(name="world")
+
+## load a template from a template file
+## * jinja2_tempdir * is the directory that contains template files
+## * temp1.txt * is a template file, the content of temp1.txt is:
+## "hello, {{name}}, this is from a template file"
+env = jinja2.Environment(loader=jinja2.FileSystemLoader("jinja2_tempdir"))
+t = env.get_template("temp1.txt")
+t.render(name="Harry")
+#> 'hello, Harry, this is from a template file'
+
+## use macro
+s = """
+{% macro test_macro(par=10) %}
+  parameter is {{par}}
+{% endmacro %}
+"""
+t = jinja2.Template(s + "{{ test_macro }}")
+t.render()
+#> "\n\n<Macro 'test_macro'>"
+
+t = jinja2.Template(s + "{{ test_macro() }}")
+t.render()
+#> '\n\n\n    parameter is 10\n'
+
+t = jinja2.Template(s + "{{ test_macro(3) }}")
+t.render()
+#> '\n\n\n    parameter is 3\n'
+
+## import: use macro in another file, there is *NO* endimport
+## in a.txt
+"""{% macro test_macro(par=10) %}
+    parameter is {{par}}
+{% endmacro %} """
+## in b.txt
+"""{% import "a.txt" as mfile %}
+{{ mfile.test_macro(3) }}"""
+env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+t = env.get_template("b.txt")
+t.render()
+#> '\n\n    parameter is 3\n'
+
+## use include. there is *NO* endinclude, either
+## in a.txt
+"""this is text inside a.txt
+{% include "b.txt" %}
+this is text inside a.txt, too"""
+## in b.txt
+" this is text inside b.txt "
+env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+t = env.get_template("a.txt")
+t.render()
+#> 'this is text inside a.txt\n' \
+#  'this is text inside b.txt\n' \
+#  'this is text inside a.txt, too'
+
+## block and extends
+## in a.txt
+"""in a.txt
+{% block b1 %}{% endblock %}
+{% block b2 %}content in block b2 is not empty{% endblock %} """
+## in b.txt
+"""{% extends "a.txt" %}
+{% block b1 %}
+this is b.txt - block b1
+{% endblock %}
+this is data outside block, will not shown
+{% block blahblah %}
+data in an unknown block, will now shown
+{% endblock %}
+{% block b2 %}
+{{ super() }}
+this is b.txt - block b2
+{% endblock %}"""
+env = jinja2.Environment(loader=jinja2.FileSystemLoader("."))
+t = env.get_template("a.txt")
+t.render()
+#> 'in a.txt\n\ncontent in block b2 is not empty'
+t = env.get_template("b.txt")
+t.render()
+#> 'in a.txt\n\nthis is b.txt - block b1\n\n\n' \
+#  'content in block b2 is not empty\nthis is b.txt - block b2\n'
+
+

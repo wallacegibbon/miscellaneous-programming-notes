@@ -1,0 +1,259 @@
+## vim: ft=python :
+
+## python build_opener
+
+## install_opener(opener)
+
+## header
+opener = urllib.request.build_opener()
+opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+t = opener.open("http://www.baidu.com")
+c = t.read()
+
+## encode http string
+urllib.parse.quote("中文")
+#> '%E4%B8%AD%E6%96%87'
+urllib.parse.unquote('%E4%B8%AD%E6%96%87')
+#> '中文'
+##
+## `quote_plus'  :  Like quote(), but also replace ' ' with '+'
+## `unquote_plus':  Like unquote(), but also replace plus signs by spaces
+urllib.parse.quote("abc def")
+#> 'abc%20def'
+urllib.parse.quote_plus("abc def")
+#> 'abc+def'
+urllib.parse.unquote('abc%20de+f')
+#> 'abc de+f'
+urllib.parse.unquote_plus('abc%20de+f')
+#> 'abc de f'
+##
+## `quote_from_bytes': Like quote(), but accepts a bytes object rather than
+##                     a str
+## `unquote_to_bytes': Replace %xx escapes by their single-octet equivalent
+urllib.parse.quote_from_bytes(b"\x11\x22")
+#> '%11%22'
+urllib.parse.unquote_to_bytes("%11%22")
+#> b'\x11"'
+urllib.parse.unquote_to_bytes('%E4%B8%AD%E6%96%87') # with `unquote': '中文'
+#> b'\xe4\xb8\xad\xe6\x96\x87'
+##
+## ! `unquote_to_bytes' will not translate '+' to ' ', so do the translation
+## !  by hand before calling `unquote_to_bytes'.
+
+## encode key-value
+urllib.parse.urlencode({"a":1, "b":3})
+#> 'a=1&b=3'
+urllib.parse.urlencode([("a",1), ("b",3)])
+#> 'a=1&b=3'
+#-----------------------------
+## in /usr/lib/python3.4/urllib/parse.py
+def urlencode(query, doseq=False, safe='', encoding=None, errors=None):
+    """Encode a dict or sequence of two-element tuples into a URL query string.
+    ..."""
+    if hasattr(query, "items"):
+        query = query.items()
+    else:
+        try:
+            if len(query) and not isinstance(query[0], tuple):
+                raise TypeError
+#...
+#-----------------------------
+
+## send a post request
+## headers (the 3rd argument) have to be a dict, can NOT be list of pairs.
+req = urllib.request.Request(url, "a=1&b=3", {"User-Agent": "Mozilla/5.0"})
+urlopen(req)
+#-----------------------------
+## in /usr/lib/python3.4/urllib/request.py
+class Request:
+    def __init__(self, url, data=None, headers={}, ...):
+#...
+        self.data = data
+#...
+        for key, value in headers.items(): # this is why headers should be dict
+            self.add_header(key, value)
+#...
+default_method = "POST" if self.data is not None else "GET"
+
+def build_opener(*handlers):
+    opener = OpenerDirector()
+#...
+
+class OpenerDirector:
+#...
+    def open(self, fullurl, data=None, timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
+        # accept a URL or a Request object
+        if isinstance(fullurl, str):
+            req = Request(fullurl, data)
+        else:
+            req = fullurl
+            if data is not None:
+                req.data = data
+        req.timeout = timeout
+#...
+#-----------------------------
+
+
+## cookie
+cookie_jar = http.cookiejar.CookieJar()
+cookie = urllib.request.HTTPCookieProcessor(cookie_jar)
+opener = urllib.request.build_opener(cookie)
+opener.open("...")
+
+## proxy
+proxy = urllib.request.ProxyHandler({"http":"http://117.177.243.79:80"})
+opener = urllib.request.build_opener(proxy)
+opener.open("...")
+
+## authenticate
+auth = urllib.request.HTTPBasicAuthHandler()
+## auth.add_password("realm", "http://192.168.1.1", "user", "passwd")
+## realm depend on the server
+auth.add_password("TP-LINK ...", "http://192.168.2.1", "admin", "admin")
+opener = urllib.request.build_opener(auth)
+opener.open("http://192.168.2.1")
+
+## in python 3.2.3, you can't call `add_password' to try a new password,
+## you can do that in python 3.4.3
+## in python 3.2.3:
+auth = urllib.request.HTTPBasicAuthHandler()
+auth.add_password("info", "http://192.168.1.1", "a", "b")
+auth.passwd.passwd
+#> {'info': {(('192.168.1.1', '/'),): ('a', 'b'),
+#            (('192.168.1.1:80', '/'),): ('a', 'b')}}
+auth.add_password("info", "http://192.168.1.1", "c", "d")
+auth.passwd.passwd
+#> {'info': {(('192.168.1.1', '/'),): ('c', 'd'),
+#            (('192.168.1.1:80', '/'),): ('c', 'd')}}
+
+## ^ see ! it's renewed if you use `auth.passwd.passwd' to see, but if you try
+## to open url, things go wrong
+
+## auth can take multiple passwords:
+auth.add_password("user", "http://192.168.1.1", "guest", "guest123456")
+auth.passwd.passwd
+#> {'info': {(('192.168.1.1', '/'),): ('c', 'd'),
+#            (('192.168.1.1:80', '/'),): ('c', 'd')},
+#   'user': {(('192.168.1.1', '/'),): ('guest', 'guest123456'),
+#            (('192.168.1.1:80', '/'),): ('guest', 'guest123456')}}
+opener = urllib.request.build_opener(auth)
+opener.open("http://192.168.1.1")
+#> <http.client.HTTPResponse object at 0x7b5470>
+
+## then you change the password:
+auth.add_password("user", "http://192.168.1.1", "guest", "guest12345")
+auth.passwd.passwd
+#> {'info': {(('192.168.1.1', '/'),): ('c', 'd'),
+#            (('192.168.1.1:80', '/'),): ('c', 'd')},
+#   'user': {(('192.168.1.1', '/'),): ('guest', 'guest12345'),
+#            (('192.168.1.1:80', '/'),): ('guest', 'guest12345')}}
+opener.open("http://192.168.1.1")
+#> urllib.error.HTTPError: HTTP Error 401: basic auth failed
+
+## you change it back:
+auth.add_password("user", "http://192.168.1.1", "guest", "guest123456")
+auth.passwd.passwd
+#> {'info': {(('192.168.1.1', '/'),): ('c', 'd'),
+#            (('192.168.1.1:80', '/'),): ('c', 'd')},
+#   'user': {(('192.168.1.1', '/'),): ('guest', 'guest123456'),
+#            (('192.168.1.1:80', '/'),): ('guest', 'guest123456')}}
+opener.open("http://192.168.1.1")
+#> urllib.error.HTTPError: HTTP Error 401: basic auth failed
+
+## you will find the passwd has been renewed, but still 401
+## this might be a bug in python 3.2.3.
+
+## so if you want to try many passwords,
+## create a new `HTTPBasicAuthHandler' object each time.
+
+
+## Tips !
+## there is urllib.request.Request, but NO urllib.request.Response.
+## there is http.client.HTTPResponse, but NO http.client.HTTPRequest.
+
+## get response information
+res = urllib.request.urlopen("http://www.pythonchallenge.com")
+res
+#> <http.client.HTTPResponse object at 0x7f32e83e57f0>
+res.headers
+#> <http.client.HTTPMessage object at 0x0123F9B0>
+print(res.headers)
+#> X-Powered-By: PHP/5.3.3-7+squeeze17
+#  Content-type: text/html
+#  Connection: close
+#  Transfer-Encoding: chunked
+#  Date: Tue, 23 Jun 2015 00:33:38 GMT
+#  Server: lighttpd/1.4.28
+res.getheaders()
+#> [('X-Powered-By', 'PHP/5.3.3-7+squeeze17'),
+#   ('Content-type', 'text/html'), ('Connection', 'close'),
+#   ('Transfer-Encoding', 'chunked'),
+#   ('Date', 'Tue, 23 Jun 2015 00:33:38 GMT'),
+#   ('Server', 'lighttpd/1.4.28')]
+res.getheader("Content-type")
+#> 'text/html'
+
+
+## `urllib.error.HTTPError' is inherited from `urllib.error.URLError',
+## so if you want to catch both of them, you should write
+## `HTTPError' before `URLError'
+## right
+try:
+except urllib.error.HTTPError:
+except urllib.error.URLError:
+## wrong !!
+try:
+except urllib.error.URLError:
+except urllib.error.HTTPError:
+
+
+## set socket timeout
+socket.setdefaulttimeout(5)
+## you can change it when using urlopen or opener.open
+opener.open("http://www.google.com.hk", timeout=5)
+urlopen("http://www.google.com.hk", timeout=5)
+## the real timeout depend on the site
+## urlopen("http://www.google.com.hk", timeout=5) : 5 seconds
+## while
+## urlopen("http://www.google.com", timeout=5) : more than 20 seconds
+
+
+## max connection number you can listen(different depending on the system)
+socket.SOMAXCONN
+#> 128
+
+
+## both on linux and windows, socket share the same descriptor space with
+## normal files. but on linux, it tries to be continuous.
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.fileno()
+#> 3
+f = open("/tmp/f", "w")
+f.fileno()
+#> 4
+
+
+## `gethostname' and `gethostbyname' are static methods.
+## get host name
+socket.gethostname()
+#> 'L3IXGY0JHNAK2O0'
+socket.gethostbyname('L3IXGY0JHNAK2O0')
+#> '100.10.181.66'
+socket.gethostbyname('localhost')
+#> '127.0.0.1'
+
+## `gethostbyname' can query the ip from url(DNS query)
+socket.gethostbyname("baidu.com")
+#> '220.181.57.217'
+## www.baidu.com is DIFFERENT from baidu.com
+socket.gethostbyname("www.baidu.com")
+#> '61.135.169.125'
+
+## since `gethostbyname' is not IPv6 compatible, you might need to use
+## `getaddrinfo'. `gethostbyname' return 1 ip address, but `getaddrinfo' return
+## all ip addresses that binded to this domain name.
+## `getaddrinfo' is a static method, too.
+socket.getaddrinfo("baidu.com", 80)
+## return a list of tuple: [(family, socktype, proto, canonname, sockaddr)...]
+
+

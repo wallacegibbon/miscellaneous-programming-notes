@@ -1,0 +1,15 @@
+## vim: ft=elixir :
+
+
+## you can use "elem"/"put_elem" to get/set element of a tuple. offset starts
+## from 0. (erlang starts from 1)
+elem {:ok, "hello"}, 0
+#> :ok
+
+put_elem {:foo, 1}, 1, :bar
+#> {:foo, :bar}
+
+tuple_size {:ok, "hello"}
+#> 2
+
+

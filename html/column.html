@@ -1,0 +1,51 @@
+<html>
+
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+.container {
+  -webkit-column-width: 160px;
+  -moz-column-width: 160px;
+  column-width: 160px;
+
+  -webkit-column-gap: 1px;
+  -moz-column-gap: 1px;
+  column-gap: 1px;
+}
+
+div:not(.container) {
+  width: 160px;
+  margin: 2px;
+  border-radius: 10px;
+  background: #ddd;
+
+  display: inline-block; /* this is important */
+
+  text-align: center;
+  color: white;
+}
+
+</style>
+</head>
+
+<body>
+<div class="container"></div>
+<script>
+var heights = [
+  180, 80, 120, 130, 140, 60, 110, 50, 170, 90, 120, 30, 250, 60, 150, 160,
+  130, 120, 130, 80, 60, 110, 90, 40, 90, 220, 30, 50, 40, 150, 140,
+];
+
+var container = document.querySelector(".container");
+
+for (var i = 0, len = heights.length; i < len; i++) {
+  var d = document.createElement("div");
+  d.style.height = heights[i] + "px";
+  d.innerHTML = i;
+  container.appendChild(d);
+}
+</script>
+
+</body>
+
+</html>

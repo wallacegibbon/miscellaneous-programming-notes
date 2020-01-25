@@ -1,0 +1,183 @@
+## vim: ft=python :
+
+## the difference between re.match and re.search:
+re.match('abc', 'ccabcde')
+#> None
+re.search('abc', 'ccabcde')
+#> <_sre.SRE_Match object at 0xb74e6758>
+
+## `match' need "START WITH", `search' just need "CONTAIN"
+
+## but it doesn't mean `match' have to match the whole string.
+## just the start is restricted
+re.match("abc", "abcdefg")
+#> <_sre.SRE_Match object at 0xb69b39f8>
+
+
+## you can "compile" a regular expression
+pattern = re.compile("ab.*ef$")
+pattern.match("abcdef")
+#> <_sre.SRE_Match object at 0xb74e6758>
+pattern.match("abcdeg")
+#> None
+
+
+##
+re.split("[a-z][1-9][a-z]", "xx b2g dos2unix", 2)
+#> ['xx ', ' do', 'nix']
+
+## re.split can remain the separator by grouping it with "()"
+re.split(",", "a, b, c, d, e")
+#> ['a', ' b', ' c', ' d', ' e']
+re.split("(,)", "a, b, c, d, e")
+#> ['a', ',', ' b', ',', ' c', ',', ' d', ',', ' e']
+re.split("(_)(_)", "a___b__c__d")
+#> ['a', '_', '_', '_b', '_', '_', 'c', '_', '_', 'd']
+re.split("(a(.))", "xabcxabcxab")
+#> ['x', 'ab', 'b', 'cx', 'ab', 'b', 'cx', 'ab', 'b', '']
+
+
+## the `.group(0)' exists even if you did not use `(' `)'
+m = re.match("ab.*ef", "abcdef")
+m.group(0)
+#> 'abcdef'
+m.group(1)
+#> Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#  IndexError: no such group
+
+## but `.group(0)' is not contained in `.groups()'
+m.groups()
+#> ()
+
+## group created by "()" starts from 1, not 0, group 0 is the entire substring
+## matched
+m = re.match(r"(\d+)\.(\d+)", "24.1632xxx")
+m.groups()
+#> ('24', '1632')
+m.group(0)
+#> '24.1632'
+m.group(1)
+#> '24'
+m.group(2)
+#> '1632'
+m.group(3)
+#> IndexError: no such group
+m.groupdict() ## only named group was contained in the dict
+#> {}
+
+## named group
+m = re.match(r"(?P<n1>\d+)\.(\d+)", "24.1632")
+m.groupdict()
+#> {'n1': '24'}
+m.group("n1")
+#> '24'
+
+## the normal group related function still works
+m.groups()
+#> ('24', '1632')
+m.group(1)
+#> '24'
+m.group(2)
+#> '1632'
+
+## when using re.match, m.start() will always be 0
+m = re.search(r"(\d+)\.(\d+)", "float number: 24.1632")
+m.groups()
+#> ('24', '1632')
+m.start()
+#> 14
+m.end()
+#> 21
+
+## re.sub
+## the second argument could be string or function
+re.sub("\d+", "xxx", "numbers: 111 222 333")
+#> 'numbers: xxx xxx xxx'
+
+re.sub("(name)=([a-zA-Z0-9_]+)", "\g<0>, \g<1>, \g<2>", "name=canvas")
+#> 'name=canvas, name, canvas'
+
+## named group
+re.sub("(?P<test>name)=([a-zA-Z0-9_]+)", "-\g<test>- is \g<2>", "name=canvas")
+#> '-name- is canvas'
+
+## second argument as function
+re.sub("num1 is (?P<n1>\d+)", lambda m: str(int(m.group("n1")) + 10),
+       "num1 is 32")
+#> '42'
+
+## multiple match
+re.sub("x=(\d+)", lambda m: str(int(m.group(1)) + 10) + ";)_",
+       "test: x=3, x=4")
+#> 'test: 13;)_, 14;)_'
+
+## findall & finditer
+re.findall("name=([a-zA-Z0-9_]+)", "name=canvas, name=iframe")
+#> ['canvas', 'iframe']
+
+r = re.finditer("name=([a-zA-Z0-9_]+)", "name=canvas, name=iframe")
+r
+#> <callable_iterator object at 0xb7159f8c>
+n = r.__next__()
+n
+#> <_sre.SRE_Match object; span=(0, 11), match='name=canvas'>
+n.group(1)
+#> 'canvas'
+r.__next__().group(1)
+#> 'iframe'
+
+## '\n' will be matched by '\s', newline is space. So is '\r'
+re.match("\s", "\n")
+#> <_sre.SRE_Match object; span=(0, 1), match='\n'>
+re.match("\s", "\r")
+#> <_sre.SRE_Match object; span=(0, 1), match='\r'>
+
+## '\s' can be used in `[^..]', too
+re.match("a[^\s]b", "acb")
+#> <_sre.SRE_Match object; span=(0, 3), match='acb'>
+re.match("a[^\s]b", "accb")
+#> None
+re.match("a[^\s]b", "a\tb")
+#> None
+
+
+## use `\\b' to match word boundaries
+re.search('\\bhe\\b', 'hello')
+#> (nothing)
+re.search('\\bhe\\b', 'he llo')
+#> <_sre.SRE_Match object; span=(0, 2), match='he'>
+
+## you have to use '\\b', not '\b', as '\b' is a ascii character
+'\b'
+#> '\x08'
+'\\b'
+#> '\\b'
+
+
+## `.' does NOT match newline by default, but `\s' does.
+re.match("a.*b", "a\r\nb")
+#> None
+re.match("a.*b", "a\r\nb", re.S)  # or re.DOTALL
+#> <_sre.SRE_Match object; span=(0, 4), match='a\r\nb'>
+
+re.match("a\s*b", "a\r\nb")
+#> <_sre.SRE_Match object; span=(0, 4), match='a\r\nb'>
+
+re.S is re.DOTALL
+#> True
+
+
+## the `|' doesn't stop for a space or any character(except for another `|')
+re.search("ab;d |cd", "ab;d xycd").group(0)
+#> 'ab;d '
+
+## you have to quote it if you just want to match a small part
+re.search("abXX|YYcd", "--abYYcd--").group(0)
+#> 'YYcd'
+re.search("ab(?:XX|YY)cd", "--abXXcd--").group(0)
+#> 'abXXcd'
+re.search("ab(?:XX|YY)cd", "--abYYcd--").group(0)
+#> 'abYYcd'
+
+

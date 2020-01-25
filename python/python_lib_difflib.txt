@@ -1,0 +1,61 @@
+## vim: ft=python :
+
+
+## difflib
+## The 3 import class of `difflib':
+##  * SequenceMatcher (for any sequence: list, string...)
+##  * Differ
+##  * HtmlDiff
+##
+## the 4 `opcodes' for `get_opcodes':
+##  * equal
+##  * replace
+##  * insert
+##  * delete
+##
+a = "hello, wx, bye"
+b = "hello, WX, !"
+m = difflib.SequenceMatcher(None, a, b)
+m.get_opcodes()
+#> [('equal', 0, 7, 0, 7),
+#   ('replace', 7, 9, 7, 9),
+#   ('equal', 9, 11, 9, 11),
+#   ('replace', 11, 14, 11, 12)]
+m.get_matching_blocks()
+#> [Match(a=0, b=0, size=7),
+#   Match(a=9, b=9, size=2),
+#   Match(a=14, b=12, size=0)]
+
+## `insert' and `delete' depend on which sequence write first.
+a = "what"
+b = "wh at"
+m = difflib.SequenceMatcher(None, a, b)
+m.get_opcodes()
+#> [('equal', 0, 2, 0, 2), ('insert', 2, 2, 2, 3), ('equal', 2, 4, 3, 5)]
+m = difflib.SequenceMatcher(None, b, a)
+m.get_opcodes()
+#> [('equal', 0, 2, 0, 2), ('delete', 2, 3, 2, 2), ('equal', 3, 5, 2, 4)]
+
+##
+d = difflib.Differ().compare("startup", "StartUp")
+d
+#> <generator object compare at 0x00BF6A30>
+list(d)
+#> ['- s', '+ S', '  t', '  a', '  r', '  t', '- u', '+ U', '  p']
+## it's same as difflib.ndiff
+d = difflib.ndiff("startup", "StartUp")
+d
+#> <generator object compare at 0x00C43440>
+list(d)
+#> ['- s', '+ S', '  t', '  a', '  r', '  t', '- u', '+ U', '  p']
+
+## use ndiff on a list of string
+list(difflib.ndiff(["abc", "def"], ["aB", "deg"]))
+#> ['- abc', '- def', '+ aB', '+ deg']
+
+##
+s = difflib.HtmlDiff.make_file(difflib.HtmlDiff(), "startup", "StartUp")
+with open("./tmp.html", "w") as f:
+    f.write(s)
+
+

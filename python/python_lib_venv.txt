@@ -1,0 +1,7 @@
+## vim: ft=sh :
+
+## create a new virtual environment
+$ python3 -m venv new_env_name
+
+## start the new virtual environment
+$ new_env_name/bin/activate

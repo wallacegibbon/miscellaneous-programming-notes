@@ -1,0 +1,218 @@
+## vim: ft=elixir :
+
+## in elixir, we can compare two different data types:
+## the comparing rule:
+##  number < atom < reference < functions < port < pid < tuple < maps < list
+##    < bitstring
+
+
+
+## in Elixir, an alias is a capitalized identifier(like String, Keyword, etc)
+## which is converted to an atom during compilation.
+## alias expand to atoms because in the Erlang VM, modules are always
+## represented by atoms.
+## (for alias, the prefix "Elixir" can be omitted. "String" is "Elixir.String")
+is_atom String
+#> true
+to_string String
+#> "Elixir.String"
+String == :"Elixir.String"
+#> true
+:"Elixir.String".upcase "abc"
+#> "ABC"
+
+## A alias is expanded to itself by default. After you use alias/2 on it, it
+## will be expanded to the another atom
+to_string ANonExistAlias
+#> "Elixir.ANonExistAlias"
+alias :what, as: ANonExistAlias
+#> :what
+to_string ANonExistAlias
+#> "what"
+
+## you can even rebind the alias in stdlib
+alias String, as: EEx
+#> String
+EEx.upcase "abc"
+#> "ABC"
+to_string EEx
+#> "Elixir.String"
+
+## alias can be assigned to a variable, too. (just like erlang)
+a = String
+#> String
+a == :"Elixir.String"
+#> true
+
+## for nested alias, e.g. A.B, you do NOT have to define A before define B.
+## because all alias will be converted to atom.
+defmodule A.B.C.D do
+  def a, do: IO.puts "this is a"
+end
+A.B.C.D.a
+#> this is a
+#  :ok
+A.B.C.D == :"Elixir.A.B.C.D"
+#> true
+
+## alias/1 will set the alias automatically to the last part of the module
+## name, e.g.
+alias A.B.C.D
+#> nil
+D
+#> A.B.C.D
+
+## as you see, it's same as "alias A.B.C.D, as: D"
+
+
+
+## you can use import to access function/macro without fully-qulified name.
+import String, only: [upcase: 1]
+#> String
+upcase "abc"
+#> "ABC"
+
+## use `import` without `only: [...]` will import everything
+import String
+#> String
+&upcase/1
+#> &String.upcase/1
+&downcase/1
+#> &String.downcase/1
+
+## `import`ing a module automatically `require`s it.
+
+
+
+## `use` is a macro tightly related to `require`
+defmodule Example do
+  use Feature, option: :value
+end
+
+# is compiled to:
+
+defmodule Example do
+  require Feature
+  Feature.__using__(option: :value)
+end
+
+
+
+## the wonderful "|>" (it's just like "|" for unix shell)
+## the result of the former function will be the first argument of the later
+
+a = fn v1, v2, v3 -> "Args of a: #{v1}, #{v2}, #{v3}" end
+#> #Function<18.50752066/3 in :erl_eval.expr/5>
+"blah" |> a.(1, 2)
+#> "Args of a: blah, 1, 2"
+
+## another example:
+String.split("a,b,c,d,e", ",") |> Enum.join("-") |> String.upcase
+#> "A-B-C-D-E"
+
+to_string(:atom) |> String.capitalize |> String.to_atom
+#> :Atom
+
+
+## "/" will always return float, you need "div" and "rem" for integer divide
+10 / 3
+#> 3.3333333333333335
+div 10, 3
+#> 3
+rem 10, 3
+#> 1
+
+## round and trunc
+round 3.6
+#> 4
+trunc 3.6
+#> 3
+round -3.6
+#> -4
+trunc -3.6
+#> -3
+
+## for more functionality, you need Float module
+Float.ceil -3.6
+#> -3.0
+Float.floor -3.6
+#> -4.0
+
+
+
+## you can use 0x, 0o, 0b to represend numbers, just like python
+0x1f
+#> 31
+0o100
+#> 64
+0b1100
+#> 12
+
+
+
+## function capturing
+f = &String.length/1
+#> &String.length/1
+f.("hello")
+#> 5
+
+## "&(&1 + 1)" is same as "fn x -> x + 1 end".
+a = &("arg1 is #{&1}, arg2 is #{&2}")
+#> #Function<6.52032458/1 in :erl_eval.expr/5>
+a.("blah", "tt")
+#> "arg1 is blah, arg2 is tt"
+
+
+
+## map, reduce
+Enum.map([1, 2, 3], fn x -> x * 2 end)
+#> [2, 4, 6]
+Enum.map([a: 1, b: 2], fn {k, v} -> {k, -v} end)
+#> [a: -1, b: -2]
+
+Enum.reduce([1, 2, 3], 0, fn x, acc -> x + acc end)
+#> 6
+
+## or simply:
+Enum.reduce([1, 2, 3], 0, &+/2)
+#> 6
+
+
+
+## expression inside a module will be executed when loading the module
+defmodule Test do IO.puts "hello" end
+#> hello
+#  #{:module, Test, <<...>>, :ok}
+
+
+
+## start observer
+:observer.start
+
+
+
+## defdelegate
+defmodule Dummy do
+  def hello, do: "hello from dummy"
+end
+
+Dummy.hello
+#> "hello from dummy"
+
+defmodule Real do
+  defdelegate hello, to: Dummy
+end
+
+Real.hello
+#> "hello from dummy"
+
+## or you can add a `as: blah` argument, so that you can give it a new name
+defmodule Other do
+  defdelegate world, to: Dummy, as: :hello
+end
+
+Other.world
+#> "hello from dummy"
+
+
+

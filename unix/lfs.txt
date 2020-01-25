@@ -1,0 +1,2977 @@
+# -*- mode: sh; -*-
+# vim: ft=sh :
+
+export LFS=/mnt/lfs
+mkdir -pv $LFS
+mount -v -t ext4 /dev/sda3 $LFS
+swapon -v /dev/sda7
+
+mkdir -v $LFS/sources
+chmod -v a+wt $LFS/sources
+wget --input-file=wget-list --continue --directory-prefix=$LFS/sources
+
+pushd $LFS/sources
+md5sum -c md5sums
+popd
+
+mkdir -v $LFS/tools
+ln -sv $LFS/tools /
+
+groupadd lfs
+useradd -s /bin/bash -g lfs -m -k /dev/null lfs
+passwd lfs
+
+chown -v lfs $LFS/tools
+chown -v lfs $LFS/sources
+
+su - lfs
+
+
+## file : .bash_profile
+exec env -i HOME=$HOME TERM=$TERM PS1='\u:\w\$ ' /bin/bash
+
+
+## file : .bashrc
+set +h
+umask 022
+LFS=/mnt/lfs
+LC_ALL=POSIX
+LFS_TGT=$(uname -m)-lfs-linux-gnu
+PATH=/tools/bin:/bin:/usr/bin
+export LFS_LC_ALL LFS_TGT PATH
+
+
+
+
+            #### build binutils (1st pass) #####
+
+
+time {
+  ../binutils-2.25/configure                \
+  --prefix=/tools                           \
+  --with-sysroot=$LFS                       \
+  --with-lib-path=/tools/lib                \
+  --target=$LFS_TGT                         \
+  --disable-nls                             \
+  --disable-werror && make && make install
+}
+
+
+
+
+
+            #### build gcc (1st pass) ####
+
+
+
+tar -xf ../mpfr-3.1.2.tar.xz
+mv -v mpfr-3.1.2 mpfr
+tar -xf ../gmp-6.0.0a.tar.xz
+mv -v gmp-6.0.0 gmp
+tar -xf ../mpc-1.0.2.tar.gz
+mv -v mpc-1.0.2 mpc
+
+## change gcc's default dynamic linker to use the on installed in /tools
+for file in \
+  $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+do
+  cp -uv $file{,.orig}
+  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&@g' \
+      -e 's@/usr@/tools@g' $file.orig > $file
+  echo '
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
+#define STANDARD_STARTFILE_PREFIX_2 ""' >> $file
+  touch $file.orig
+done
+
+# fix gcc issue( for glibc-2.21)
+sed -i '/k prot/agcc_cv_libc_provides_ssp=yes' gcc/configure
+
+# configure
+time {
+  ../gcc-4.9.2/configure                           \
+  --target=$LFS_TGT                                \
+  --prefix=/tools                                  \
+  --with-sysroot=$LFS                              \
+  --with-newlib                                    \
+  --without-headers                                \
+  --with-local-prefix=/tools                       \
+  --with-native-system-header-dir=/tools/include   \
+  --disable-nls                                    \
+  --disable-shared                                 \
+  --disable-multilib                               \
+  --disable-decimal-float                          \
+  --disable-threads                                \
+  --disable-libatomic                              \
+  --disable-libgomp                                \
+  --disable-libitm                                 \
+  --disable-libquadmath                            \
+  --disable-libsanitizer                           \
+  --disable-libssp                                 \
+  --disable-libvtv                                 \
+  --disable-libcilkrts                             \
+  --disable-libstdc++-v3                           \
+  --enable-languages=c,c++ && make && make install
+}
+
+
+
+
+
+            #### copy linux headers ####
+
+
+make mrproper
+make INSTALL_HDR_PATH=dest headers_install
+cp -rv dest/include/* /tools/include
+
+
+
+
+
+            #### build glibc ####
+
+
+if [ ! -r /usr/include/rpc/types.h ]; then
+  su -c 'mkdir -pv /usr/include/rpc'
+  su -c 'cp -v sunrpc/rpc/*.h /usr/include/rpc'
+fi
+
+# Fix a regression in the package that affects 32-bit architectures:
+sed -e '/ia32/s/^/1:/' \
+    -e '/SSE2/s/^1://' \
+    -i sysdeps/i386/i686/multiarch/mempcpy_chk.S
+
+time {
+  ../glibc-2.21/configure                       \
+  --prefix=/tools                               \
+  --host=$LFS_TGT                               \
+  --build=$(../glibc-2.21/scripts/config.guess) \
+  --disable-profile                             \
+  --enable-kernel=2.6.32                        \
+  --with-headers=/tools/include                 \
+  libc_cv_forced_unwind=yes                     \
+  libc_cv_ctors_header=yes                      \
+  libc_cv_c_cleanup=yes && make && make install
+}
+
+# test glibc:
+echo 'main(){}' > dummy.c
+$LFS_TGT-gcc dummy.c
+readelf -l a.out | grep ': /tools'
+
+
+
+
+
+            #### build libstdc++ ####
+
+
+time {
+  ../gcc-4.9.2/libstdc++-v3/configure           \
+  --host=$LFS_TGT                               \
+  --prefix=/tools                               \
+  --disable-multilib                            \
+  --disable-shared                              \
+  --disable-nls                                 \
+  --disable-libstdcxx-threads                   \
+  --disable-libstdcxx-pch                       \
+  --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/4.9.2 \
+  && make && make install
+}
+
+
+
+
+            #### build binutils (2nd pass) ####
+
+
+CC=$LFS_TGT-gcc                           \
+AR=$LFS_TGT-ar                            \
+RANLIB=$LFS_TGT-ranlib                    \
+../binutils-2.25/configure                \
+--prefix=/tools                           \
+--disable-nls                             \
+--disable-werror                          \
+--with-lib-path=/tools/lib                \
+--with-sysroot && make && make install
+
+# prepare the linker for the "Re-adjusting" phase in the next chapter:
+make -C ld clean
+make -C ld LIB_PATH=/usr/lib:/lib
+cp -v ld/ld-new /tools/bin
+
+
+
+
+
+            #### build gcc (2nd pass) ####
+
+
+cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h
+
+for file in \
+  $(find gcc/config -name linux64.h -o -name linux.h -o -name sysv4.h)
+do
+  cp -uv $file{,.orig}
+  sed -e 's@/lib\(64\)\?\(32\)\?/ld@/tools&@g' \
+      -e 's@/usr@/tools@g' $file.orig > $file
+  echo '
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 "/tools/lib/"
+#define STANDARD_STARTFILE_PREFIX_2 ""' >> $file
+  touch $file.orig
+done
+
+#
+tar -xf ../mpfr-3.1.2.tar.xz
+mv -v mpfr-3.1.2 mpfr
+tar -xf ../gmp-6.0.0a.tar.xz
+mv -v gmp-6.0.0 gmp
+tar -xf ../mpc-1.0.2.tar.gz
+mv -v mpc-1.0.2 mpc
+
+#
+CC=$LFS_TGT-gcc                                  \
+CXX=$LFS_TGT-g++                                 \
+AR=$LFS_TGT-ar                                   \
+RANLIB=$LFS_TGT-ranlib                           \
+../gcc-4.9.2/configure                           \
+--prefix=/tools                                  \
+--with-local-prefix=/tools                       \
+--with-native-system-header-dir=/tools/include   \
+--enable-languages=c,c++                         \
+--disable-libstdcxx-pch                          \
+--disable-multilib                               \
+--disable-bootstrap                              \
+--disable-libgomp && make && make install
+
+#
+ln -sv gcc /tools/bin/cc
+
+# test
+echo 'main(){}' > dummy.c
+cc dummy.c
+readelf -l a.out | grep ': /tools'
+
+
+
+
+
+            #### build the test system ####
+
+
+# tcl
+cd unix
+./configure --prefix=/tools
+make
+
+TZ=UTC make test
+
+make install
+
+chmod -v u+w /tools/lib/libtcl8.6.so
+make install-private-headers
+ln -sv /tools/bin/{tclsh8.6,tclsh}
+# actually not needed, just. ln will find it through $PATH
+ln -sv tclsh8.6 /tools/bin/tclsh
+
+# expect
+cp -v configure{,.orig}
+sed 's:/usr/local/bin:/bin:' configure.orig > configure
+./configure --prefix=/tools       \
+            --with-tcl=/tools/lib \
+            --with-tclinclude=/tools/include
+make
+make test # some test will fail
+make SCRIPTS="" install
+
+# dejagnu
+./configure --prefix=/tools
+make install
+make check
+
+# check
+PKG_CONFIG= ./configure --prefix=/tools
+# 'PKG_CONFIG=' tells the configure script to ignore any pkg-config
+# options that may cause the system to try to link with libraries not
+# in the /tools directory.
+make
+make check  # this take a long time: 4SBU
+make install
+
+
+
+
+            #### build user libs ####
+
+
+# ncurses
+./configure --prefix=/tools \
+            --with-shared   \
+            --without-debug \
+            --without-ada   \
+            --enable-widec  \
+            --enable-overwrite
+make
+make install
+
+
+# bash
+./configure --prefix=/tools --without-bash-malloc
+make
+make tests
+make install
+ln -sv bash /tools/bin/sh
+
+
+# bzip2
+make
+make PREFIX=/tools install
+
+
+# core utils
+./configure --prefix=/tools --enable-install-program=hostname
+make
+make RUN_EXPENSIVE_TESTS=yes check
+make install
+
+
+# diff utils
+./configure --prefix=/tools
+make
+make check
+make install
+
+# file
+./configure --prefix=/tools
+make
+make check
+make install
+
+# find utils
+./configure --prefix=/tools
+make
+make check
+make install
+
+# gawk
+./configure --prefix=/tools
+make
+make check  # will get some error
+make install
+
+# gettext
+cd gettext-tools
+EMACS="no" ./configure --prefix=/tools --disable-shared
+make -C gnulib-lib
+make -C intl pluralx.c
+make -C src msgfmt
+make -C src msgmerge
+make -C src xgettext
+cp -v src/{msgfmt,msgmerge,xgettext} /tools/bin
+
+# grep
+./configure --prefix=/tools
+make
+make check
+make install
+
+# gzip
+./configure --prefix=/tools
+make
+make check
+make install
+
+# m4
+./configure --prefix=/tools
+make
+make check
+make install
+
+# make
+./configure --prefix=/tools --without-guile
+make
+make check
+make install
+
+# patch
+./configure --prefix=/tools
+make
+make check
+make install
+
+# perl
+sh Configure -des -Dprefix=/tools -Dlibs=-lm
+make
+cp -v perl cpan/podlators/pod2man /tools/bin
+mkdir -pv /tools/lib/perl5/5.20.2
+cp -Rv lib/* /tools/lib/perl5/5.20.2
+
+# sed
+./configure --prefix=/tools
+make
+make check
+make install
+
+# tar
+./configure --prefix=/tools
+make
+make check
+make install
+
+# texinfo
+./configure --prefix=/tools
+make
+make check
+make install
+
+# util linux  (commands like mount...)
+./configure --prefix=/tools                \
+            --without-python               \
+            --disable-makeinstall-chown    \
+            --without-systemdsystemunitdir \
+            PKG_CONFIG=""
+make
+make install
+
+# xz
+./configure --prefix=/tools
+make
+make check
+make install
+
+
+
+
+
+            #### strip libs (not necessary) ####
+
+
+strip --strip-debug /tools/lib/*
+/usr/bin/strip --strip-unneeded /tools/{,s}bin/*
+#!!!! Take care not to use --strip-unneeded on the libraries
+rm -rf /tools/{,share}/{info,man,doc}
+
+
+
+
+
+            #### change owership ####
+
+
+# as root, do:
+chown -R root:root $LFS/tools
+
+mkdir -pv $LFS/{proc,sys,dev,run}
+
+# Creating Initial Device Nodes
+mknod -m 600 $LFS/dev/console c 5 1
+mknod -m 666 $LFS/dev/null c 1 3
+
+# Mounting and Populating /dev
+mount -v --bind /dev $LFS/dev
+
+# Mounting Virtual Kernel File Systems
+mount -vt devpts devpts $LFS/dev/pts -o gid=5,mode=620
+mount -vt proc proc $LFS/proc
+mount -vt sysfs sysfs $LFS/sys
+mount -vt tmpfs tmpfs $LFS/run
+
+if [ -h $LFS/dev/shm ]
+then
+  mkdir -pv $LFS/$(readlink $LFS/dev/shm)
+fi
+
+
+# Entering the Chroot Environment
+chroot "$LFS" /tools/bin/env -i                 \
+  HOME=/root                                    \
+  TERM="$TERM"                                  \
+  PS1='\u:\w\$ '                                \
+  PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
+  /tools/bin/bash --login +h
+
+# Creating Directories
+mkdir -pv /{bin,boot,etc/{opt,sysconfig},home,lib/firmware,mnt,opt}
+mkdir -pv /{media/{floppy,cdrom},sbin,srv,var}
+install -dv -m 0750 /root
+install -dv -m 1777 /tmp /var/tmp
+mkdir -pv /usr/{,local/}{bin,include,lib,sbin,src}
+mkdir -pv /usr/{,local/}share/{color,dict,doc,info,locale,man}
+mkdir -v  /usr/{,local/}share/{misc,terminfo,zoneinfo}
+mkdir -v  /usr/libexec
+mkdir -pv /usr/{,local/}share/man/man{1..8}
+
+case $(uname -m) in
+  x86_64) ln -sv lib /lib64
+          ln -sv lib /usr/lib64
+          ln -sv lib /usr/local/lib64 ;;
+esac
+
+mkdir -v /var/{log,mail,spool}
+ln -sv /run /var/run
+ln -sv /run/lock /var/lock
+mkdir -pv /var/{opt,cache,lib/{color,misc,locate},local}
+
+#
+ln -sv /tools/bin/{bash,cat,echo,pwd,stty} /bin
+ln -sv /tools/bin/perl /usr/bin
+ln -sv /tools/lib/libgcc_s.so{,.1} /usr/lib
+ln -sv /tools/lib/libstdc++.so{,.6} /usr/lib
+sed 's/tools/usr/' /tools/lib/libstdc++.la > /usr/lib/libstdc++.la
+ln -sv bash /bin/sh
+
+ln -sv /proc/self/mounts /etc/mtab
+
+# passwd
+cat > /etc/passwd << "EOF"
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/dev/null:/bin/false
+daemon:x:6:6:Daemon User:/dev/null:/bin/false
+messagebus:x:18:18:D-Bus Message Daemon User:/var/run/dbus:/bin/false
+nobody:x:99:99:Unprivileged User:/dev/null:/bin/false
+EOF
+
+# group
+cat > /etc/group << "EOF"
+root:x:0:
+bin:x:1:daemon
+sys:x:2:
+kmem:x:3:
+tape:x:4:
+tty:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+usb:x:14:
+cdrom:x:15:
+adm:x:16:
+messagebus:x:18:
+systemd-journal:x:23:
+input:x:24:
+mail:x:34:
+nogroup:x:99:
+users:x:999:
+EOF
+
+# then solve the `I have no name!':
+exec /tools/bin/bash --login +h
+
+#
+touch /var/log/{btmp,lastlog,wtmp}
+chgrp -v utmp /var/log/lastlog
+chmod -v 664  /var/log/lastlog
+chmod -v 600  /var/log/btmp
+
+
+
+
+
+            #### linux-3.19 headers ####
+
+
+make mrproper
+make INSTALL_HDR_PATH=dest headers_install
+find dest/include \( -name .install -o -name ..install.cmd \) -delete
+cp -rv dest/include/* /usr/include
+
+
+
+# install man page
+make install
+
+
+
+
+
+            #### install the final glibc ####
+
+
+
+patch -Np1 -i ../glibc-2.21-fhs-1.patch
+
+sed -e '/ia32/s/^/1:/' \
+    -e '/SSE2/s/^1://' \
+    -i sysdeps/i386/i686/multiarch/mempcpy_chk.S
+
+mkdir -v ../glibc-build
+cd ../glibc-build
+
+../glibc-2.21/configure     \
+  --prefix=/usr             \
+  --disable-profile         \
+  --enable-kernel=2.6.32    \
+  --enable-obsolete-rpc
+
+make
+make check  # you will get a lot of errors
+
+touch /etc/ld.so.conf
+
+make install
+
+cp -v ../glibc-2.21/nscd/nscd.conf /etc/nscd.conf
+mkdir -pv /var/cache/nscd
+
+# install the minimum set of locales necessary for the optimal
+# coverage of tests
+mkdir -pv /usr/lib/locale
+localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
+localedef -i de_DE -f ISO-8859-1 de_DE
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
+localedef -i de_DE -f UTF-8 de_DE.UTF-8
+localedef -i en_GB -f UTF-8 en_GB.UTF-8
+localedef -i en_HK -f ISO-8859-1 en_HK
+localedef -i en_PH -f ISO-8859-1 en_PH
+localedef -i en_US -f ISO-8859-1 en_US
+localedef -i en_US -f UTF-8 en_US.UTF-8
+localedef -i es_MX -f ISO-8859-1 es_MX
+localedef -i fa_IR -f UTF-8 fa_IR
+localedef -i fr_FR -f ISO-8859-1 fr_FR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i fr_FR -f UTF-8 fr_FR.UTF-8
+localedef -i it_IT -f ISO-8859-1 it_IT
+localedef -i it_IT -f UTF-8 it_IT.UTF-8
+localedef -i ja_JP -f EUC-JP ja_JP
+localedef -i ru_RU -f KOI8-R ru_RU.KOI8-R
+localedef -i ru_RU -f UTF-8 ru_RU.UTF-8
+localedef -i tr_TR -f UTF-8 tr_TR.UTF-8
+localedef -i zh_CN -f GB18030 zh_CN.GB18030
+
+# Alternatively, install all locales listed in the
+# glibc-2.21/localedata/SUPPORTED file
+make localedata/install-locales
+
+
+cat > /etc/nsswitch.conf << "EOF"
+# Begin /etc/nsswitch.conf
+
+passwd: files
+group: files
+shadow: files
+
+hosts: files dns
+networks: files
+
+protocols: files
+services: files
+ethers: files
+rpc: files
+
+# End /etc/nsswitch.conf
+EOF
+
+# timezone info:
+tar xvf ../tzdata2015a.tar.gz
+ZONEINFO=/usr/share/zoneinfo
+mkdir -pv $ZONEINFO/{posix,right}
+
+# zic : time zone compiler
+for tz in etcetera southamerica northamerica europe africa antarctica  \
+    asia australasia backward pacificnew systemv
+do
+  zic -L /dev/null   -d $ZONEINFO       -y "sh yearistype.sh" ${tz}
+  zic -L /dev/null   -d $ZONEINFO/posix -y "sh yearistype.sh" ${tz}
+  zic -L leapseconds -d $ZONEINFO/right -y "sh yearistype.sh" ${tz}
+done
+
+cp -v zone.tab zone1970.tab iso3166.tab $ZONEINFO
+#zic -d $ZONEINFO -p America/New_York
+zic -d $ZONEINFO -p Asia/Shanghai
+unset ZONEINFO
+
+tzselect
+
+#
+cat > /etc/ld.so.conf << "EOF"
+# Begin /etc/ld.so.conf
+/usr/local/lib
+/opt/lib
+
+EOF
+
+#
+cat >> /etc/ld.so.conf << "EOF"
+# Add an include directory
+include /etc/ld.so.conf.d/*.conf
+
+EOF
+mkdir -pv /etc/ld.so.conf.d
+
+# Adjusting the Toolchain
+mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(gcc -dumpmachine)/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(gcc -dumpmachine)/bin/ld
+
+gcc -dumpspecs | sed -e 's@/tools@@g'                   \
+    -e '/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}' \
+    -e '/\*cpp:/{n;s@$@ -isystem /usr/include@}' >      \
+    `dirname $(gcc --print-libgcc-file-name)`/specs
+
+echo 'main(){}' > dummy.c
+cc dummy.c -v -Wl,--verbose &> dummy.log
+readelf -l a.out | grep ': /lib'
+
+grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log
+grep -B1 '^ /usr/include' dummy.log
+grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
+grep "/lib.*/libc.so.6 " dummy.log
+grep found dummy.log
+
+rm -v dummy.c a.out dummy.log
+
+
+
+
+
+
+            #### build utils ####
+
+
+# zlib
+./configure --prefix=/usr
+make
+make check
+make install
+mv -v /usr/lib/libz.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so
+
+# file
+./configure --prefix=/usr
+make
+make check
+make install
+
+# binutils
+mkdir -v ../binutils-build
+cd ../binutils-build
+../binutils-2.25/configure --prefix=/usr   \
+                           --enable-shared \
+                           --disable-werror
+
+make tooldir=/usr
+make -k check
+make tooldir=/usr install
+
+# gmp
+./configure --prefix=/usr \
+            --enable-cxx  \
+            --docdir=/usr/share/doc/gmp-6.0.0a
+
+make
+make html
+make check 2>&1 | tee gmp-check-log
+awk '/tests passed/{total+=$2} ; END{print total}' gmp-check-log
+
+make install
+make install-html
+
+# mpfr
+patch -Np1 -i ../mpfr-3.1.2-upstream_fixes-3.patch
+./configure --prefix=/usr        \
+            --enable-thread-safe \
+            --docdir=/usr/share/doc/mpfr-3.1.2
+make
+make html
+make check
+make install
+make install-html
+
+# mpc
+./configure --prefix=/usr --docdir=/usr/share/doc/mpc-1.0.2
+make
+make html
+make check
+make install
+make install-html
+
+
+
+
+
+            #### build gcc for the target ####
+
+
+# this will take a long time: 63SBU (with tests)
+
+mkdir -v ../gcc-build
+cd ../gcc-build
+SED=sed                       \
+../gcc-4.9.2/configure        \
+     --prefix=/usr            \
+     --enable-languages=c,c++ \
+     --disable-multilib       \
+     --disable-bootstrap      \
+     --with-system-zlib
+
+make
+
+ulimit -s 32768
+
+make -k check
+
+# To receive a summary of the test suite results, run:
+../gcc-4.9.2/contrib/test_summary
+
+make install
+
+# Some packages expect the C preprocessor to be installed in the /lib directory
+ln -sv ../usr/bin/cpp /lib
+
+ln -sv gcc /usr/bin/cc
+
+# create directory : /usr/lib/bfd-plugins
+install -v -dm755 /usr/lib/bfd-plugins
+ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/4.9.2/liblto_plugin.so \
+   /usr/lib/bfd-plugins/
+
+# check
+echo 'main(){}' > dummy.c
+cc dummy.c -v -Wl,--verbose &> dummy.log
+readelf -l a.out | grep ': /lib'
+
+# make sure that we're setup to use the correct startfiles
+grep -o '/usr/lib.*/crt[1in].*succeeded' dummy.log
+
+# erify that the compiler is searching for the correct header files
+grep -B4 '^ /usr/include' dummy.log
+
+# verify that the new linker is being used with the correct search paths:
+grep 'SEARCH.*/usr/lib' dummy.log |sed 's|; |\n|g'
+
+# make sure that we're using the correct libc:
+grep "/lib.*/libc.so.6 " dummy.log
+
+# make sure GCC is using the correct dynamic linker:
+grep found dummy.log
+
+#
+rm -v dummy.c a.out dummy.log
+
+# move a misplaced file:
+mkdir -pv /usr/share/gdb/auto-load/usr/lib
+mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib
+
+
+
+
+            #### build basic system software ####
+
+
+# bzip2
+patch -Np1 -i ../bzip2-1.0.6-install_docs-1.patch
+sed -i 's@\(ln -s -f \)$(PREFIX)/bin/@\1@' Makefile
+sed -i "s@(PREFIX)/man@(PREFIX)/share/man@g" Makefile
+make -f Makefile-libbz2_so
+make clean
+make
+make PREFIX=/usr install
+
+cp -v bzip2-shared /bin/bzip2
+cp -av libbz2.so* /lib
+ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
+rm -v /usr/bin/{bunzip2,bzcat,bzip2}
+ln -sv bzip2 /bin/bunzip2
+ln -sv bzip2 /bin/bzcat
+
+
+# pkg-config
+./configure --prefix=/usr         \
+            --with-internal-glib  \
+            --disable-host-tool   \
+            --docdir=/usr/share/doc/pkg-config-0.28
+
+make
+make check
+make install
+
+# ncurses
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            --with-shared           \
+            --without-debug         \
+            --enable-pc-files       \
+            --enable-widec
+
+make
+make install
+
+mv -v /usr/lib/libncursesw.so.5* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+
+
+for lib in ncurses form panel menu
+do
+  rm -vf                    /usr/lib/lib${lib}.so
+  echo "INPUT(-l${lib}w)" > /usr/lib/lib${lib}.so
+  ln -sfv lib${lib}w.a      /usr/lib/lib${lib}.a
+  ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+done
+
+ln -sfv libncurses++w.a /usr/lib/libncurses++.a
+
+rm -vf                     /usr/lib/libcursesw.so
+echo "INPUT(-lncursesw)" > /usr/lib/libcursesw.so
+ln -sfv libncurses.so      /usr/lib/libcurses.so
+ln -sfv libncursesw.a      /usr/lib/libcursesw.a
+ln -sfv libncurses.a       /usr/lib/libcurses.a
+
+
+# attr
+sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in
+./configure --prefix=/usr --bindir=/bin
+make
+make -j1 test root-tests
+
+make install install-dev install-lib
+
+chmod -v 755 /usr/lib/libattr.so
+
+mv -v /usr/lib/libattr.so.* /lib
+
+ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so
+
+
+# acl
+# Modify the documentation directory so that it is a versioned directory:
+sed -i -e 's|/@pkg_name@|&-@pkg_version@|' include/builddefs.in
+# Fix some broken tests:
+sed -i "s:| sed.*::g" test/{sbits-restore,cp,misc}.test
+
+# fix a bug that causes getfacl -e to segfault on overly long group name:
+sed -i -e "/TABS-1;/a if (x > (TABS-1)) x = (TABS-1);" \
+  libacl/__acl_to_any_text.c
+
+./configure --prefix=/usr \
+            --bindir=/bin \
+            --libexecdir=/usr/lib
+
+make
+# If desired, return to this package and run make -j1 tests after Coreutils
+# has been built
+make install install-dev install-lib
+chmod -v 755 /usr/lib/libacl.so
+
+mv -v /usr/lib/libacl.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so
+
+
+# libcap
+make
+make RAISE_SETFCAP=no prefix=/usr install
+chmod -v 755 /usr/lib/libcap.so
+
+mv -v /usr/lib/libcap.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libcap.so) /usr/lib/libcap.so
+
+
+# sed
+./configure --prefix=/usr --bindir=/bin --htmldir=/usr/share/doc/sed-4.2.2
+make
+make html
+make check
+make install
+make -C doc install-html
+
+
+# shadow
+sed -i 's/groups$(EXEEXT) //' src/Makefile.in
+find man -name Makefile.in -exec sed -i 's/groups\.1 / /' {} \;
+
+sed -i -e 's@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@' \
+       -e 's@/var/spool/mail@/var/mail@' etc/login.defs
+
+sed -i 's/1000/999/' etc/useradd
+
+./configure --sysconfdir=/etc --with-group-name-max-length=32
+
+make
+make install
+
+mv -v /usr/bin/passwd /bin
+
+# To enable shadowed passwords, run the following command:
+pwconv
+
+# To enable shadowed group passwords, run:
+grpconv
+
+sed -i 's/yes/no/' /etc/default/useradd
+
+
+# psmisc
+./configure --prefix=/usr
+make
+make install
+mv -v /usr/bin/fuser   /bin
+mv -v /usr/bin/killall /bin
+
+
+# procps (ps is in this package, not in psmisc)
+./configure --prefix=/usr                           \
+            --exec-prefix=                          \
+            --libdir=/usr/lib                       \
+            --docdir=/usr/share/doc/procps-ng-3.3.10 \
+            --disable-static                        \
+            --disable-kill
+
+make
+sed -i -r 's|(pmap_initname)\\\$|\1|' testsuite/pmap.test/pmap.exp
+make check
+make install
+
+mv -v /usr/bin/pidof /bin
+mv -v /usr/lib/libprocps.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so
+
+
+# e2fsprog
+sed -e '/int.*old_desc_blocks/s/int/blk64_t/' \
+    -e '/if (old_desc_blocks/s/super->s_first_meta_bg/desc_blocks/' \
+    -i lib/ext2fs/closefs.c
+
+mkdir -v build
+cd build
+
+
+LIBS=-L/tools/lib                    \
+CFLAGS=-I/tools/include              \
+PKG_CONFIG_PATH=/tools/lib/pkgconfig \
+../configure --prefix=/usr           \
+             --bindir=/bin           \
+             --with-root-prefix=""   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck
+
+make
+ln -sfv /tools/lib/lib{blk,uu}id.so.1 lib
+make LD_LIBRARY_PATH=/tools/lib check
+
+make install
+make install-libs
+
+chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+
+gunzip -v /usr/share/info/libext2fs.info.gz
+install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info
+
+# If desired, create and install some additional documentation by issuing
+# the following commands:
+makeinfo -o      doc/com_err.info ../lib/et/com_err.texinfo
+install -v -m644 doc/com_err.info /usr/share/info
+install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info
+
+
+# coreutils
+patch -Np1 -i ../coreutils-8.23-i18n-1.patch 
+touch Makefile.in
+
+FORCE_UNSAFE_CONFIGURE=1 ./configure \
+            --prefix=/usr            \
+            --enable-no-install-program=kill,uptime
+
+make
+make NON_ROOT_USERNAME=nobody check-root
+echo "dummy:x:1000:nobody" >> /etc/group
+chown -Rv nobody .
+su nobody -s /bin/bash \
+          -c "PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check"
+sed -i '/dummy/d' /etc/group
+
+make install
+mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
+mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
+mv -v /usr/bin/chroot /usr/sbin
+mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
+sed -i s/\"1\"/\"8\"/1 /usr/share/man/man8/chroot.8
+
+mv -v /usr/bin/{head,sleep,nice,test,[} /bin
+
+
+# iana
+make
+make install
+
+
+# m4
+./configure --prefix=/usr
+make
+make check
+make install
+
+
+# flex
+sed -i -e '/test-bison/d' tests/Makefile.in
+./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.5.39
+make
+make check
+make install
+ln -sv flex /usr/bin/lex
+
+
+# bison
+./configure --prefix=/usr --docdir=/usr/share/doc/bison-3.0.4
+make
+make check
+make install
+
+
+# grep
+sed -i -e '/tp++/a  if (ep <= tp) break;' src/kwset.c
+./configure --prefix=/usr --bindir=/bin
+make
+make check
+make install
+
+
+# readline
+patch -Np1 -i ../readline-6.3-upstream_fixes-3.patch
+sed -i '/MV.*old/d' Makefile.in
+sed -i '/{OLDSUFF}/c:' support/shlib-install
+./configure --prefix=/usr --docdir=/usr/share/doc/readline-6.3
+make SHLIB_LIBS=-lncurses
+make SHLIB_LIBS=-lncurses install
+mv -v /usr/lib/lib{readline,history}.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
+ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+
+install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-6.3
+
+
+# bash
+patch -Np1 -i ../bash-4.3.30-upstream_fixes-1.patch
+
+./configure --prefix=/usr                    \
+            --bindir=/bin                    \
+            --docdir=/usr/share/doc/bash-4.3.30 \
+            --without-bash-malloc            \
+            --with-installed-readline
+
+make
+
+chown -Rv nobody .
+su nobody -s /bin/bash -c "PATH=$PATH make tests"
+
+make install
+
+exec /bin/bash --login +h
+
+
+# bc
+patch -Np1 -i ../bc-1.06.95-memory_leak-1.patch
+./configure --prefix=/usr           \
+            --with-readline         \
+            --mandir=/usr/share/man \
+            --infodir=/usr/share/info
+make
+echo "quit" | ./bc/bc -l Test/checklib.b
+make install
+
+
+# libtool
+./configure --prefix=/usr
+make
+make check # 5 tests are known to fail in the LFS build envronment
+make install
+
+
+# gdbm
+./configure --prefix=/usr --enable-libgdbm-compat
+make
+make check
+make install
+
+
+# expat
+./configure --prefix=/usr
+make
+make check
+make install
+install -v -dm755 /usr/share/doc/expat-2.1.0
+install -v -m644 doc/*.{html,png,css} /usr/share/doc/expat-2.1.0
+
+
+# inetutils
+echo '#define PATH_PROCNET_DEV "/proc/net/dev"' >> ifconfig/system/linux.h
+./configure --prefix=/usr  \
+            --localstatedir=/var   \
+            --disable-logger       \
+            --disable-whois        \
+            --disable-servers
+
+make
+make check
+make install
+mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
+mv -v /usr/bin/ifconfig /sbin
+
+
+# perl
+echo "127.0.0.1 localhost $(hostname)" > /etc/hosts
+export BUILD_ZLIB=False
+export BUILD_BZIP2=0
+sh Configure -des -Dprefix=/usr                 \
+                  -Dvendorprefix=/usr           \
+                  -Dman1dir=/usr/share/man/man1 \
+                  -Dman3dir=/usr/share/man/man3 \
+                  -Dpager="/usr/bin/less -isR"  \
+                  -Duseshrplib
+
+make
+make -k test
+make install
+unset BUILD_ZLIB BUILD_BZIP2
+
+
+# XML::Parser
+perl Makefile.PL
+make
+make test
+make install
+
+
+# autoconf
+./configure --prefix=/usr
+make
+make check # (one unexpected failures)
+make install
+
+
+# automake
+./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.15
+make
+
+sed -i "s:./configure:LEXLIB=/usr/lib/libfl.a &:" t/lex-{clean,depend}-cxx.sh
+make -j4 check
+
+make install
+
+
+# diffutils
+sed -i 's:= @mkdir_p@:= /bin/mkdir -p:' po/Makefile.in.in
+./configure --prefix=/usr
+make
+make check
+make install
+
+
+# gawk
+./configure --prefix=/usr
+make
+make check
+make install
+mkdir -v /usr/share/doc/gawk-4.1.1
+cp    -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-4.1.1
+
+
+# findutils
+./configure --prefix=/usr --localstatedir=/var/lib/locate
+make
+make check
+make install
+mv -v /usr/bin/find /bin
+sed -i 's|find:=${BINDIR}|find:=/bin|' /usr/bin/updatedb
+
+
+# gettext
+./configure --prefix=/usr --docdir=/usr/share/doc/gettext-0.19.4
+make
+make check
+make install
+
+
+# intltool
+./configure --prefix=/usr
+make
+make check
+make install
+install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.50.2/I18N-HOWTO
+
+
+# gperl
+./configure --prefix=/usr --docdir=/usr/share/doc/gperf-3.0.4
+make
+make check
+make install
+
+
+# groff
+PAGE=A4 ./configure --prefix=/usr
+make
+make install
+
+
+# xz
+./configure --prefix=/usr --docdir=/usr/share/doc/xz-5.2.0
+make
+make check
+make install
+mv -v   /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
+mv -v /usr/lib/liblzma.so.* /lib
+ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so
+
+
+# grub
+./configure --prefix=/usr          \
+            --sbindir=/sbin        \
+            --sysconfdir=/etc      \
+            --disable-grub-emu-usb \
+            --disable-efiemu       \
+            --disable-werror
+
+make
+make install
+
+
+# less
+./configure --prefix=/usr --sysconfdir=/etc
+make
+make install
+
+
+# gzip
+./configure --prefix=/usr --bindir=/bin
+make
+make check
+make install
+mv -v /bin/{gzexe,uncompress,zcmp,zdiff,zegrep} /usr/bin
+mv -v /bin/{zfgrep,zforce,zgrep,zless,zmore,znew} /usr/bin
+
+
+# iproute2
+sed -i '/^TARGETS/s@arpd@@g' misc/Makefile
+sed -i /ARPD/d Makefile
+sed -i 's/arpd.8//' man/man8/Makefile
+make
+make DOCDIR=/usr/share/doc/iproute2-3.19.0 install
+
+
+# kbd
+patch -Np1 -i ../kbd-2.0.2-backspace-1.patch
+sed -i 's/\(RESIZECONS_PROGS=\)yes/\1no/g' configure
+sed -i 's/resizecons.8 //' docs/man/man8/Makefile.in
+PKG_CONFIG_PATH=/tools/lib/pkgconfig ./configure --prefix=/usr --disable-vlock
+make
+make check
+make install
+
+mkdir -v /usr/share/doc/kbd-2.0.2
+cp -R -v docs/doc/* /usr/share/doc/kbd-2.0.2
+
+
+# kmod
+./configure --prefix=/usr          \
+            --bindir=/bin          \
+            --sysconfdir=/etc      \
+            --with-rootlibdir=/lib \
+            --with-xz              \
+            --with-zlib
+
+make
+make check
+make install
+
+for target in depmod insmod lsmod modinfo modprobe rmmod
+do
+  ln -sv ../bin/kmod /sbin/$target
+done
+
+ln -sv kmod /bin/lsmod
+
+
+# libpipeline
+PKG_CONFIG_PATH=/tools/lib/pkgconfig ./configure --prefix=/usr
+make
+make check
+make install
+
+
+# make
+./configure --prefix=/usr
+make
+make check
+make install
+
+
+# patch
+./configure --prefix=/usr
+make
+make check
+make install
+
+
+# sysklogd
+sed -i '/Error loading kernel symbols/{n;n;d}' ksym_mod.c
+make
+make BINDIR=/sbin install
+
+cat > /etc/syslog.conf << "EOF"
+# Begin /etc/syslog.conf
+
+auth,authpriv.* -/var/log/auth.log
+*.*;auth,authpriv.none -/var/log/sys.log
+daemon.* -/var/log/daemon.log
+kern.* -/var/log/kern.log
+mail.* -/var/log/mail.log
+user.* -/var/log/user.log
+*.emerg *
+
+# End /etc/syslog.conf
+EOF
+
+
+# sysvinit
+patch -Np1 -i ../sysvinit-2.88dsf-consolidated-1.patch
+make -C src
+make -C src install
+
+
+# tar
+FORCE_UNSAFE_CONFIGURE=1  \
+./configure --prefix=/usr \
+            --bindir=/bin
+
+make
+make check
+make install
+make -C doc install-html docdir=/usr/share/doc/tar-1.28
+
+
+# texinfo
+./configure --prefix=/usr
+make
+make check
+make TEXMF=/usr/share/texmf install-tex
+
+pushd /usr/share/info
+rm -v dir
+for f in *
+do install-info $f dir 2>/dev/null
+done
+popd
+
+
+# eudev
+sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl
+
+BLKID_CFLAGS=-I/tools/include       \
+BLKID_LIBS='-L/tools/lib -lblkid'   \
+./configure --prefix=/usr           \
+            --bindir=/sbin          \
+            --sbindir=/sbin         \
+            --libdir=/usr/lib       \
+            --sysconfdir=/etc       \
+            --libexecdir=/lib       \
+            --with-rootprefix=      \
+            --with-rootlibdir=/lib  \
+            --enable-split-usr      \
+            --enable-libkmod        \
+            --enable-rule_generator \
+            --enable-keymap         \
+            --disable-introspection \
+            --disable-gudev         \
+            --disable-gtk-doc-html
+
+make
+mkdir -pv /lib/udev/rules.d
+mkdir -pv /etc/udev/rules.d
+make check
+make install
+
+tar -xvf ../eudev-2.1.1-manpages.tar.bz2 -C /usr/share
+tar -xvf ../udev-lfs-20140408.tar.bz2
+make -f udev-lfs-20140408/Makefile.lfs install
+
+# information compile into a binary database /etc/udev/hwdb.bin
+udevadm hwdb --update
+
+
+# utils-linux
+mkdir -pv /var/lib/hwclock
+
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime     \
+            --docdir=/usr/share/doc/util-linux-2.26   \
+            --disable-chfn-chsh                       \
+            --disable-login                           \
+            --disable-nologin                         \
+            --disable-su                              \
+            --disable-setpriv                         \
+            --disable-runuser                         \
+            --disable-pylibmount                      \
+            --without-python                          \
+            --without-systemd                         \
+            --without-systemdsystemunitdir
+
+make
+chown -Rv nobody .
+su nobody -s /bin/bash -c "PATH=$PATH make -k check"
+
+make install
+
+
+# man-db
+./configure --prefix=/usr                          \
+            --docdir=/usr/share/doc/man-db-2.7.1 \
+            --sysconfdir=/etc                      \
+            --disable-setuid                       \
+            --with-browser=/usr/bin/lynx           \
+            --with-vgrind=/usr/bin/vgrind          \
+            --with-grap=/usr/bin/grap
+
+make
+make check
+make install
+
+
+# vim
+echo '#define SYS_VIMRC_FILE "/etc/vimrc"' >> src/feature.h
+./configure --prefix=/usr
+make
+make -j1 test
+make install
+
+ln -sv vim /usr/bin/vi
+for L in /usr/share/man/{,*/}man1/vim.1; do
+  ln -sv vim.1 $(dirname $L)/vi.1
+done
+
+ln -sv ../vim/vim74/doc /usr/share/doc/vim-7.4
+
+
+# strip
+# i don't want to strip the debug information
+
+
+# clean up
+rm -rf /tmp/*
+
+rm -rf /tools # you might want to keep it somewhere else.
+
+# you have deleted /tools, now use this to login
+chroot "$LFS" /usr/bin/env -i                   \
+  HOME=/root                                    \
+  TERM="$TERM"                                  \
+  PS1='\u:\w\$ '                                \
+  PATH=/bin:/usr/bin:/sbin:/usr/sbin            \
+  /bin/bash --login +h
+
+
+
+
+
+
+            #### bootscript ####
+
+
+# lfs-bootstripts
+make install
+
+
+# network
+cd /etc/sysconfig/
+cat > ifconfig.eth0 << "EOF"
+ONBOOT=yes
+IFACE=eth0
+SERVICE=ipv4-static
+IP=192.168.1.2
+GATEWAY=192.168.1.1
+PREFIX=24
+BROADCAST=192.168.1.255
+EOF
+
+
+cat > /etc/resolv.conf << "EOF"
+domain wxlfs
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+
+
+echo wxhost > /etc/hostname
+
+cat > /etc/hosts << "EOF"
+127.0.0.1 localhost
+#192.168.1.190 wxhost.net wxhost1.net wxhpst2.net
+EOF
+
+
+# sysv init
+cat > /etc/inittab << "EOF"
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc S
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty --noclear tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+EOF
+
+
+
+# configure time
+cat > /etc/sysconfig/clock << "EOF"
+UTC=1
+# Set this to any options you might need to give to hwclock,
+# such as machine hardware clock type for Alphas.
+CLOCKPARAMS=
+EOF
+
+
+# configure console
+cat > /etc/sysconfig/console << "EOF"
+KEYMAP="qwerty"
+#FONT="lat2a-16 -m 8859-2" # for polish
+FONT="lat1-16 -m 8859-1"
+EOF
+
+# profile
+cat > /etc/profile << "EOF"
+#export LANG=<ll>_<CC>.<charmap><@modifiers>
+export LANG=en_US.iso88591
+EOF
+
+
+# inputrc
+cat > /etc/inputrc << "EOF"
+# Allow the command prompt to wrap to the next line
+set horizontal-scroll-mode Off
+
+# Enable 8bit input
+set meta-flag On
+set input-meta On
+
+# Turns off 8th bit stripping
+set convert-meta Off
+
+# Keep the 8th bit for display
+set output-meta On
+
+# none, visible or audible
+set bell-style none
+
+# All of the following map the escape sequence of the value
+# contained in the 1st argument to the readline specific functions
+"\eOd": backward-word
+"\eOc": forward-word
+
+# for linux console
+"\e[1~": beginning-of-line
+"\e[4~": end-of-line
+"\e[5~": beginning-of-history
+"\e[6~": end-of-history
+"\e[3~": delete-char
+"\e[2~": quoted-insert
+
+# for xterm
+"\eOH": beginning-of-line
+"\eOF": end-of-line
+
+# for Konsole
+"\e[H": beginning-of-line
+"\e[F": end-of-line
+EOF
+
+
+# shell
+cat > /etc/shells << "EOF"
+/bin/sh
+/bin/bash
+EOF
+
+
+# fstab
+cat > /etc/fstab << "EOF"
+# file system  mount-point  type     options             dump  fsck
+/dev/<xxx>     /            <fff>    defaults            1     1
+/dev/<yyy>     swap         swap     pri=1               0     0
+proc           /proc        proc     nosuid,noexec,nodev 0     0
+sysfs          /sys         sysfs    nosuid,noexec,nodev 0     0
+devpts         /dev/pts     devpts   gid=5,mode=620      0     0
+tmpfs          /run         tmpfs    defaults            0     0
+devtmpfs       /dev         devtmpfs mode=0755,nosuid    0     0
+EOF
+
+
+# linux kernel
+make mrproper
+make menuconfig
+make
+make modules_install
+cp -v arch/x86/boot/bzImage /boot/vmlinuz-3.19
+cp -v System.map /boot/System.map-3.19
+cp -v .config /boot/config-3.19
+
+#install documentation
+install -d /usr/share/doc/linux-3.19
+cp -r Documentation/* /usr/share/doc/linux-3.19
+
+grub-install /dev/sda
+
+cat > /boot/grub/grub.cfg << "EOF"
+set default=0
+set timeout=5
+insmod ext2
+set root=(hd0,1)
+menuentry "Linux kernel 3.19" {
+  linux /vmlinuz-3.19 root=/dev/sda3 ro
+}
+EOF
+
+# if you want to use your Lenovo X61 laptop's WIFI, you will need
+# the `/lib/firmware/iwlwifi-4965-2.ucode'
+
+
+# use `wireless-tools' or `wpa-supplicant' to support wifi
+# `wireless-tools' support more hardware devices, but do not support WPA,
+# it supports WEP only. But nearly all wireless AP around use WPA-2/PSK,
+# so you need `wpa-supplicant'
+
+
+# to use wifi, you need to enable this when compiling kernel:
+#   `cfg80211 wireless extensions compatibility'
+
+
+# to install wpasupplicant
+# libnl
+./configure --prefix=/usr     \
+            --sysconfdir=/etc \
+            --disable-static
+make
+make install
+# install documents
+mkdir -vp /usr/share/doc/libnl-3.2.25 &&
+tar -xf ../libnl-doc-3.2.25.tar.gz --strip-components=1 --no-same-owner \
+        -C /usr/share/doc/libnl-3.2.25
+
+
+# openssl
+./config --prefix=/usr         \
+         --openssldir=/etc/ssl \
+         --libdir=lib          \
+         shared                \
+         zlib-dynamic
+make
+sed -i 's# libcrypto.a##;s# libssl.a##' Makefile
+
+make MANDIR=/usr/share/man MANSUFFIX=ssl install &&
+install -dv -m755 /usr/share/doc/openssl-1.0.2d  &&
+cp -vfr doc/*     /usr/share/doc/openssl-1.0.2d
+
+
+# wpa supplicant
+cat > wpa_supplicant/.config << "EOF"
+CONFIG_BACKEND=file
+CONFIG_CTRL_IFACE=y
+CONFIG_DEBUG_FILE=y
+CONFIG_DEBUG_SYSLOG=y
+CONFIG_DEBUG_SYSLOG_FACILITY=LOG_DAEMON
+CONFIG_DRIVER_NL80211=y
+CONFIG_DRIVER_WEXT=y
+CONFIG_DRIVER_WIRED=y
+CONFIG_EAP_GTC=y
+CONFIG_EAP_LEAP=y
+CONFIG_EAP_MD5=y
+CONFIG_EAP_MSCHAPV2=y
+CONFIG_EAP_OTP=y
+CONFIG_EAP_PEAP=y
+CONFIG_EAP_TLS=y
+CONFIG_EAP_TTLS=y
+CONFIG_IEEE8021X_EAPOL=y
+CONFIG_IPV6=y
+CONFIG_LIBNL32=y
+CONFIG_PEERKEY=y
+CONFIG_PKCS12=y
+CONFIG_READLINE=y
+CONFIG_SMARTCARD=y
+CONFIG_WPS=y
+CFLAGS += -I/usr/include/libnl3
+EOF
+
+# If you wish to use WPA Supplicant with NetworkManager-1.0.6, make sure
+# that you have installed D-Bus-1.10.0 and libxml2-2.9.2
+#cat >> wpa_supplicant/.config << "EOF"
+#CONFIG_CTRL_IFACE_DBUS=y
+#CONFIG_CTRL_IFACE_DBUS_NEW=y
+#CONFIG_CTRL_IFACE_DBUS_INTRO=y
+#EOF
+#
+
+cd wpa_supplicant &&
+make BINDIR=/sbin LIBDIR=/lib
+
+install -v -m755 wpa_{cli,passphrase,supplicant} /sbin/ &&
+install -v -m644 doc/docbook/wpa_supplicant.conf.5 /usr/share/man/man5/ &&
+install -v -m644 doc/docbook/wpa_{cli,passphrase,supplicant}.8 /usr/share/man/man8/
+
+# if with dbus support
+#install -v -m644 dbus/fi.{epitest.hostap.WPASupplicant,w1.wpa_supplicant1}.service \
+#                 /usr/share/dbus-1/system-services/ &&
+#install -v -m644 dbus/dbus-wpa_supplicant.conf \
+#                 /etc/dbus-1/system.d/wpa_supplicant.conf
+
+
+# configure wpa supplicant
+wpa_passphrase SSID SECRET_PASSWORD > /etc/sysconfig/wpa_supplicant-wifi0.conf
+
+# start the wpa_supplicant, and use `-B' to run background
+wpa_supplicant -Dnl80211 -iwlan0 -c/etc/sysconfig/wpa_supplicant-wifi0.conf -B
+
+
+
+# pciutils
+make PREFIX=/usr              \
+  SHAREDIR=/usr/share/misc    \
+  SHARED=yes
+
+make PREFIX=/usr              \
+  SHAREDIR=/usr/share/misc    \
+  SHARED=yes                  \
+  install install-lib
+
+chmod -v 755 /usr/lib/libpci.so
+
+
+
+
+
+
+             ###       certificate (for ssl)      ###
+
+
+
+cat > /usr/bin/make-cert.pl << "EOF"
+#!/usr/bin/perl -w
+
+# Used to generate PEM encoded files from Mozilla certdata.txt.
+# Run as ./make-cert.pl > certificate.crt
+# Version 20120211
+
+my $certdata = './tempfile.cer';
+
+open( IN, "cat $certdata|" ) || die "could not open $certdata";
+
+my $incert = 0;
+
+while ( <IN> ) {
+  if ( /^CKA_VALUE MULTILINE_OCTAL/ ) {
+    $incert = 1;
+    open( OUT, "|openssl x509 -text -inform DER -fingerprint" )
+      || die "could not pipe to openssl x509";
+  }
+  elsif ( /^END/ && $incert ) {
+    close( OUT );
+    $incert = 0;
+    print "\n\n";
+  }
+  elsif ($incert) {
+    my @bs = split( /\\/ );
+    foreach my $b (@bs) {
+      chomp $b;
+      printf( OUT "%c", oct($b) ) unless $b eq '';
+    }
+  }
+}
+EOF
+
+chmod +x /usr/bin/make-cert.pl
+
+
+cat > /usr/bin/make-ca.sh << "EOF"
+#!/bin/sh
+# Begin make-ca.sh
+# Script to populate OpenSSL's CApath from a bundle of PEM formatted CAs
+# The file certdata.txt must exist in the local directory
+# Version number is obtained from the version of the data.
+# Version 20120211
+
+certdata="certdata.txt"
+
+if [ ! -r $certdata ]; then
+  echo "$certdata must be in the local directory"
+  exit 1
+fi
+
+REVISION=$(grep CVS_ID $certdata | cut -f4 -d'$')
+
+if [ -z "${REVISION}" ]; then
+  echo "$certfile has no 'Revision' in CVS_ID"
+  exit 1
+fi
+
+VERSION=$(echo $REVISION | cut -f2 -d" ")
+
+TEMPDIR=$(mktemp -d)
+TRUSTATTRIBUTES="CKA_TRUST_SERVER_AUTH"
+BUNDLE="BLFS-ca-bundle-${VERSION}.crt"
+CONVERTSCRIPT="/usr/bin/make-cert.pl"
+SSLDIR="/etc/ssl"
+
+mkdir "${TEMPDIR}/certs"
+
+# Get a list of starting lines for each cert
+CERTBEGINLIST=$(grep -n "^# Certificate" "${certdata}" | cut -d ":" -f1)
+
+# Get a list of ending lines for each cert
+CERTENDLIST=`grep -n "^CKA_TRUST_STEP_UP_APPROVED" "${certdata}" | cut -d ":" -f 1`
+
+# Start a loop
+for certbegin in ${CERTBEGINLIST}; do
+  for certend in ${CERTENDLIST}; do
+    if test "${certend}" -gt "${certbegin}"; then
+      break
+    fi
+  done
+  # Dump to a temp file with the name of the file as the beginning line number
+  sed -n "${certbegin},${certend}p" "${certdata}" > "${TEMPDIR}/certs/${certbegin}.tmp"
+done
+
+unset CERTBEGINLIST CERTDATA CERTENDLIST certbegin certend
+
+mkdir -p certs
+rm -f certs/*      # Make sure the directory is clean
+
+for tempfile in ${TEMPDIR}/certs/*.tmp; do
+  # Make sure that the cert is trusted...
+  grep "CKA_TRUST_SERVER_AUTH" "${tempfile}" | \
+      egrep "TRUST_UNKNOWN|NOT_TRUSTED" > /dev/null
+
+  if test "${?}" = "0"; then
+    # Throw a meaningful error and remove the file
+    cp "${tempfile}" tempfile.cer
+    perl ${CONVERTSCRIPT} > tempfile.crt
+    keyhash=$(openssl x509 -noout -in tempfile.crt -hash)
+    echo "Certificate ${keyhash} is not trusted!  Removing..."
+    rm -f tempfile.cer tempfile.crt "${tempfile}"
+    continue
+  fi
+
+  # If execution made it to here in the loop, the temp cert is trusted
+  # Find the cert data and generate a cert file for it
+
+  cp "${tempfile}" tempfile.cer
+  perl ${CONVERTSCRIPT} > tempfile.crt
+  keyhash=$(openssl x509 -noout -in tempfile.crt -hash)
+  mv tempfile.crt "certs/${keyhash}.pem"
+  rm -f tempfile.cer "${tempfile}"
+  echo "Created ${keyhash}.pem"
+done
+
+# Remove blacklisted files
+# MD5 Collision Proof of Concept CA
+if test -f certs/8f111d69.pem; then
+  echo "Certificate 8f111d69 is not trusted!  Removing..."
+  rm -f certs/8f111d69.pem
+fi
+
+# Finally, generate the bundle and clean up.
+cat certs/*.pem >  ${BUNDLE}
+rm -r "${TEMPDIR}"
+EOF
+
+chmod +x /usr/bin/make-ca.sh
+
+
+cat > /usr/sbin/remove-expired-certs.sh << "EOF"
+#!/bin/sh
+# Begin /usr/sbin/remove-expired-certs.sh
+#
+# Version 20120211
+
+# Make sure the date is parsed correctly on all systems
+mydate()
+{
+  local y=$( echo $1 | cut -d" " -f4 )
+  local M=$( echo $1 | cut -d" " -f1 )
+  local d=$( echo $1 | cut -d" " -f2 )
+  local m
+
+  if [ ${d} -lt 10 ]; then d="0${d}"; fi
+
+  case $M in
+  Jan) m="01";;
+  Feb) m="02";;
+  Mar) m="03";;
+  Apr) m="04";;
+  May) m="05";;
+  Jun) m="06";;
+  Jul) m="07";;
+  Aug) m="08";;
+  Sep) m="09";;
+  Oct) m="10";;
+  Nov) m="11";;
+  Dec) m="12";;
+  esac
+
+  certdate="${y}${m}${d}"
+}
+
+OPENSSL=/usr/bin/openssl
+DIR=/etc/ssl/certs
+
+if [ $# -gt 0 ]; then
+  DIR="$1"
+fi
+
+certs=$( find ${DIR} -type f -name "*.pem" -o -name "*.crt" )
+today=$( date +%Y%m%d )
+
+for cert in $certs; do
+  notafter=$( $OPENSSL x509 -enddate -in "${cert}" -noout )
+  date=$( echo ${notafter} |  sed 's/^notAfter=//' )
+  mydate "$date"
+
+  if [ ${certdate} -lt ${today} ]; then
+    echo "${cert} expired on ${certdate}! Removing..."
+    rm -f "${cert}"
+  fi
+done
+EOF
+
+chmod u+x /usr/sbin/remove-expired-certs.sh
+
+
+#
+URL=http://anduin.linuxfromscratch.org/sources/other/certdata.txt &&
+rm -f certdata.txt &&
+wget $URL          &&
+make-ca.sh         &&
+unset URL
+# or you can just download certdata.txt as wget may not available
+
+SSLDIR=/etc/ssl                                              &&
+remove-expired-certs.sh certs                                &&
+install -d ${SSLDIR}/certs                                   &&
+cp -v certs/*.pem ${SSLDIR}/certs                            &&
+c_rehash                                                     &&
+install BLFS-ca-bundle*.crt ${SSLDIR}/ca-bundle.crt          &&
+ln -sfv ../ca-bundle.crt ${SSLDIR}/certs/ca-certificates.crt &&
+unset SSLDIR
+
+# clean up:
+rm -r certs BLFS-ca-bundle*
+
+
+
+# install curl:
+./configure --prefix=/usr              \
+            --disable-static           \
+            --enable-threaded-resolver
+make
+make install
+find docs \( -name Makefile\* \
+          -o -name \*.1       \
+          -o -name \*.3 \)    \
+          -exec rm {} \;      &&
+install -v -d -m755 /usr/share/doc/curl-7.44.0 &&
+cp -v -R docs/*     /usr/share/doc/curl-7.44.0
+
+
+# install git: (need curl if want to download with https)
+./configure --prefix=/usr --with-gitconfig=/etc/gitconfig --without-python
+make
+make install
+
+
+# install links2 (www browser)
+./configure --prefix=/usr --mandir=/usr/share/man
+make
+make install &&
+install -v -d -m755 /usr/share/doc/links-2.9 &&
+install -v -m644 doc/links_cal/* KEYS BRAILLE_HOWTO \
+    /usr/share/doc/links-2.9
+
+
+# install wget:
+# the combination wget-1.6.3, openssl-1.0.2a is know to be broken.
+# the LFS use openssl-1.0.2d, lucky.
+./configure --prefix=/usr/ --sysconfdir=/etc --with-ssl=openssl
+make
+make install
+echo ca-directory=/etc/ssl/certs >> /etc/wgetrc
+
+
+# alsa (you need to enable many option in the SoundCard part)
+# alsa-lib-1.0.28
+./configure && make
+make install
+
+# alsa-plugins-1.0.28
+./configure && make
+make install
+
+# alsa-utils-1.0.28
+./configure --disable-alsaconf --disable-xmlto && make
+make install
+
+# test
+speaker-test  # I don't know how this test the alsa
+aplay somewav.wav # this works !
+
+# alsa-oss
+./configure --disable-static && make
+make install
+
+
+# mpg123
+./configure --prefix=/usr --with-module-suffix=.so
+make
+make install
+
+
+# install mplayer
+# yasm
+set -i 's#) ytasm.*#)#' Makefile.in
+./configure --prefix=/usr --enable-dynamic-plugins
+make
+make check
+make install
+
+# mplayer
+sed -i 's:libsmbclient.h:samba-4.0/&:' configure stream/stream_smb.c
+./configure --prefix=/usr --confdir=/etc/mplayer --enable-dynamic-plugins
+make
+make install
+
+
+
+# i don't want to install python, but so many build process needs it.
+# so, just a python2
+
+# libffi
+# make package install header into `/usr/include'
+# instead of                       `/usr/lib/libffi-3.2.1/include'
+sed -e '/^includesdir/ s/$(libdir).*$/$(includedir)/' \
+     -i include/Makefile.in &&
+sed -e '/^includedir/ s/=.*$/=@includedir@/' \
+    -e 's/^Cflags: -I${includedir}/Cflags:/' \
+    -i libffi.pc.in         &&
+./configure --prefix=/usr --disable-static &&
+make
+
+
+# python2
+./configure --prefix=/usr       \
+            --enable-shared     \
+            --with-system-expat \
+            --with-system-ffi   \
+            --enable-unicode=ucs4 &&
+make
+make -k test  # on test fails for unknown reason
+make install &&
+chmod -v 755 /usr/lib/libpython2.7.so.1.0
+
+
+
+
+
+
+
+            #### build X.org ####
+
+
+# before compiling:
+cat > /etc/profile.d/xorg.sh << "EOF"
+export XORG_PREFIX=/opt/X.org
+export XORG_CONFIG="--prefix=$XORG_PREFIX --sysconfdir=/etc \
+    --localstatedir=/var --disable-static"
+
+EOF
+chmod 644 /etc/profile.d/xorg.sh
+
+# if you don't install x.org in /usr:
+cat >> /etc/profile.d/xorg.sh << "EOF"
+export PATH="$PATH:$XORG_PREFIX/bin"
+
+if [ -z $PKG_CONFIG_PATH ]; then
+  export PKG_CONFIG_PATH="$XORG_PREFIX/lib/pkgconfig"
+else
+  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$XORG_PREFIX/lib/pkgconfig"
+fi
+
+if [ -z $PKG_CONFIG_PATH ]; then
+  export PKG_CONFIG_PATH="$XORG_PREFIX/share/pkgconfig"
+else
+  export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$XORG_PREFIX/share/pkgconfig"
+fi
+
+if [ -z $LIBRARY_PATH ]; then
+  export LIBRARY_PATH="$XORG_PREFIX/lib"
+else
+  export LIBRARY_PATH="$LIBRARY_PATH:$XORG_PREFIX/lib"
+fi
+
+if [ -z C_INCLUDE_PATH ]; then
+  export C_INCLUDE_PATH="$XORG_PREFIX/include"
+else
+  export C_INCLUDE_PATH="$C_INCLUDE_PATH:$XORG_PREFIX/include"
+fi
+
+if [ -z CPLUS_INCLUDE_PATH ]; then
+  export CPLUS_INCLUDE_PATH="$XORG_PREFIX/include"
+else
+  export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:$XORG_PREFIX/include"
+fi
+
+export ACLOCAL='aclocal -I $XORG_PREFIX/share/aclocal'
+
+EOF
+
+
+echo "$XORG_PREFIX/lib" >> /etc/ld.so.conf
+
+sed "s@/usr/X11R6@$XORG_PREFIX@g" -i /etc/man_db.conf
+
+ln -sf $XORG_PREFIX/share/X11 /usr/share/X11
+ln -sf $XORG_PREFIX /usr/X11R6
+
+
+
+# util-macros
+./configure $XORG_CONFIG
+make install
+
+
+# xorg protocol headers (need to download 26 .tar.bz2 files)
+cat > proto-7.7.md5 << "EOF"
+1a05fb01fa1d5198894c931cf925c025  bigreqsproto-1.1.2.tar.bz2
+98482f65ba1e74a08bf5b056a4031ef0  compositeproto-0.4.2.tar.bz2
+998e5904764b82642cc63d97b4ba9e95  damageproto-1.2.1.tar.bz2
+4ee175bbd44d05c34d43bb129be5098a  dmxproto-2.3.1.tar.bz2
+b2721d5d24c04d9980a0c6540cb5396a  dri2proto-2.8.tar.bz2
+a3d2cbe60a9ca1bf3aea6c93c817fee3  dri3proto-1.0.tar.bz2
+e7431ab84d37b2678af71e29355e101d  fixesproto-5.0.tar.bz2
+36934d00b00555eaacde9f091f392f97  fontsproto-2.1.3.tar.bz2
+5565f1b0facf4a59c2778229c1f70d10  glproto-1.4.17.tar.bz2
+6caebead4b779ba031727f66a7ffa358  inputproto-2.3.1.tar.bz2
+94afc90c1f7bef4a27fdd59ece39c878  kbproto-1.0.7.tar.bz2
+2d569c75884455c7148d133d341e8fd6  presentproto-1.0.tar.bz2
+a46765c8dcacb7114c821baf0df1e797  randrproto-1.5.0.tar.bz2
+1b4e5dede5ea51906f1530ca1e21d216  recordproto-1.14.2.tar.bz2
+a914ccc1de66ddeb4b611c6b0686e274  renderproto-0.11.1.tar.bz2
+cfdb57dae221b71b2703f8e2980eaaf4  resourceproto-1.2.0.tar.bz2
+edd8a73775e8ece1d69515dd17767bfb  scrnsaverproto-1.2.2.tar.bz2
+e658641595327d3990eab70fdb55ca8b  videoproto-2.3.2.tar.bz2
+5f4847c78e41b801982c8a5e06365b24  xcmiscproto-1.2.2.tar.bz2
+70c90f313b4b0851758ef77b95019584  xextproto-7.3.0.tar.bz2
+120e226ede5a4687b25dd357cc9b8efe  xf86bigfontproto-1.2.0.tar.bz2
+a036dc2fcbf052ec10621fd48b68dbb1  xf86dgaproto-2.1.tar.bz2
+1d716d0dac3b664e5ee20c69d34bc10e  xf86driproto-2.1.1.tar.bz2
+e793ecefeaecfeabd1aed6a01095174e  xf86vidmodeproto-2.3.1.tar.bz2
+9959fe0bfb22a0e7260433b8d199590a  xineramaproto-1.2.1.tar.bz2
+3ce2f230c5d8fa929f326ad1f0fa40a8  xproto-7.0.28.tar.bz2
+EOF
+
+mkdir proto && cd proto && \
+grep -v '^#' ../proto-7.7.md5 | awk '{print $2}' | wget -i - -c \
+    -B http://ftp.x.org/pub/individual/proto/ && md5sum -c ../proto-7.7.md5
+
+
+# install
+# start a subshell that will exit on error:
+bash -e
+
+for package in $(grep -v '^#' ../proto-7.7.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  pushd $packagedir
+  ./configure $XORG_CONFIG
+  make install
+  popd
+  rm -rf $packagedir
+done
+
+exit
+
+
+# libXau
+./configure $XORG_CONFIG && make
+make check
+make install
+
+
+# libXdmcp
+./configure $XORG_CONFIG && make
+make install
+
+
+# xcb-proto
+./configure $XORG_CONFIG
+make check
+make install
+
+
+# libxcb
+sed -i "s/pthread-stubs//" configure &&
+./configure $XORG_CONFIG      \
+            --enable-xinput   \
+            --without-doxygen \
+            --docdir='${datadir}'/doc/libxcb-1.11.1 &&
+make
+make check
+make install
+
+
+
+# to install xorg, you need to install fontconfig, to install fonconfig, you
+# need freetype2, and to install freetype2, you need harfbuzz, libpng, which.
+# But harfbuzz need freetype2, so install freetype first, then harfbuzz,
+# then recompile freetype
+
+# freetype (first pass)
+sed -i  -e "/AUX.*.gxvalid/s@^# @@" \
+        -e "/AUX.*.otvalid/s@^# @@" \
+        modules.cfg                        &&
+sed -ri -e 's:.*(#.*SUBPIXEL.*) .*:\1:' \
+        include/config/ftoption.h          &&
+./configure --prefix=/usr --disable-static &&
+make
+make install
+
+
+# harfbuzz
+./configure --prefix=/usr && make # if you need pango, use --with-gobject
+make check
+make install
+
+
+# libpng
+gzip -cd ../libpng-1.6.18-apng.patch.gz | patch -p1
+
+./configure --prefix=/usr --disable-static &&
+make
+make check
+make install &&
+mkdir -v /usr/share/doc/libpng-1.6.18 &&
+cp -v README libpng-manual.txt /usr/share/doc/libpng-1.6.18
+
+
+# now reinstall freetype2, don't need sed this time
+make clean
+./configure --prefix=/usr --disable-static &&
+make
+make install
+
+
+# fontconfig
+./configure --prefix=/usr        \
+            --sysconfdir=/etc    \
+            --localstatedir=/var \
+            --disable-docs       \
+            --docdir=/usr/share/doc/fontconfig-2.11.1 &&
+make
+make check
+make install
+
+
+
+# xorg libs
+cat > lib-7.7.md5 << "EOF"
+c5ba432dd1514d858053ffe9f4737dd8  xtrans-1.3.5.tar.bz2
+2e36b73f8a42143142dda8129f02e4e0  libX11-1.6.3.tar.bz2
+52df7c4c1f0badd9f82ab124fb32eb97  libXext-1.3.3.tar.bz2
+d79d9fe2aa55eb0f69b1a4351e1368f7  libFS-1.0.7.tar.bz2
+addfb1e897ca8079531669c7c7711726  libICE-1.0.9.tar.bz2
+499a7773c65aba513609fe651853c5f3  libSM-1.2.2.tar.bz2
+7a773b16165e39e938650bcc9027c1d5  libXScrnSaver-1.2.2.tar.bz2
+8f5b5576fbabba29a05f3ca2226f74d3  libXt-1.1.5.tar.bz2
+41d92ab627dfa06568076043f3e089e4  libXmu-1.1.2.tar.bz2
+769ee12a43611cdebd38094eaf83f3f0  libXpm-3.5.11.tar.bz2
+e5e06eb14a608b58746bdd1c0bd7b8e3  libXaw-1.0.13.tar.bz2
+b985b85f8b9386c85ddcfe1073906b4d  libXfixes-5.0.1.tar.bz2
+f7a218dcbf6f0848599c6c36fc65c51a  libXcomposite-0.4.4.tar.bz2
+5db92962b124ca3a8147daae4adbd622  libXrender-0.9.9.tar.bz2
+1e7c17afbbce83e2215917047c57d1b3  libXcursor-1.1.14.tar.bz2
+0cf292de2a9fa2e9a939aefde68fd34f  libXdamage-1.1.4.tar.bz2
+0920924c3a9ebc1265517bdd2f9fde50  libfontenc-1.1.3.tar.bz2
+96f76ba94b4c909230bac1e2dcd551c4  libXfont-1.5.1.tar.bz2
+331b3a2a3a1a78b5b44cfbd43f86fcfe  libXft-2.3.2.tar.bz2
+9c4a69c34b19ec1e4212e849549544cb  libXi-1.7.4.tar.bz2
+9336dc46ae3bf5f81c247f7131461efd  libXinerama-1.1.3.tar.bz2
+309762867e41c6fd813da880d8a1bc93  libXrandr-1.5.0.tar.bz2
+45ef29206a6b58254c81bea28ec6c95f  libXres-1.0.7.tar.bz2
+25c6b366ac3dc7a12c5d79816ce96a59  libXtst-1.2.2.tar.bz2
+e0af49d7d758b990e6fef629722d4aca  libXv-1.0.10.tar.bz2
+eba6b738ed5fdcd8f4203d7c8a470c79  libXvMC-1.0.9.tar.bz2
+d7dd9b9df336b7dd4028b6b56542ff2c  libXxf86dga-1.1.4.tar.bz2
+298b8fff82df17304dfdb5fe4066fe3a  libXxf86vm-1.1.4.tar.bz2
+ba983eba5a9f05d152a0725b8e863151  libdmx-1.1.3.tar.bz2
+ace78aec799b1cf6dfaea55d3879ed9f  libpciaccess-0.13.4.tar.bz2
+4a4cfeaf24dab1b991903455d6d7d404  libxkbfile-1.0.9.tar.bz2
+66662e76899112c0f99e22f2fc775a7e  libxshmfence-1.2.tar.bz2
+EOF
+
+mkdir lib && cd lib &&
+grep -v '^#' ../lib-7.7.md5 | awk '{print $2}' | wget -i- -c \
+     -B http://ftp.x.org/pub/individual/lib/ &&
+md5sum -c ../lib-7.7.md5
+
+# install
+bash -e
+for package in $(grep -v '^#' ../lib-7.7.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  pushd $packagedir
+  case $packagedir in
+  libXfont-[0-9]* )
+    ./configure $XORG_CONFIG --disable-devel-docs
+    ;;
+  libXt-[0-9]* )
+    ./configure $XORG_CONFIG \
+      --with-appdefaultdir=/etc/X11/app-defaults
+    ;;
+  * )
+    ./configure $XORG_CONFIG
+    ;;
+  esac
+  make
+  #make check 2>&1 | tee ../$packagedir-make_check.log
+  make install
+  popd
+  rm -rf $packagedir
+  /sbin/ldconfig
+done
+
+exit
+
+# you didn't install xorg in /usr, so:
+ln -sv $XORG_PREFIX/lib/X11 /usr/lib/X11 &&
+ln -sv $XORG_PREFIX/include/X11 /usr/include/X11
+
+
+# xcb-util
+./configure $XORG_CONFIG && make
+make install
+
+
+# xcb-util-image
+./configure $XORG_CONFIG && make
+LD_LIBRARY_PATH=$XORG_PREFIX/lib make check
+make install
+
+
+# xcb-util-keysyms
+./configure $XORG_CONFIG && make
+make install
+
+
+# xcb-util-renderutil
+./configure $XORG_CONFIG && make
+make install
+
+
+# xcb-util-wm
+./configure $XORG_CONFIG && make
+make install
+
+
+
+# to install mesalib, you should install libdrm first
+# libdrm
+sed -e "/pthread-stubs/d" -i configure.ac &&
+    autoreconf -fiv &&
+./configure --prefix=/usr \
+            --enable-udev \
+            --disable-valgrind &&
+make
+make check 
+# teset may hang for unknown reasons, if nouveau threaded test hangs, you
+# can disable it with `sed -i 's/^TESTS/#&/' tests/nouveau/Makefile.in'
+make install
+
+
+# elfutils (failed !)
+./configure --prefix=/usr --program-prefix="eu-" && make
+make check
+make install
+
+
+# mesalib
+maybe i do not need mesa now
+
+
+
+# xbitmap (will installed in $XORG_PREFIX/include/X11/bitmaps
+./configure $XORG_CONFIG
+make install
+
+
+# xorg applications
+cat > app-7.7.md5 << "EOF"
+53a48e1fdfec29ab2e89f86d4b7ca902  bdftopcf-1.0.5.tar.bz2
+25dab02f8e40d5b71ce29a07dc901b8c  iceauth-1.0.7.tar.bz2
+c4a3664e08e5a47c120ff9263ee2f20c  luit-1.1.1.tar.bz2
+18c429148c96c2079edda922a2b67632  mkfontdir-1.0.7.tar.bz2
+9bdd6ebfa62b1bbd474906ac86a40fd8  mkfontscale-1.1.2.tar.bz2
+e238c89dabc566e1835e1ecb61b605b9  sessreg-1.1.0.tar.bz2
+2c47a1b8e268df73963c4eb2316b1a89  setxkbmap-1.3.1.tar.bz2
+3a93d9f0859de5d8b65a68a125d48f6a  smproxy-1.0.6.tar.bz2
+f0b24e4d8beb622a419e8431e1c03cd7  x11perf-1.6.0.tar.bz2
+7d6003f32838d5b688e2c8a131083271  xauth-1.0.9.tar.bz2
+0066f23f69ca3ef62dcaeb74a87fdc48  xbacklight-1.2.1.tar.bz2
+9956d751ea3ae4538c3ebd07f70736a0  xcmsdb-1.0.5.tar.bz2
+b58a87e6cd7145c70346adad551dba48  xcursorgen-1.0.6.tar.bz2
+8809037bd48599af55dad81c508b6b39  xdpyinfo-1.3.2.tar.bz2
+fceddaeb08e32e027d12a71490665866  xdriinfo-1.0.5.tar.bz2
+249bdde90f01c0d861af52dc8fec379e  xev-1.2.2.tar.bz2
+90b4305157c2b966d5180e2ee61262be  xgamma-1.0.6.tar.bz2
+f5d490738b148cb7f2fe760f40f92516  xhost-1.0.7.tar.bz2
+305980ac78a6954e306a14d80a54c441  xinput-1.6.1.tar.bz2
+0012a8e3092cddf7f87b250f96bb38c5  xkbcomp-1.3.0.tar.bz2
+c747faf1f78f5a5962419f8bdd066501  xkbevd-1.1.4.tar.bz2
+502b14843f610af977dffc6cbf2102d5  xkbutils-1.0.4.tar.bz2
+0ae6bc2a8d3af68e9c76b1a6ca5f7a78  xkill-1.0.4.tar.bz2
+5dcb6e6c4b28c8d7aeb45257f5a72a7d  xlsatoms-1.1.2.tar.bz2
+9fbf6b174a5138a61738a42e707ad8f5  xlsclients-1.1.3.tar.bz2
+2dd5ae46fa18abc9331bc26250a25005  xmessage-1.0.4.tar.bz2
+723f02d3a5f98450554556205f0a9497  xmodmap-1.0.9.tar.bz2
+6101f04731ffd40803df80eca274ec4b  xpr-1.0.4.tar.bz2
+fae3d2fda07684027a643ca783d595cc  xprop-1.2.2.tar.bz2
+441fdb98d2abc6051108b7075d948fc7  xrandr-1.4.3.tar.bz2
+b54c7e3e53b4f332d41ed435433fbda0  xrdb-1.1.0.tar.bz2
+a896382bc53ef3e149eaf9b13bc81d42  xrefresh-1.0.5.tar.bz2
+dcd227388b57487d543cab2fd7a602d7  xset-1.2.3.tar.bz2
+7211b31ec70631829ebae9460999aa0b  xsetroot-1.1.1.tar.bz2
+558360176b718dee3c39bc0648c0d10c  xvinfo-1.1.3.tar.bz2
+6b5d48464c5f366e91efd08b62b12d94  xwd-1.0.6.tar.bz2
+b777bafb674555e48fd8437618270931  xwininfo-1.1.3.tar.bz2
+3025b152b4f13fdffd0c46d0be587be6  xwud-1.0.4.tar.bz2
+EOF
+
+mkdir app && cd app &&
+grep -v '^#' ../app-7.7.md5 | awk '{print $2}' | wget -i- -c \
+     -B http://ftp.x.org/pub/individual/app/ &&
+md5sum -c ../app-7.7.md5
+
+# install
+#  bash -e # because i didn't install mesa, there might be wrong
+for package in $(grep -v '^#' ../app-7.7.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  pushd $packagedir
+  case $packagedir in
+  luit-[0-9]* )
+    line1="#ifdef _XOPEN_SOURCE"
+    line2="#  undef _XOPEN_SOURCE"
+    line3="#  define _XOPEN_SOURCE 600"
+    line4="#endif"
+    sed -i -e "s@#ifdef HAVE_CONFIG_H@$line1\n$line2\n$line3\n$line4\n\n&@" sys.c
+    unset line1 line2 line3 line4
+    ;;
+  sessreg-* )
+    sed -e 's/\$(CPP) \$(DEFS)/$(CPP) -P $(DEFS)/' -i man/Makefile.in
+    ;;
+  esac
+  ./configure $XORG_CONFIG
+  make 2>> /tmp/xapp.log
+  make install 
+  popd
+  rm -rf $packagedir
+done
+#exit
+
+
+
+# xcursor-themes
+./configure $XORG_CONFIG && make
+make install
+
+
+
+# xorg fonts
+cat > font-7.7.md5 << "EOF"
+23756dab809f9ec5011bb27fb2c3c7d6  font-util-1.3.1.tar.bz2
+0f2d6546d514c5cc4ecf78a60657a5c1  encodings-1.0.4.tar.bz2
+1347c3031b74c9e91dc4dfa53b12f143  font-adobe-100dpi-1.0.3.tar.bz2
+6c9f26c92393c0756f3e8d614713495b  font-adobe-75dpi-1.0.3.tar.bz2
+66fb6de561648a6dce2755621d6aea17  font-adobe-utopia-100dpi-1.0.4.tar.bz2
+e99276db3e7cef6dccc8a57bc68aeba7  font-adobe-utopia-75dpi-1.0.4.tar.bz2
+fcf24554c348df3c689b91596d7f9971  font-adobe-utopia-type1-1.0.4.tar.bz2
+6d25f64796fef34b53b439c2e9efa562  font-alias-1.0.3.tar.bz2
+cc0726e4a277d6ed93b8e09c1f195470  font-arabic-misc-1.0.3.tar.bz2
+9f11ade089d689b9d59e0f47d26f39cd  font-bh-100dpi-1.0.3.tar.bz2
+565494fc3b6ac08010201d79c677a7a7  font-bh-75dpi-1.0.3.tar.bz2
+c8b73a53dcefe3e8d3907d3500e484a9  font-bh-lucidatypewriter-100dpi-1.0.3.tar.bz2
+f6d65758ac9eb576ae49ab24c5e9019a  font-bh-lucidatypewriter-75dpi-1.0.3.tar.bz2
+e8ca58ea0d3726b94fe9f2c17344be60  font-bh-ttf-1.0.3.tar.bz2
+53ed9a42388b7ebb689bdfc374f96a22  font-bh-type1-1.0.3.tar.bz2
+6b223a54b15ecbd5a1bc52312ad790d8  font-bitstream-100dpi-1.0.3.tar.bz2
+d7c0588c26fac055c0dd683fdd65ac34  font-bitstream-75dpi-1.0.3.tar.bz2
+5e0c9895d69d2632e2170114f8283c11  font-bitstream-type1-1.0.3.tar.bz2
+e452b94b59b9cfd49110bb49b6267fba  font-cronyx-cyrillic-1.0.3.tar.bz2
+3e0069d4f178a399cffe56daa95c2b63  font-cursor-misc-1.0.3.tar.bz2
+0571bf77f8fab465a5454569d9989506  font-daewoo-misc-1.0.3.tar.bz2
+6e7c5108f1b16d7a1c7b2c9760edd6e5  font-dec-misc-1.0.3.tar.bz2
+bfb2593d2102585f45daa960f43cb3c4  font-ibm-type1-1.0.3.tar.bz2
+a2401caccbdcf5698e001784dbd43f1a  font-isas-misc-1.0.3.tar.bz2
+cb7b57d7800fd9e28ec35d85761ed278  font-jis-misc-1.0.3.tar.bz2
+143c228286fe9c920ab60e47c1b60b67  font-micro-misc-1.0.3.tar.bz2
+96109d0890ad2b6b0e948525ebb0aba8  font-misc-cyrillic-1.0.3.tar.bz2
+6306c808f7d7e7d660dfb3859f9091d2  font-misc-ethiopic-1.0.3.tar.bz2
+e3e7b0fda650adc7eb6964ff3c486b1c  font-misc-meltho-1.0.3.tar.bz2
+c88eb44b3b903d79fb44b860a213e623  font-misc-misc-1.1.2.tar.bz2
+56b0296e8862fc1df5cdbb4efe604e86  font-mutt-misc-1.0.3.tar.bz2
+e805feb7c4f20e6bfb1118d19d972219  font-schumacher-misc-1.1.2.tar.bz2
+6f3fdcf2454bf08128a651914b7948ca  font-screen-cyrillic-1.0.4.tar.bz2
+beef61a9b0762aba8af7b736bb961f86  font-sony-misc-1.0.3.tar.bz2
+948f2e07810b4f31195185921470f68d  font-sun-misc-1.0.3.tar.bz2
+829a3159389b7f96f629e5388bfee67b  font-winitzki-cyrillic-1.0.3.tar.bz2
+3eeb3fb44690b477d510bbd8f86cf5aa  font-xfree86-type1-1.0.4.tar.bz2
+EOF
+
+
+mkdir font && cd font &&
+grep -v '^#' ../font-7.7.md5 | awk '{print $2}' | wget -i- -c \
+     -B http://ftp.x.org/pub/individual/font/ &&
+md5sum -c ../font-7.7.md5
+
+# install
+bash -e
+for package in $(grep -v '^#' ../font-7.7.md5 | awk '{print $2}')
+do
+  packagedir=${package%.tar.bz2}
+  tar -xf $package
+  pushd $packagedir
+  ./configure $XORG_CONFIG
+  make
+  make install
+  popd
+  rm -rf $packagedir
+done
+
+exit
+
+install -v -d -m755 /usr/share/fonts                               &&
+ln -svfn $XORG_PREFIX/share/fonts/X11/OTF /usr/share/fonts/X11-OTF &&
+ln -svfn $XORG_PREFIX/share/fonts/X11/TTF /usr/share/fonts/X11-TTF
+
+
+
+# xkeyboard-config
+./configure $XORG_CONFIG --with-xkb-rules-symlink=xorg && make
+make install
+
+
+#pixman
+./configure --prefix=/usr --disable-static && make
+make check
+make install
+
+
+# xorg-server
+# you need to disable `glx'(as you didn't install mesa) and `dri'.
+# `glamor' should be disabled, too. but it's default to be disabled.
+./configure $XORG_CONFIG            \
+            --enable-install-setuid  \
+            --enable-suid-wrapper    \
+            --disable-systemd-logind \
+            --with-xkb-output=/var/lib/xkb \
+            --disable-glx \
+            --disable-dri &&
+make
+make check
+
+make install &&
+mkdir -pv /etc/X11/xorg.conf.d &&
+cat >> /etc/sysconfig/createfiles << "EOF"
+/tmp/.ICE-unix dir 1777 root root
+/tmp/.X11-unix dir 1777 root root
+EOF
+
+
+# xf86-video-intel
+# installed library: libIntelXvMc.so
+# installed Xorg Driver: intel_drv.so
+./configure $XORG_CONFIG --enable-kms-only --enable-uxa && make
+make install
+
+
+# evdev
+./configure $XORG_CONFIG && make
+make install
+
+# xf86-input-evdev
+./configure $XORG_CONFIG && make
+make install
+
+
+
+# xterm
+sed -i '/v0/{n;s/new:/new:kb=^?:/}' termcap &&
+printf '\tkbs=\\177,\n' >> terminfo &&
+TERMINFO=/usr/share/terminfo \
+./configure $XORG_CONFIG     \
+  --with-app-defaults=/etc/X11/app-defaults &&
+make
+make install &&
+make install-ti
+
+cat >> /etc/X11/app-defaults/XTerm << "EOF"
+*VT100*locale: true
+*VT100*faceName: Monospace
+*VT100*faceSize: 10
+*backarrowKeyIsErase: true
+*ptyInitialErase: true
+EOF
+
+
+# twm
+sed -i -e '/^rcdir =/s,^\(rcdir = \).*,\1/etc/X11/app-defaults,' \
+  src/Makefile.in &&
+./configure $XORG_CONFIG &&
+make
+make install
+
+
+
+
+# xinit
+sed -e '/$serverargs $vtarg/ s/serverargs/: #&/' \
+    -i startx.cpp
+# if you forget the sed above, just change the installed `startx'
+sed -e '/$serverargs $vtarg/ s/serverargs/: #&/' \
+    -i.orig /usr/bin/startx
+
+./configure $XORG_CONFIG \
+            --with-xinitdir=/etc/X11/app-defaults &&
+make
+make install && ldconfig
+
+
+
+# libjpeg-turbo
+sed -i -e '/^docdir/ s:$:/libjpeg-turbo-1.4.1:' Makefile.in &&
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            --with-jpeg8            \
+            --disable-static &&
+make
+make test
+# if you have installed oldversion libjepg, not all symbolic links are updated
+# properly. to fix this before installation:
+rm -f /usr/lib/libjpeg.so*
+
+make install
+
+
+# libarchive
+./configure --prefix=/usr --disable-static && make
+make check
+make install
+
+
+
+# cmake
+./bootstrap --prefix=/usr       \
+            --system-libs       \
+            --mandir=/share/man \
+            --no-system-jsoncpp \
+            --docdir=/share/doc/cmake-3.3.1 &&
+make
+# test it: bin/ctest -j<N> -O ../cmake-3.3.1-test.log
+# where <N> is an integer between 1 and the number of threads of your
+# processor, inclusive. Current results: 99% tests passed, 1 test
+# failed out of 433.
+# in your mathine, it's
+bin/ctest -j2 -O ../cmake-3.3.1-test.log
+
+make install
+
+
+
+# openjpeg
+mkdir -v build && cd build &&
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. &&
+make
+make install &&
+pushd ../doc &&
+for man in man/man?/* ; do
+  install -v -D -m 644 $man /usr/share/$man
+done &&
+popd
+
+
+# mupdf
+rm -rf thirdparty/curl &&
+rm -rf thirdparty/freetype &&
+rm -rf thirdparty/jpeg &&
+rm -rf thirdparty/openjpeg &&
+rm -rf thirdparty/zlib &&
+patch -Np1 -i ../mupdf-1.7-openjpeg21-1.patch &&
+make build=release
+
+install -v -m 755 build/release/mupdf-x11-curl /usr/bin/mupdf &&
+install -v -m 644 docs/man/mupdf.1 /usr/share/man/man1/
+
+
+# unzip
+make -f unix/Makefile generic
+
+make prefix=/usr MANDIR=/usr/share/man/man1 \
+  -f unix/Makefile install
+
+
+# zip
+make -f unix/Makefile generic_gcc
+
+make prefix=/usr MANDIR=/usr/share/man/man1 \
+  -f unix/Makefile install
+
+
+# nspr (netscape portable runtime)
+cd nspr                                                     &&
+sed -ri 's#^(RELEASE_BINS =).*#\1#' pr/src/misc/Makefile.in &&
+sed -i 's#$(LIBRARY) ##' config/rules.mk                    &&
+
+./configure --prefix=/usr \
+            --with-mozilla \
+            --with-pthreads \
+            $([ $(uname -m) = x86_64 ] && echo --enable-64bit) &&
+make
+make install
+
+
+# sqlite
+unzip -q ../sqlite-doc-3081101.zip
+./configure --prefix=/usr --disable-static        \
+            CFLAGS="-g -O2 -DSQLITE_ENABLE_FTS3=1 \
+                    -DSQLITE_ENABLE_COLUMN_METADATA=1     \
+                    -DSQLITE_ENABLE_UNLOCK_NOTIFY=1       \
+                    -DSQLITE_SECURE_DELETE=1              \
+                    -DSQLITE_ENABLE_DBSTAT_VTAB=1" &&
+make
+make install
+
+install -v -m755 -d /usr/share/doc/sqlite-3.8.11.1 &&
+cp -v -R sqlite-doc-3081101/* /usr/share/doc/sqlite-3.8.11.1
+
+
+# nss
+cd nss &&
+make BUILD_OPT=1                      \
+     NSPR_INCLUDE_DIR=/usr/include/nspr  \
+     USE_SYSTEM_ZLIB=1                   \
+     ZLIB_LIBS=-lz                       \
+     $([ $(uname -m) = x86_64 ] && echo USE_64=1) \
+     $([ -f /usr/include/sqlite3.h ] && echo NSS_USE_SYSTEM_SQLITE=1) -j1
+
+cd ../dist                                                       &&
+install -v -m755 Linux*/lib/*.so              /usr/lib           &&
+install -v -m644 Linux*/lib/{*.chk,libcrmf.a} /usr/lib           &&
+install -v -m755 -d                           /usr/include/nss   &&
+cp -v -RL {public,private}/nss/*              /usr/include/nss   &&
+chmod -v 644                                  /usr/include/nss/* &&
+install -v -m755 Linux*/bin/{certutil,nss-config,pk12util} /usr/bin &&
+install -v -m644 Linux*/lib/pkgconfig/nss.pc  /usr/lib/pkgconfig
+
+
+
+# pcre (perl compatible regular expression)
+patch -Np1 -i ../pcre-8.37-upstream_fixes-1.patch &&
+./configure --prefix=/usr                     \
+            --docdir=/usr/share/doc/pcre-8.37 \
+            --enable-unicode-properties       \
+            --enable-pcre16                   \
+            --enable-pcre32                   \
+            --enable-pcregrep-libz            \
+            --enable-pcregrep-libbz2          \
+            --enable-pcretest-libreadline     \
+            --disable-static                 &&
+make
+make install                     &&
+mv -v /usr/lib/libpcre.so.* /lib &&
+ln -sfv ../../lib/$(readlink /usr/lib/libpcre.so) /usr/lib/libpcre.so
+
+
+# glib
+./configure --prefix=/usr --with-pcre=system &&
+make
+make isntall
+
+
+# atk
+./configure --prefix=/usr && make
+make install
+
+
+# tiff (libtiff)
+./configure --prefix=/usr --disable-static && make
+make check
+make install
+
+
+# gdk-pixbuf
+./configure --prefix=/usr --with-x11 && make
+# make check # this takes too much time and disk spaces
+make install
+# you may need to `gdk-pixbuf-query-loader --update-cache'
+
+
+# you may need to reinstall harfbuzz
+
+# icu (International Components for Unicode)
+cd source && ./configure --prefix=/usr && make
+make check
+make install
+
+
+# cario
+./configure --prefix=/usr    \
+            --disable-static \
+            --enable-tee &&
+make
+make install
+
+
+# pango
+./configure --prefix=/usr --sysconfdir=/etc &&
+make
+make -k check # one test will fail
+make install
+# you may need `pango-querymodules --update-cache'
+
+
+# gtk+2
+sed -e 's#l \(gtk-.*\).sgml#& -o \1#' \
+    -i docs/{faq,tutorial}/Makefile.in      &&
+sed -e 's#pltcheck.sh#$(NULL)#g' \
+    -i gtk/Makefile.in                      &&
+./configure --prefix=/usr --sysconfdir=/etc &&
+make
+make check  # in X window
+make install
+# you may need `gtk-query-immodules-2.0 --update-cache'
+
+

@@ -1,0 +1,51 @@
+## vim: ft=elixir :
+
+## the Base module of elixir contains many encode functions
+
+## hex string
+Base.encode16("abcd")
+#> "61626364"
+
+## base32
+Base.encode32("abcd")
+#> "MFRGGZA="
+
+## base64
+Base.encode64("abcd")
+#> "YWJjZA=="
+
+
+
+## to do something like md5, sha, you need erlang
+:crypto.md5 "abcd"
+#> <<226, 252, 113, 76, 71, 39, 238, 147, 149, 243, 36, 205, 46, 127, 51, 31>>
+
+## yes, thereis md4
+:crypto.md4 "abcd"
+#> <<65, 222, 205, 143, 87, 146, 85, 197, 32, 15, 134, 164, 187, 59, 167, 64>>
+
+## sha1 is just called sha
+:crypto.sha "abcd"
+#> <<129, 254, 139, 254, 135, 87, 108, 62, 203, 34, 66, 111, 142, ...>
+
+
+## there is a more general function: `crypto.hash/2`
+:crypto.hash :md4, "abcd"
+#> <<65, 222, 205, 143, 87, 146, 85, 197, 32, 15, 134, 164, 187, 59, 167, 64>>
+:crypto.hash :md5, "abcd"
+#> <<226, 252, 113, 76, 71, 39, 238, 147, 149, 243, 36, 205, 46, 127, 51, 31>>
+:crypto.hash :sha, "abcd"
+#> <<129, 254, 139, 254, 135, 87, 108, 62, 203, 34, 66, 111, 142, ...>>
+
+## sha224, sha256, sha384, sha512, they are called sha2
+:crypto.hash :sha224, "abcd"
+#> <<167, 102, 84, 216, 227, 85, 14, 154, 45, 103, 160, ...>>
+:crypto.hash :sha256, "abcd"
+#> <<136, 212, 38, 111, 212, 230, 51, 141, 19, 184, 69, ...>>
+:crypto.hash :sha384, "abcd"
+#> <<17, 101, 179, 64, 111, 240, 181, 42, 61, 36, 114, ...>>
+:crypto.hash :sha512, "abcd"
+#> <<216, 2, 47, 32, 96, 173, 110, 253, 41, 122, 183, 61, ...>>
+
+
+

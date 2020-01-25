@@ -1,0 +1,27 @@
+# vim: ft=sh :
+
+
+# show number of fields(NF)
+ls -l | awk '{print NF}'
+
+# show only file name(the last field)
+ls -l | awk '{print $NF}'
+
+# show only time(the last-1 field)
+ls -l | awk '{print $(NF - 1)}'
+
+# show multiple columns
+# use `,' to separate
+ls -l | awk '{print $5,$8}' | tail -1
+#> 4096 09:47
+
+# use `\t' to separate
+ls -l | awk '{print $5"\t"$8}' | tail -1
+#> 4096    09:47
+
+# use `-F' to specify the filed separator
+echo "a:b c:d" | awk '{print $1"*"$2}'
+#> a:b*c:d
+echo "a:b c:d" | awk -F':' '{print $1"*"$2}'
+#> a*b c
+

@@ -1,0 +1,9 @@
+## vim: ft=python :
+
+## tempfile
+tempfile.mkstemp(suffix=".wx", prefix="tempfile.")
+#> (4, '/tmp/tempfile.oj_nqv8d.wx')
+os.listdir("/tmp/")
+#> [ ..., 'tempfile.oj_nqv8d.wx', ... ]
+
+

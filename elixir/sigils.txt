@@ -1,0 +1,43 @@
+## vim: ft=elixir :
+
+## Delimiters do NOT have to be "/", sigils support 8 different delimiters:
+~r/hello/
+~r|hello|
+~r"hello"
+~r'hello'
+~r(hello)
+~r[hello]
+~r{hello}
+~r<hello>
+
+## ~r for regular expression
+~r"abc"
+#> ~r/abc/
+
+## ~s for string
+~s"abc"
+#> "abc"
+
+## ~c for char lists
+~c"abc"
+#> 'abc'
+
+## ~w for word lists
+~w"abc def"
+#> ["abc", "def"]
+
+
+## for String, upper case means do not escapt special characters
+String.length ~s"abc\nd"
+#> 5
+String.length ~S"abc\nd"
+#> 6
+
+## but for Regex, upper case is same as lower case
+~R"abc\s" == ~r"abc\s"
+#> true
+~S"abc\s" == ~s"abc\s"
+#> false
+
+
+

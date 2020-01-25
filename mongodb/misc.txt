@@ -1,0 +1,71 @@
+## vim: ft=conf :
+
+
+##----------------------------------------------------------------------------
+## Some basic concepts of mongodb (compare with mysql)
+
+##      RDBMS                       MongoDB
+##      ---------                   ----------
+##      Database                    Database
+##      Table                       Collection
+##      Tuple/Row                   Document
+##      Column                      Field
+
+
+##----------------------------------------------------------------------------
+## Some general purpose functions:
+
+## show help
+db.help()
+
+## mongodb statics
+db.stats()
+
+##----------------------------------------------------------------------------
+## Show basic db info:
+
+## show databases
+show dbs
+
+## show collections in current database
+show collections
+
+
+##----------------------------------------------------------------------------
+## DB operations:
+
+## Create a database (or just switch to it if already exists)
+use <dbname>
+
+## Drop a database (you need to switch to that database first)
+db.dropDatabase()
+
+## Create a collection (options is optional)
+db.createCollection(name, options)
+
+## e.g.
+db.createCollection("coll1")
+
+## you can give some extra options:
+db.createCollection("mycol", { capped : true, autoIndexID : true, size : 6142800, max : 10000 } )
+
+
+## !!!
+## In mongodb, you don't need to create collection, mongodb create collection
+## automatically, when you insert some document.
+## (Unless you want to give some extra argument)
+
+## Create a collection and insert a document to it
+db.<collection>.insert(<document>)
+
+## e.g.
+db.coll2.insert({hello: "some text"})
+
+## Drop collection
+db.coll1.drop()
+
+## Query
+db.coll2.find()
+#> { "_id" : ObjectId("57d6a54d4c6b23597057f4bb"), "hello" : "some text" }
+
+

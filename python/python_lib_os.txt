@@ -1,0 +1,256 @@
+## vim: ft=python :
+
+## python script path problem:
+## if you use "./test.txt" in ./test.py, and call test.py in upper directory,
+## problem comes.
+## assume that test.txt and test.py is stored in directory "xxx", and you are
+## in upper directory of "xxx", then
+#$ ./xxx/test.py
+## the "./test.txt" inside test.py will be treated as a test.txt in current dir,
+## not in directory "xxx", so you should use 
+(os.path.dirname(__file__) or ".") + "/test.txt"
+## instead of
+"./test.txt"
+
+
+## for file: /home/user/example.desktop, assume you are in /home/user/ now
+os.path.dirname("example.desktop")  # will not return absolute path
+#> ''   #!! it is '', not '.'
+os.path.dirname("") # same as os.path.dirname(".")
+#> ''
+
+os.path.abspath("example.desktop")
+#> '/home/user/example.desktop'
+os.path.abspath("") # same as os.path.abspath(".")
+#> '/home/user'
+os.path.abspath("nonexistpath") # abspath does not do the exist check
+#> '/home/user/nonexistpath'
+os.path.abspath(os.path.dirname("example.desktop"))
+#> '/home/user'
+
+os.path.basename("/a/b/c/d/e/fname")
+#> 'fname'
+
+## test path exist
+os.path.exists("/tmp/test.txt")
+#> False
+
+## test filetype
+os.path.isdir("somedir")
+#> True (False if somedir is not a directory OR doesn't exist).
+
+# os.path.isfile(), os.path.islink() # is similar to `os.path.isdir()'
+
+# test absolute path
+os.path.isabs("/a/b")
+#> True
+os.path.isabs("a/b")
+#> False
+
+# test mount
+os.path.ismount("/")
+#> True
+os.path.ismount("/tmp")
+#> False
+
+
+## `mkdir' just like `rmdir'. `makedirs' just like `removedirs', they do things
+## recursively
+## mkdir can only create a directory inside an existing directory
+os.mkdir("/tmp/testdir/testdir1/testdir2")      #> FileNotFoundError
+os.makedirs("/tmp/testdir/testdir1/testdir2")   # ok
+## rmdir can only remove a certain directory
+os.rmdir("/tmp/testdir/testdir1/testdir2")      # will remove testdir2 only
+os.removedirs("/tmp/testdir/testdir1")
+## will remove testdir1, then remove testdir...
+## until a nonempty directory found(exception will be ignored automaticly)
+
+## read environment variable
+os.environ["PATH"]  # it's not a dict, but a <class 'os._Environ'>
+## you can also add a new environment variable
+os.environ["ttt"] = "tttttt"
+os.environ["ttt"]
+#> 'tttttt'
+
+## run command
+os.system("ls -alh")         # output to stdout
+os.popen("ls -alh").read()   # return as value
+
+## 'os.rename' in python is just like 'mv' in unix shell
+os.rename("txt", "../txt")  # will move txt to upper directory
+
+## query file atime, ctime, mtime
+os.stat("test.txt").st_atime
+os.stat("test.txt").st_mtime
+os.stat("test.txt").st_ctime
+
+## update atime(access time), mtime(modify time)
+os.utime("test.txt", times=(1000000, 2000000))  # times=(atime, mtime)
+os.stat("test.txt").st_atime
+#> 1000000.0
+os.stat("test.txt").st_mtime
+#> 2000000.0
+## if you want to update mtime and atime to the current time
+## just leave the times as None(the deafult value)
+os.utime("test.txt")
+os.stat("test.txt").st_atime
+#> 1425386107.1006107
+os.stat("test.txt").st_mtime
+#> 1425386107.1006107
+
+## get file size
+os.stat("test.txt").st_size
+#> 1028
+
+## filesystem seperator
+os.sep
+#> '/'  # will be '\\' on windows
+
+## get the pid of the current process
+os.getpid()
+#> 6270
+## get the pid of parent process
+os.getppid()
+#> 6058
+
+## get/set process group ID
+## process group(pgrp) is a set of related processes, usually parent processes
+## and their child processes
+os.getpgrp()
+#> 6093
+## child processes share the same gourp ID as parent process
+if os.fork(): print(os.getpgrp())
+else: print(os.getpgrp())
+#> 6093
+#  6093
+
+## make this process the process group leader, use
+os.setpgrp()
+## e.g.
+if os.fork():
+    print("parent group id:", os.getpgrp())
+else:
+    print("child group id: {} child PID: {}".format(os.getpgrp(), os.getpid()))
+    os.setpgrp()
+    print("child group id after change:", os.getpgrp())
+#> parent group id: 7198
+#  child group id: 7198 child PID: 7255
+#  child group id after change: 7255
+
+## get/set the session ID, getsid need PID as arguments
+## in a python3 shell(inside a terminal)
+## all process inside the same shell share the same session ID
+os.getsid(os.getpid())
+#> 4243
+os.getsid(os.getppid())
+#> 4243
+os.getppid()
+#> 4243
+## all the same! 4243 is the pid of the bash who runs the python shell
+#$ ps
+## 4243 pts/7   00:00:00 bash
+
+## make this process the session leader
+## need to be root in python shell, but do not need if you do this in a forked
+## child process
+os.setsid()
+
+## these functions will call the same-name system call, just like C does
+os.setpgrp
+os.setpgid
+os.getsid
+os.setsid
+
+
+## os.fork is a built-in function, just like print
+help(os.fork)
+#> Help on built-in function fork in module posix...(! it's in posix module)
+posix.fork is os.fork
+#> True
+posix.listdir is os.listdir
+#> True
+
+
+## os.fork() return the pid of child process to the parent process, and
+## return 0 to the child process
+os.getpid()
+#> 8455
+print(os.fork())
+#> 8456
+#  0
+## now you have to type Ctrl-d for two times to exit python shell
+## because the two processes(parent and child) share the same stdin.
+## if you use `kill 8456' to kill the child process, then
+## use `top' you will see "1 zombie",
+## use `ps -e | grep python' you will see "python3 <defunct>"
+
+## `wait'
+## you can easily create a defunct process by:
+if os.fork() == 0: exit()
+#$ ps -e | grep python
+## 3827 pts/18   00:00:00 python3 <defunct>
+## then
+os.wait()
+#> (3827, 0)
+#$ ps -e | grep python
+## no defunct anymore
+
+## a better example
+print("parent process:", os.getpid())
+#> parent process: 8436
+if os.fork(): print("if part in id:", os.getpid())
+else: print("else part in id:", os.getpid())
+#> if part in id: 8436
+#  else part in id: 8440
+
+## both if part and else part are executed! but if part is executed by
+## parent process, else part is executed by child process
+
+## if you do this in python shell
+if os.fork():
+    print("parent:", os.getpid())
+    exit()
+#> parent: 2349
+
+## the python shell will exit, AND at the same time, you will not be able
+## to see what you have typed after that !!!
+## the stdin is messed up !
+
+## but use `ps -e | grep python' in another terminal
+## you will see:
+##  2351 pts/1   00:00:00 python3 
+
+## yes, the child process did NOT exit yet, it's now an 'orphan' process
+## but after exiting the terminal, the child process got terminated, because
+## the child process is not the session leader, use:
+os.setsid() #(only in program file, python shell will exit after parent exit)
+## will make the child process the session leader, then the child process
+## will become a daemon.
+
+## the terminal who runs the child process will have problem with
+## input display. you can't see what you have input though keyboard.
+## Because it was (partly) given to the child process.
+## if you input something or just enter, AND it was given to
+## child process, the child process might raise a NameError or
+## ValueError(I/O operation on a closed file, I mean the stdout) or
+## something else(you can't see it), and exit. I guess so~
+## in this case, `ps -e | grep python' will not show the child any more.
+
+
+## but if you simply do `if os.fork(): exit()' in a python script file,
+## not the python shell, the child process will runs just fine.
+## without messing up the stdin of the terminal
+
+
+## open stdin in binary mode:
+newstdin = os.fdopen(sys.stdin.fileno(), "rb")
+
+
+## unix's "/dev/zero" will always return 0 when you read it.
+with open("/dev/null") as f: f.read(10)
+#> ''
+with open("/dev/zero") as f: f.read(10)
+#> '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
+
+

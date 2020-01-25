@@ -1,0 +1,224 @@
+%% vim: ft=erlang :
+
+
+%%-----------------------------------------------------------------------------
+%% the "if" in erlang is special, it only support guard, so it only have
+%% limited power.
+%%-----------------------------------------------------------------------------
+%% "case" can take the place of if:
+if                                    case dummy of
+  N > 0 -> positive;                    _ when N > 0 -> positive;
+end.                                  end.
+
+
+if length([]) -> 1; true -> 2 end.
+%> 2
+
+A = fun() -> true end.
+%> #Fun<erl_eval.20.54118792>
+
+if A() -> 1; true -> 2 end. % user defined function is not allow in "if"
+%> * 1: illegal guard expression
+
+
+%%-----------------------------------------------------------------------------
+%% character
+%%-----------------------------------------------------------------------------
+$c.           => 99
+$\r.          => 13
+$\n.          => 10
+[$a|"bcd"].   => "abcd"
+["a"|"bcd"].  => ["a", 98, 99, 100]
+
+
+%%-----------------------------------------------------------------------------
+%% element & lists:nth, one for list, one for tuple
+%%    nth is not built-in, because usually, you should not use nth, it's slow
+%% for lists, hd and tl is normal operation.
+%% but for tuple, select element through index is fast and normal,
+%% so element is built-in.
+%%-----------------------------------------------------------------------------
+lists:nth(2, [a, b, c, d, e]).
+%> b
+element(2, {a, b, c, d, e}).
+%> b
+
+
+%%-----------------------------------------------------------------------------
+%% there is no "reduce" in erlang, it's called "fold"
+%%-----------------------------------------------------------------------------
+lists:foldl(fun(X, V) -> io:format("~p,", [X]), V + X end, 1, [1,2,3]).
+%> 1,2,3,7
+
+lists:foldr(fun(X, V) -> io:format("~p,", [X]), V + X end, 1, [1,2,3]).
+%> 3,2,1,7
+
+
+%%-----------------------------------------------------------------------------
+%% SYNTAX SUGAR of map
+%% Suggestion:
+%%      use "=>" only when you want to create a new map
+%%      use ":=" when possible
+%%-----------------------------------------------------------------------------
+%% create:
+Me = #{ name => "wittyfox", age => 19 }.
+%> #{age => 19,name => "wittyfox"}
+
+%% update:
+New_Me = Me#{ age => 20 }.
+%> #{age => 20,name => "wittyfox"}
+
+%% if you write a wrong key:
+Me#{ aeg => 20 }.
+%> #{aeg => 20,age => 19,name => "wittyfox"}
+
+%% if you do NOT want to add element by accident, use ":=" instead of "=>"
+Me#{ aeg := 20 }.
+%> ** exception error: {badkey,aeg}
+%    in function  maps:update/3
+%       called as maps:update(aeg,20,#{age => 19,name => "wittyfox"})
+
+%% pattern match: use ":=" only
+#{ age := Age } = Me.
+%> #{age => 19,name => "wittyfox"}
+Age.
+%> 19
+
+
+%%-----------------------------------------------------------------------------
+%% FUNCTIONS of map
+%%-----------------------------------------------------------------------------
+%% create:
+maps:new() % no argument
+%> #{}
+
+%% get all keys:
+maps:keys(Me)
+%> [age,name]
+
+%% get all values:
+maps:values(Me)
+%> [19,"wittyfox"]
+
+%% check key existence
+maps:is_key(age, Me).
+%> true
+
+maps:is_key(aeg, Me).
+%> false
+
+%% size, maps:size uses erlang:map_size
+maps:size(Me).
+%> 2
+
+map_size(Me).
+%> 2
+
+%% get value from key
+maps:get(age, Me).
+%> 19
+maps:get(aeg, Me).
+%> ** exception error: {badkey,aeg}
+
+%% get value from key with default value when key does not exist
+maps:get(aeg, Me, 20).
+%> 20
+
+%% find can do this, too
+maps:find(age, Me).
+%> {ok, 19}
+
+maps:find(aeg, Me).
+%> error
+
+
+%% update map like "=>"
+maps:put(gender, male, Me).
+%> #{age => 19,gender => male,name => "wittyfox"}
+
+
+%% update map like ":="
+maps:update(gender, male, Me).
+%> ** exception error: {badkey,gender}
+
+maps:update(age, 20, Me).
+%> #{age => 20,name => "wittyfox"}
+
+
+%% remove a set, will NOT raise exception even if the key does not exist
+maps:remove(age, Me).
+%> #{name => "wittyfox"}
+
+
+%% merge two map
+maps:merge(Me, #{ age => 10 }).
+%> #{age => 10,name => "wittyfox"}
+
+%% it's just like:
+Me#{ age => 10 }.
+
+%% transfrom between map and list
+maps:to_list(Me).
+%> [{age,19},{name,"wittyfox"}]
+
+maps:from_list([{name, "wittyfox"}, {age, 19}]).
+%> #{age => 19,name => "wittyfox"}
+
+
+%%-----------------------------------------------------------------------------
+%% "map", "fold", "with", "without"
+%% use "maps:to_list/1" transform to list and handle things as list, then
+%% use "maps:from_list/1" transform back to map.
+%%-----------------------------------------------------------------------------
+maps:map(fun (X, Y) -> io:format("~p => ~p~n", [X, Y]) end, Me).
+%> age => 19
+%  name => "wittyfox"
+%  #{age => ok,name => ok}
+
+maps:fold(fun (X, Y, V) -> V + 1 end, 0, Me).
+%> 2
+
+
+%% select part of a map
+maps:with([], Me).
+%> #{}
+
+maps:with([age], Me).
+%> #{age => 19}
+
+% non-exist key is accepted
+maps:with([aeg], Me).
+%> #{}
+
+maps:without([], Me).
+%> #{age => 19,name => "wittyfox"}
+
+maps:without([age], Me).
+%> #{name => "wittyfox"}
+
+% non-exist key is accepted
+maps:without([age, neme], Me).
+%> #{name => "wittyfox"}
+
+
+%%-----------------------------------------------------------------------------
+%% list > tuple > atom > number
+%%-----------------------------------------------------------------------------
+[1, 2, 3] > {1, 2, 3}
+%> true
+
+lists:sort([a, b, "abc", {1,2,3}, 5]).
+%> [5,a,b,{1,2,3},"abc"]
+
+
+%%-----------------------------------------------------------------------------
+%% try...of... in erlang is like try...else... in python
+%% the "of" part is executed only when no exception was raised in try part.
+%%-----------------------------------------------------------------------------
+
+
+%%-----------------------------------------------------------------------------
+%% pre-defined macros: ?MODULE, ?FILE, ?LINE
+%%-----------------------------------------------------------------------------
+
+

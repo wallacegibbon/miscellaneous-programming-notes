@@ -1,0 +1,47 @@
+# vim: ft=sh :
+
+
+# use `diff' to create a patch file. the `-u' is necessary, or the output format
+# of `diff' will be useless to `patch'
+
+diff -u original.c new.c > original.patch
+# apply the patch:
+patch -p0 < original.patch
+
+# create a patch for a whole directory.
+diff -urN original/ new/ > original.patch
+# apply the patch:
+cd original # necessary, or it will reverse, i don't know why
+patch -p1 < ../original.patch
+
+
+
+# `-pN' or `--strip=N': strip the smallest prefix containing N leading slashes
+#   from each file name found in the patch file.
+# suppose the file name in the patch file was:  "a/b/c/d/e.c"
+# then, `-p0' give the file name unmodified:    "a/b/c/d/e.c"
+#       `-p1' give the file name:               "  b/c/d/e.c"
+#       not specifying `-p' at all gives:       "        e.c"
+
+
+# ways to specify the input patch file:
+patch -p0 < foo.patch
+# or
+patch -p0 -i foo.patch
+# `patch -p0 -i -' means read from stdin, the default
+
+
+# apply a patch
+patch -p0 < foo.patch
+
+# reverse (the same command as apply)
+patch -p0 < foo.patch
+# there will be a query about reverse, type y to reverse
+
+
+# if you have to specify this is a APPLY, use -N
+patch -Np0 < foo.patch
+
+# specify this is a REVERSE, use -R
+patch -Rp0 < foo.patch
+

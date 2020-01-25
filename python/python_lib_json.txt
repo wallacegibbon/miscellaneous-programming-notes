@@ -1,0 +1,34 @@
+## vim: ft=python :
+
+## json.dumps and json.loads do more than just change syntax
+"树莓派"
+#> "树莓派"
+json.dumps("树莓派")
+#> '"\\u6811\\u8393\\u6d3e"'
+
+## !!!
+json.loads('"\\u6811"') == json.loads('"\u6811"')
+#> True
+json.loads('"\\u6811"') is json.loads('"\u6811"')
+#> False
+json.loads('"\\u6811"') is json.loads('"\\u6811"')
+#> False
+
+## in javascript and python, "\uhhhh" stands for an unicode character,
+## where hhhh is a 2-bytes hex-number
+## python:
+"树" is "\u6811"
+#> True
+"\u6811".__len__()
+#> 1
+"\\u6811".__len__()
+#> 6
+## javascript:
+#j "树" === "\u6811"
+#> true
+#j "\u6811".length
+#> 1
+#j "\\u6811".length
+#> 6
+
+

@@ -1,0 +1,35 @@
+## vim: ft=sh :
+
+## start the repl:
+iex
+
+## with readline
+rlwrap -a iex
+## on mac
+rlwrap -a blah iex
+
+
+
+## mix
+
+## create new project
+mix new prj_name --module module_name
+
+## compile the project
+mix compile
+
+## run the tests
+mix test
+
+## other usage, run "mix help" to see
+
+
+## mix support 3 environment:
+## :dev   - the default environment
+## :test  - the environment that "mix test" uses
+## :prod  - the productive environment
+
+## you can change the environment by changing environment variable:
+MIX_ENV=prod mix compile
+
+

@@ -1,0 +1,20 @@
+# vim: ft=sh :
+
+# the `-e' is not necessary if only one command followed
+ls -l | sed '1d'
+ls -l | sed -e '1d' -e '3,6d'
+# do not show lines contain `bug'
+blahcommands | sed '/bug/d'
+
+
+# use `-n' to disable the auto-print of sed(sed will print all line by default)
+apt-cache search wifi | sed -n '/intel/p'
+# works just like:
+apt-cache search wifi | grep 'intel'
+
+
+# sed just like vi, the `g' means global
+echo 'abcdeabcde' | sed 's/a/A/'  #> Abcdeabcde
+echo 'abcdeabcde' | sed 's/a/A/g' #> AbcdeAbcde
+
+

@@ -1,0 +1,48 @@
+# vim: ft=sh :
+
+##============================================================================
+## a good ldap client you need:  LDAP Browser/Editor v2.8.2
+##============================================================================
+
+##============================================================================
+## OpenLDAP
+##============================================================================
+## General purpose commands:
+
+## start openldap server
+/usr/libexec/slapd -d 255
+
+## export data to a file
+slapcat -v -l aa.ldif
+
+## import data from a file
+slapadd -v -l aa.ldif
+
+
+##============================================================================
+## Configuration before running
+##============================================================================
+## load init.ldif
+## change to directory defined in "/etc/openldap/slapd.conf", then run:
+cp DB_CONFIG.example DB_CONFIG 
+
+# and you need add these lines to slapd.conf:
+include     /private/etc/openldap/schema/corba.schema
+include     /private/etc/openldap/schema/cosine.schema
+include     /private/etc/openldap/schema/dyngroup.schema
+include     /private/etc/openldap/schema/inetorgperson.schema
+include     /private/etc/openldap/schema/java.schema
+include     /private/etc/openldap/schema/misc.schema
+include     /private/etc/openldap/schema/nis.schema
+include     /private/etc/openldap/schema/openldap.schema
+
+# then you can load a ldif file
+slapadd -v -l test.ldif
+
+# load a ldif with slapd server running
+# -x : Use simple authentication
+# -D : bind DN
+# -W : Prompt for simple authentication
+# -c : don't exit on error
+ldapadd -c -x -D cn=Manager,dc=wx,dc=me -W -f test.ldif
+

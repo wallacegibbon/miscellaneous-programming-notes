@@ -1,0 +1,19 @@
+## vim: ft=sh :
+
+##############################################################################
+## Upload a design
+
+## assume in "a.json":
+{
+  "_id": "_design/example",
+  "views": {
+    "foo": {
+      "map": "function(doc) { emit(doc._id, doc._rev); }"
+    }
+  }
+}
+
+## then upload it with curl:
+curl localhost:5984/dbname/_design/example -d @a.json
+
+

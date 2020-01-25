@@ -1,0 +1,28 @@
+;; vim: ft=clojure :
+
+;;-----------------------------------------------------------------------------
+;; This library is not yet available from a public repository.
+;; Clone this repository and install it locally using leiningen
+;;
+;; Usage:
+;;    git clone https://github.com/otherpeoplespixels/data-uri
+;;    cd data-uri
+;;    lein cljx once
+;;    lein install
+;;
+;; leiningen:
+;;    add to project.clj: [com.otherpeoplespixels/data-uri "0.1.0-SNAPSHOT"]
+;;-----------------------------------------------------------------------------
+
+
+;;-----------------------------------------------------------------------------
+;; basic usage:
+;;-----------------------------------------------------------------------------
+(require '[opp.data-uri :as data-uri])
+;> nil
+
+
+
+;; failed downloading this library
+
+

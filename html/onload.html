@@ -1,0 +1,12 @@
+<script>
+// Usually you can use "addEventListener" when you can use "onload".
+// Every Element support both method.
+// But "onload" overrides, "addEventListener" append.
+
+window.onload = (e) => alert("onload: hello");
+window.onload = (e) => alert("onload: world");
+
+window.addEventListener("load", (e) => alert("addEventListener: hello"));
+window.addEventListener("load", (e) => alert("addEventListener: world"));
+
+</script>

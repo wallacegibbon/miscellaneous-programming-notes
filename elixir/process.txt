@@ -1,0 +1,60 @@
+## vim: ft=elixir :
+
+## register a process, then all other processes can access to this process.
+## have to do registry with a atom.
+Process.register pid, :blah
+
+
+##----------------------------------------------------------------------------
+## link
+
+## `Process.link(spawn(function))` or `Process.link(spawn(m, f, a))` happens in
+## more than one step. (it's not atomic)
+## In some cases, it is possible for a process to die before the link has been
+## set up and then provoke unexpected behavior.
+## For this reason, the `spawn_link` is added to Erlang. (it's atomic)
+
+
+## Links can NOT be stacked. If you call `Process.link/1` 15 times for the same
+## two processes, only one link still exist between them and a single call to
+## `Process.unlink/1` will be enough to tear it down.
+
+
+## usually, the exit message `{:EXIT, #PID<x.xxx.x>, x}` can NOT be received.
+## running this will cause the iex shell restart after 3 seconds
+spawn_link fn -> receive do after 3000 -> exit 1 end end
+#> #PID<0.127.0>
+#  ** (EXIT from #PID<0.120.0>) 1
+
+
+## but once you set this, the exit message will become normal message
+Process.flag :trap_exit, true
+#> false
+spawn_link fn -> receive do after 3000 -> exit 1 end end
+#> #PID<0.132.0>
+
+flush
+#> {:EXIT, #PID<0.132.0>, 1}
+#  :ok
+
+
+##----------------------------------------------------------------------------
+## monitor
+
+## things that monitor different from link:
+##  1. they are uni-directional
+##  2. they can be stacked
+
+
+## monitor will return a reference
+Process.monitor spawn(fn -> :ok end)
+#> #Reference<0.0.4.586>
+Process.monitor spawn(fn -> :eh end)
+#> #Reference<0.0.4.590>
+flush
+#> {:DOWN, #Reference<0.0.4.586>, :process, #PID<0.146.0>, :normal}
+#  {:DOWN, #Reference<0.0.4.590>, :process, #PID<0.148.0>, :normal}
+#  :ok
+
+
+

@@ -1,0 +1,28 @@
+<style>
+.a {
+  display: inline-block;
+  width: 200px;
+  min-height: 300px;
+  background: blue;
+}
+.b {
+  float: right;
+  width: 200px;
+  min-height: 350px;
+  background: green;
+}
+.c {
+  width: 100%;
+  min-height: 100px;
+  background: orange;
+}
+</style>
+
+<div class="a"></div>
+<div class="b"></div>
+
+<!-- This is the magic line -->
+<div style="clear:both"></div>
+
+<div class="c"></div>
+

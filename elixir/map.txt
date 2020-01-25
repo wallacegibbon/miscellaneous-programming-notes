@@ -1,0 +1,111 @@
+## vim: ft=elixir :
+
+## maps were recently introduced into the erlang vm, and only from elixir v1.2
+## they are capable of holding millions of keys efficiently.
+
+
+## the key of a map can be any type
+t = %{:a => 1, "b" => 2, 3 => :c}
+#> %{3 => :c, :a => 1, "b" => 2}
+t[3]
+#> :c
+
+
+## if the keys are all atoms, elixir allows to use `key: 0` for defining and
+## `.key` for accessing fields:
+map = %{a: 1, b: 2}
+#> %{a: 1, b: 2}
+map.a
+#> 1
+map == %{:a => 1, :b => 2}
+#> true
+
+
+## to get data from a map, you can use "[]", "." (keyword only), and "Map.get/3"
+## with "Map.get(map, key, default \\ nil)", you can set a default value
+Map.get(%{}, :a)
+#> nil
+Map.get(%{a: 1}, :a)
+#> 1
+Map.get(%{a: 1}, :b)
+#> nil
+Map.get(%{a: 1}, :b, 3)
+#> 3
+
+
+## to change/add data of a map, use "Map.put/3" or "Map.update/4"
+Map.put(%{a: 1}, :b, 2)
+#> %{a: 1, b: 2}
+Map.put(%{a: 1, b: 2}, :a, 3)
+#> %{a: 3, b: 2}
+
+## how update(map, key, initial, fun) works:
+##    if the key does not exist, inserts the given initial value.
+Map.update(%{a: 1}, :a, 13, &(&1 * 2))
+#> %{a: 2}
+Map.update(%{a: 1}, :b, 11, &(&1 * 2))
+#> %{a: 1, b: 11}
+
+
+## delete some key-values.
+Map.pop(%{a: 1, b: 2}, :a)
+#> {1, %{b: 2}}
+
+
+## get keys and values
+Map.keys %{a: 1, b: 2}
+#> [:a, :b]
+Map.values %{a: 1, b: 2}
+#> [1, 2]
+
+
+
+## keyword lists are like map in a certain degree
+## there is a syntax sugar for keyword list, too:
+[{:a, 1}, {:b, 2}] == [a: 1, b: 2]
+#> true
+
+## you can access it just like map
+lst = [a: 1, b: 2]
+#> [a: 1, b: 2]
+lst[:a]
+#> 1
+
+
+## you need to be careful when mixing pairs with non-pairs
+##    pairs need to be together, you should insert a non-pair among pairs,
+##    and always write pairs at last
+[:a, b: 1, :c, d: 2]
+#> ** (SyntaxError) iex:5: syntax error before: c
+[:a, b: 1, d: 2, :c]
+#> ** (SyntaxError) iex:7: syntax error before: c
+[:a, b: 1, d: 2]
+#> [:a, {:b, 1}, {:d, 2}]
+
+## it's different from:
+[:a, [b: 1, d: 2]]
+#> [:a, [b: 1, d: 2]]
+
+
+## this syntax sugar can be used on function arguments
+a = fn a -> a end
+#> #Function<6.52032458/1 in :erl_eval.expr/5>
+
+## this passes ONE argument, not TWO !!
+a.(a: 1, b: 2)
+#> [a: 1, b: 2]
+
+## truth:
+quote do: a.(a: 1, b: 2)
+#> {{:., [], [{:a, [], Elixir}]}, [], [[a: 1, b: 2]]}
+
+## more example:
+quote do: myfn a: 1, b: 2
+#> {:myfn, [], [[a: 1, b: 2]]}
+quote do: myfn :c, a: 1, b: 2
+#> {:myfn, [], [:c, [a: 1, b: 2]]}
+quote do: myfn c, a: 1, b: 2
+#> {:myfn, [], [{:c, [], Elixir}, [a: 1, b: 2]]}
+
+
+

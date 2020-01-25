@@ -1,0 +1,2534 @@
+## vim: ft=python :
+
+##----------------------------------------------------------------------------
+## `help` can do more than just printing docs of classes and functions
+help("topics")
+
+## `help` will always start an interactive help session when you call it
+## from the python interactive prompt or from a python file.
+
+## but `dir` just simply returns a list. if you want to print the dir of
+## someobj in a python file, you should write `print(dir(someobj))'
+
+
+##----------------------------------------------------------------------------
+## module is an object, just like other objects
+import sys
+type(sys)
+#> <class 'module'>
+(1).blah
+#> AttributeError: 'int' object has no attribute 'blah'
+sys.blah
+#> AttributeError: 'module' object has no attribute 'blah'
+
+## see, the `.` always means `getting attribute from an object`,
+## it doesn't have special meaning for modules.
+
+
+##----------------------------------------------------------------------------
+## class inheriting information:
+## use `Cls.__bases__` to get all parent classes
+
+class A: pass
+class B: pass
+
+## this is how to inherit from classes:
+class C(A, B): pass
+C.__bases__
+#> (<class '__main__.A'>, <class '__main__.B'>)
+
+## use `Cls.__base__` will get the first parent class
+C.__base__
+#> <class '__main__.A'>
+
+class C(B, A): pass
+C.__base__
+#> <class '__main__.B'>
+
+
+##----------------------------------------------------------------------------
+## if you want to get the class of an object, just use `obj.__class__`
+class T:
+    def __init__(self): self.objv = 2
+    v = 1
+
+t = T()
+t
+#> <__main__.T object at 0xb70c71ac>
+t.__class__
+#> <class '__main__.T'>
+t.__class__ is T
+#> True
+## both class attribute and instance attribute contains a `v'
+dir(t)
+#> ['__class__', ..., 'objv', 'v']
+dir(t.__class__)
+#> ['__class__', ..., 'v']
+
+## this is pretty useful when you want to get the class of an object
+## without knowing the class name.
+## e.g.
+print.__class__
+#> <class 'builtin_function_or_method'>
+builtin_function_or_method
+#> NameError: name 'builtin_function_or_method' is not defined
+
+## NOT every class is bound to a name
+
+## `type` works, too
+t.__class__ is type(t)
+#> True
+
+
+## if you want to create an int object, you can call `int' class
+int(1)
+#> 1
+## but if you want to create a function object, you have to use `def'
+def x(): pass
+
+## Not every object is created by calling a class
+
+
+##----------------------------------------------------------------------------
+## callable(object) -> bool
+##     "Return whether the object is callable" (in help(callable) document)
+## function is not the only object callable in python
+## in python document:
+##     "...Note that classes are callable(calling a class returns a new
+##      instantce); instances are callable if their class has a __call__()
+##      method."
+callable
+#> <built-in function callable>
+callable(print) and callable(callable) and callable(object)
+#> True
+
+## the class of functions have a __call__() method, so functions are callable
+def x(): pass
+
+dir(x.__class__)
+#> [..., '__call__', ...]
+
+## the class of classes have a __call__() method, so classes are callable
+dir(int.__class__)
+#> [..., '__call__', ...]
+
+## so :
+##   "all objects are callable if their class has a __call__() method"
+
+print.__call__("abcde", "fg", sep="what?")
+#> abcdewhat?fg
+
+class A:
+    def __init__(self, p): self.p = p
+
+callable(A)
+#> True
+
+A.__call__
+#> <method-wrapper '__call__' of type object at 0x1b7f828>
+A(3)
+#> <__main__.A object at 0xb6a654d0>
+A.__call__(3)
+#> <__main__.A object at 0xb6a663b0>
+
+a = A.__call__("blah")  # same as a = A("blah") yet
+a.p
+#> 'blah'
+
+callable(a)
+#> False
+
+a.__call__
+#> AttributeError: 'A' object has no attribute '__call__'
+
+A.__call__ = lambda x: "blah..."
+
+callable(a)
+#> True
+
+a.__call__
+#> <bound method A.<lambda> of <__main__.A object at 0xb69ea4d0>
+a()
+#> 'blah...'
+
+## !! but now
+A(3)
+#> <__main__.A object at 0xb69eab30>
+
+A.__call__(3)
+#> 'blah...'
+
+del A.__call__
+A.__call__(3)
+#> <__main__.A object at 0xb6a66510>
+
+## So you should always use Classblah() to create an object,
+## not Classblah.__call__()
+
+
+##----------------------------------------------------------------------------
+## `is not' is a comparison operator, just like `is', `<', `=='...
+## it is NOT `is' and `not'
+## `not in' is a comparison operator, too.
+## it is NOT `not' and `in'
+
+## 10 python comparisons, including membership tests and identity tests:
+##   "in", "not in", "is", "is not", "<", "<=", ">", ">=", "!=", "=="
+
+## you can also use `help("OPERATORS")' to see it
+
+
+##----------------------------------------------------------------------------
+## in python, `and' have no priority over `or'
+## `print' will return `None', i.e. False
+def p(x): print(x); return True
+
+p(1) or p(2) and p(3)
+#> 1
+#  True
+
+## even `not' have NO higher priority
+p(1) and not p(2) # "p(1) and (not p(2))" will have the same result
+#> 1
+#  2
+#  False
+
+
+##----------------------------------------------------------------------------
+## the value that `and'/`or' returns is not forced to be a bool
+# in `or' sequence, return first non-False, or the last non-True(all False)
+0 or "" or "a" or 0
+#> 'a'
+0 or "" or [] or {}
+#> {}
+# in `and' sequence, return first non-True, or the last non-False(all True)
+1 and "a" and "" and 1
+#> ''
+1 and "a" and 1 and "b"
+#> 'b'
+
+## in short, both `and' and `or' return the *stop-value* (I created this name)
+
+
+##----------------------------------------------------------------------------
+## run a python expression in shell
+#$ python3 -c 'print("hello")'
+#> hello
+
+
+## with `;', two expressions can be written in one line
+"abcde"; 1 + 2 * 3; print(4); a = 5; 6
+#> 'abcde'
+#  7
+#  4
+#  6
+
+## but you can NOT do assignment on the whole expressions:
+x = ("abcde"; 1 + 2 * 3))
+#>   File "<stdin>", line 1
+#      x = ("abcde"; 1 + 2 * 3)
+#                  ^
+#  SyntaxError: invalid syntax
+
+## this is pretty useful when using python in command line
+#$ python3 -c 'import os; print(os.getppid())'
+#> 2406
+
+
+##----------------------------------------------------------------------------
+## function annotation syntax.
+def hello(name: str) -> str: return name
+
+hello("Ron")
+#> 'Ron'
+hello(1)
+#> 1
+
+## see, the type check is NOT done.
+## NO automatic type checking happens at runtime. Instead, it is assumed
+## that a separate off-line type checker (e.g. mypy) will be used for
+## on-demand source code analysis.
+
+## but `help` will tell you that it does exists:
+help(hello)
+#> Help on function hello in module __main__:
+#
+#  hello(name:str) -> str
+
+
+##----------------------------------------------------------------------------
+## to reverse a list:
+a = [1, 2, 3]
+a.reverse()
+a
+#> [3, 2, 1]
+
+## but `str' and `bytes' have no `reverse' method
+## there is a more general way to do that:
+[1, 2, 3][::-1]
+#> [3, 2, 1]
+"abcde"[::-1]
+#> 'edcba'
+b"abcde"[::-1]
+#> b'edcba'
+
+
+##----------------------------------------------------------------------------
+## "import" will exeute the file to be imported, then do some name binding.
+## e.g. in a.py
+print("this is in a.py")
+## then in python shell
+import a
+#> "this is in a.py"
+
+
+## the `from .* import .*' have 2 different usage:
+## from module import variable_name
+## from package import module_name
+## e.g.
+from PIL import Image   # there is a Image.py in PIL package
+Image
+#> <module 'PIL.Image' from 'c:\\Python34\\lib\\site-packages\\PIL\\Image.py'>
+from PIL.Image import open
+open
+#> <function open at 0x00D1A150>
+## !! but
+from Image import open
+#> ImportError: No module named 'Image'     # result in python3
+##
+## if a module is inside a package, you will always have to write as
+## `from packagename.modulename import variablename'
+## !!! but actually, `from Image import open' works fine in python2.
+## this is caused by the `absolute import' in python3
+
+## there is also `relative import` when using `from xxx import xxx`
+## sometimes you can write `from .blah import ...` or `from . import ...`,
+## I didn't tried this.
+## but `import .blah` is a syntax error. (even for python2)
+
+
+## variable name start with a `_' is special. it will not be imported when
+## using `from .. import *' if `__all__' is not assigned.
+## in a.py
+v, _v = 1, 2
+## in command line
+from a import *
+v
+#> 1
+_v
+#> NameError: name '_v' is not defined
+dir()
+#> ['__builtins__', '__doc__', '__name__', '__package__', 'v']
+
+## but if you change __all__, things changed
+## in a.py
+v, _v, b = 1, 2, 3
+__all__ = ["v", "_v"]
+## then
+from a import *
+dir()
+#> ['__builtins__', '__doc__', '__name__', '__package__', '_v', 'v']
+
+## and if you specify the variable
+from a import _v
+_v
+#> 2
+
+## but import xx is different
+import a
+a.v
+#> 1
+a._v
+#> 2
+
+
+##----------------------------------------------------------------------------
+## decorator `@` is pretty useful in python, it has simple philosophy:
+@dec_a
+@dec_b
+@dec_c
+def method(args): pass
+
+## is same as:
+def method(args): pass
+method = dec_a(dec_b(dec_c(method)))
+
+## and
+@dec_a(p1)
+@dec_b(p2)
+@dec_c(p3)
+def method(args): pass
+
+## is same as:
+def method(args): pass
+method = dec_a(p1)(dec_b(p2)(dec_c(p3)(method)))
+
+## any callable object can be the decorating object:
+class d:
+    def __init__(self, func): pass
+    z = 3
+
+@d
+def m(): pass   # same as m = d(m)
+
+m
+#> <__main__.d object at 0xb69a030c>
+m.z
+#> 3
+
+
+## any object can be decorated
+def x(a): return 1
+
+@x
+class A: pass   # same as A = x(A)
+
+A
+#> 1
+
+## another example
+@str.upper
+@repr
+class A: pass
+
+A
+#> "<CLASS '__MAIN__.A'>"
+
+
+##----------------------------------------------------------------------------
+## to test whether an element exists in a list or dict
+## in ruby you have `include?', but in python, no such kind of methods,
+## use `in' operator instead.
+## when checking dict, check key only, not value
+1 in [1,2]
+#> True
+3 in [1,2]
+#> False
+1 in {1:1, 2:2}
+#> True
+3 in {1:3, 2:2}
+#> False
+
+
+##----------------------------------------------------------------------------
+## special ways to create a dict
+## use 2-element list inside list(the `list' here means `list' or `tuple')
+dict(((1, 2), (3, 4), (5, 6)))
+#> {1: 2, 3: 4, 5: 6}
+
+dict.fromkeys((1, 2, 3), 0)
+#> {1: 0, 2: 0, 3: 0}
+## as it's a static method, you can also use it like: (which is misleading)
+{"a": 1}.fromkeys((1, 2, 3), 0)
+#> {1: 0, 2: 0, 3: 0}
+
+
+## concat two dict. `+' works for str, bytes, list, tuple... but NOT for dict.
+## you can use update. and of course, the data with same key will overlay
+## the old data. no duplicated keys in dict
+## but unlike `+', `update' will not return the result.
+a = {1: 2}
+a.update({3: 4})
+a
+#> {1: 2, 3: 4}
+a.update({1: 5})
+#> {1: 5, 3: 4}
+
+
+##----------------------------------------------------------------------------
+## any immutable objects can be the key of dicts, because they are 'hashable'
+a = {1: 2, 3: 4}
+a[3]
+#> 4
+a = {(1, 2): 3, (3, 4): 4}
+a[(3, 4)] # same as a[3, 4]
+#> 4
+
+
+##----------------------------------------------------------------------------
+## a `set' is just like a `dict' without values(key-only dict ~),
+## no duplicated keys in a dict : no duplicated elements in a set.
+## no order  for keys in a dict : no order  for elements in a set
+## set can only contain hashable data
+{1, "a", (1, 2)}
+#> {(1, 2), 1, 'a'}
+{1, "a", [1, 2]}
+#> TypeError: unhashable type: 'list'
+
+## invalid key in dict will raise the same Error
+{[1]: 3}
+#> TypeError: unhashable type: 'list'
+
+## `|' works different for set
+{1, 2, 3} | {2, 3, 4}
+#> {1, 2, 3, 4}
+
+## comparisons like `<', `>', `>=', `<=' is special for set, too.
+## `>' for list and tuple works just like str, it test the element with `>'
+## one by one.
+[3, 2] > [1, 2, 3]
+#> True
+(3, 2) > (1, 2, 3)
+#> True
+'32' > '123'
+#> True
+["a", 1, 2, 3] > [1, 2, 3]
+#> TypeError: unorderable types: str() > int()
+
+## but in set, things are different
+{3, 2} > {1, 2, 3}
+#> False
+
+## for sets, set_a > set_b means set_b is part of set_a
+{3, 2} < {1, 2, 3}
+#> True
+{"a", 1, 2, 3} > {1, 2, 3}
+#> True
+
+## you can use `set' to unique a list
+a = [1, 2, 3, 1, 2, 2, 2, 2, 3, 4, 1, 1, 1]
+set(a)
+#> {1, 2, 3, 4}
+
+## set have `add' to add elements, just like `append' in list, to remove
+## elements, both set and list use `remove'
+a = [1, 2, 3]
+a.append(4)
+a
+#> [1, 2, 3, 4]
+a.remove(3)
+#> [1, 2, 4]
+a = set((1, 2, 3))
+a.add(4)
+a
+#> {1, 2, 3, 4}
+a.remove(3)
+#> {1, 2, 4}
+
+
+##----------------------------------------------------------------------------
+## L.append will append object to end, but L.pop can pop object from any index
+a = [1, 2, 3]
+a.pop()
+#> 3
+a
+#> [1, 2]
+a = [1, 2, 3]
+a.pop(0)
+#> 1
+a
+#> [2, 3]
+
+## if you want to pop a certain element, do it from the end of sequence.
+## because `pop' will change the index, make the list shorter.
+a = [1, 2, 3, 1, 2, 3]
+for i in range(len(a)):
+    if a[i] == 1: a.pop(i)
+#> 1
+#  1
+#  Traceback (most recent call last):
+#    File "<stdin>", line 2, in <module>
+#  IndexError: list index out of range
+
+a = [1, 2, 3, 1, 2, 3]
+for i in range(len(a) - 1, -1, -1):
+    if a[i] == 1: a.pop(i)
+#> 1
+#  1
+
+a
+#> [2, 3, 2, 3]
+
+
+##----------------------------------------------------------------------------
+## list.index works like str.find sometimes, but can not use sub-list
+## the reason for this:
+##   A list may contain a list, but a string will not contain a string !
+["a", "b", "c"].index("b")
+#> 1
+"abc".find("b")
+#> 1
+"abcd".find("cd")
+#> 2
+["a", "b", "c", "d"].index(["c", "d"])
+#> ValueError: ['c', 'd'] is not in list
+
+## it have to be wrong ! because you will get confused if it is not wrong.
+## consider this list: ["a", "b", "c", "d", ["c", "d"]].index(["c", "d"])
+
+## `index' and `find' can take 2 or 3 arguments
+##  *   L.index(value, [start, [stop]])
+##  *   S.find(sub[, start[, end]])
+[1, 2, 3, 1, 2, 3].index(3)
+#> 2
+[1, 2, 3, 1, 2, 3].index(3, 2)
+#> 2
+[1, 2, 3, 1, 2, 3].index(3, 3)
+#> 5
+
+##
+"abcabc".find("c")
+#> 2
+"abcabc".find("c", 2)
+#> 2
+"abcabc".find("c", 3)
+#> 5
+
+
+##----------------------------------------------------------------------------
+## str.translate(table) -> str
+## table have to be a mapping of unicode ordinals to unicode ordinals, strings,
+## or None. unmapped characters are left untouched.
+## it's just like `str.replace', but it can replace multiple characters
+## at one time
+"abcabc".replace("a", ":")
+#> ':bc:bc'
+"abcabc".translate({ord("a"): ":", ord("b"): "!"})
+#> ':!c:!c'
+
+## `str.translate' is usually used with `str.maketrans'
+str.maketrans("abc", "123")
+#> {97: 49, 98: 50, 99: 51}
+
+## it's a static method, just like `int.from_bytes'
+"".maketrans("abc", "123")
+#> {97: 49, 98: 50, 99: 51}
+
+"abcabc".translate(str.maketrans("ab", ":!"))
+#> ':!c:!c'
+
+
+##----------------------------------------------------------------------------
+## `S.format' in python3
+
+## named group
+"{ww}".format(3)
+#> Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#  KeyError: 'ww'
+
+"{ww}".format(ww=3)
+#> '3'
+
+## alignment `<`, `^`, `>` (`<` is the default)
+## way to write: "{:[FILLCHAR][ALIGNCHAR][LENGTH][TAIL]}", 4 element in total
+
+## e.g.
+"{0:*<8} -- {0:+^8} -- {0:_>8}".format(10)
+#> '10****** -- +++10+++ -- ______10'
+
+## without < ^ >, you can not use random character to fill
+"{:*8}".format(10)
+#> ValueError: Invalid format specifier
+"{:08}".format(10)
+#> '00000010'
+"{:+8}".format(10)
+#> '     +10'
+"{:-8}".format(10)
+#> '      10'
+## print a hex number(with 0 when necessary)
+"{:02X}".format(12)
+#> '0C'
+## useless but cute
+"{:0<2X}".format(12)
+#> 'C0'
+
+## format float
+"{}".format(3.1415926)
+#> '3.1415926'
+"{:.2f}".format(3.1415926)  # both `f' and `F' will work
+#> '3.14'
+## number before `.' specify the length of output string
+"{:10.2f}".format(3.1415926)
+#> '      3.14'
+"{:010.2f}".format(3.1415926)
+#> '0000003.14'
+"{:0^10.2f}".format(3.1415926)
+#> '0003.14000'
+
+## exponent notation
+"{:e}".format(3)
+#> '3.000000e+00'
+"{:e}".format(31415926)
+#> '3.141593e+07'
+## 'E' to 'e' is just like 'X' to 'x'
+"{:E}".format(31415926)
+#> '3.141593E+07'
+
+## wrong type will raise an exception
+"{:d}".format(3.14)
+#> ValueError: Unknown format code 'd' for object of type 'float'
+
+
+##----------------------------------------------------------------------------
+## you may not able to use `S.format' in old-version python, use `%' instead,
+## you will have most functionality that `S.format' can give you, only
+## the `alignment' will not be so convenient.
+
+## named group
+"%(ww)s" % 3
+#> Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#  TypeError: format requires a mapping
+
+"%(ww)s" % {"ww": 3}
+#> '3'
+
+## `%d', `%i', `%u' are all the same, `%u' was unsigned, it's obsolete now
+"%d, %d, %d" % (1, 2, 3.14)
+#> '1, 2, 3'
+## see !! wrong type will NOT raise an exception !!
+
+## you have to write it as a tuple !
+"%d, %d, %d" % 1, 2, 3.14
+#> TypeError: not enough arguments for format string
+
+"%x" % 12
+#> 'c'
+"%2X" % 12
+#> ' C'
+"%02X" % 12
+#> '0C'
+
+## format float
+"%f" % 3.1415926
+#> '3.141593'
+"%.2f" % 3.1415926
+#> '3.14'
+"%10.2f" % 3.1415926
+#> '      3.14'
+"%010.2f" % 3.1415926
+#> '0000003.14'
+
+## exponent notation
+"%e" % 31415926
+#> '3.141593e+07'
+"%E" % 31415926
+#> '3.141593E+07'
+
+## a special way to use `%', specify print length, pass the length as argument,
+## just like printf in C language
+"%*d" % (3, 4)
+#> '  4'
+## and the '*' take the place of a int only !
+"%*" % ('d', 3)
+#> TypeError: * wants int
+## but it's not same a C language's printf
+"%0*d" % (3, 4)
+#> '004'    # this is same as `printf'
+"%*0d" % (3, 4)
+#> ValueError: unsupported format character '0' (0x30) at index 2
+## in printf of c, it will be:
+#> "                             4" (tested on tcc-0.9.26 i386 win32)
+
+
+##----------------------------------------------------------------------------
+## the unpacking generalization is pretty in python3.5, * and ** can be used
+## anywhere, not just as assignment target(e.g. function arguments)
+*(0, 1, 2, 3), 4
+#> (0, 1, 2, 3, 4)
+*range(4), 4
+#> (0, 1, 2, 3, 4)
+[*range(4), 4]
+#> [0, 1, 2, 3, 4]
+{*range(4), 4, *(5, 6, 7)}
+#> {0, 1, 2, 3, 4, 5, 6, 7}
+{"x": 1, **{"y": 2}}
+#> {'x': 1, 'y': 2}
+
+## You can't use it alone. (of course you can't, or what type it should be)
+*(0, 1, 2, 3)
+#> SyntaxError: can't use starred expression here
+
+## you have more freedom in function call, too
+print(*[1], 2, *[3, 4, 5])
+#> 1 2 3 4 5
+
+def fn(a, b, c, d): print(a, b, c, d)
+fn(**{'a': 1, 'c': 3}, **{'b': 2, 'd': 4})
+#> 1 2 3 4
+
+## in python3.4, unpacking only have limited power
+*(0, 1, 2, 3), 4
+#> SyntaxError: can use starred expression only as assignment target
+
+
+##----------------------------------------------------------------------------
+## "(" and ")" are first recognised as parentheses, then the creation of tuple
+## (((1, 2))) is the SAME as (1,2)
+(((1, 2)))
+#> (1, 2)
+[[[1, 2]]]
+#> [[[1, 2]]]
+list((((1, 2, 3))))
+#> [1, 2, 3]
+tuple([[[1, 2, 3]]])
+#> ([[1, 2, 3]], )
+
+## sometimes, if the tuple contains only one element, write it as (ele,)
+## instead of (ele), because (ele) will be treated as ele. BTW, () is still
+## empty tuple. and actually, it's the `,' that really makes it a tuple
+(3)
+#> 3
+(3,)
+#> (3,)
+3,
+#> (3,)
+()
+#> ()
+type(())
+#> <class 'tuple'>
+
+## especially in threading.Thread
+## e.g.
+def x(a): print(a[0]) # assume a is a dict
+threading.Thread(target=x, args=({"a": 1},)).start()
+
+## Thread will do `tuple unpacking' on `args'
+## you have to write as `args=({"a":1},)' because `args=({"a":1})' will only
+## pass "a" as arguement, not {"a":1}, because :
+## the parameter tuple unpacking contains a "convert to tuple" process
+## before unpacking.
+
+## another example to show this:
+def x(a): print(a)
+
+x({"a": 1})
+#> {'a': 1}
+x(*{"a": 1})
+#> a
+
+def x(a): print(type(a))
+
+x({"a": 1})
+#> <class 'dict'>
+x(*{"a": 1})
+#> <class 'str'>
+
+## and
+tuple({"a": 1})
+#> ('a',)
+tuple({"a": 1, "b": 2})
+#> ('a', 'b')
+
+## so `args=({"a":1})' ==> `args={"a":1}', which result in: x("a")
+
+
+##----------------------------------------------------------------------------
+## creating a thread without inheriting from threading.Thread
+def fun(par1, par2): pass
+threading.Thread(target=fun, args=(p1, p2)).start()
+
+
+## python can create native thread, ruby can not
+def x():
+    while True: pass
+
+for i in range(3): threading.Thread(target=x).start()
+## then use `ps -e | grep python', you will see:
+##  3886 pts/2    00:00:31 python3
+
+## but use `top -H -p 3886', you will see:
+##  PID USER      PR  NI  VIRT  RES  SHR S  %CPU %MEM    TIME+  COMMAND
+## 3887 wx        20   0 35312 5876 2616 R  29.9  1.5   2:58.34 python3
+## 3890 wx        20   0 35312 5876 2616 R  29.9  1.5   2:47.85 python3
+## 3891 wx        20   0 35312 5876 2616 S  23.9  1.5   2:44.37 python3
+## 3886 wx        20   0 35312 5876 2616 S   0.0  1.5   0:00.91 python3
+
+## it's 4 threads, native threads !
+
+
+## if you want to catch a keyboard interrupt and send the stop signal to a
+## running thread, you should write as something like this:
+try:
+    threading.Thread(target=xxx, args=(xx,)).start()
+    while True: pass
+except KeyboardInterrupt:
+    threading_running_flag = False
+## the "while True: pass" is needed, or the code between "try" and "except" will
+## come to an end, and the try..except expression come to an end, too.
+## because the real thread program is *NOT* running here.
+## then the "threading_running_flag = False" will never be executed.
+
+
+## send a KeyboardInterrupt from a sub thread
+_thread.interrupt_main()
+#> KeyboardInterrupt
+
+## in python2, it's `thread.interrupt_main()'
+
+## `_thread' is more fundamental than `threading'(it's imported by threading.py)
+## `_thread' is implemented in C language, there is no _thread.py
+
+
+##----------------------------------------------------------------------------
+## In python, assgiment (=) is special. There are some rules to take case of:
+## whenever you do assignment, it will alway assume that is a new assignment.
+a = 1
+def blah():
+    a = 2
+
+## python won't care whether there is a `a` in outter scope, if you want to
+## assign new value to `outer a`, you have to write `global` or `nonlocal`
+def blah():
+    global a
+    a = 2
+
+
+##----------------------------------------------------------------------------
+## _io.TextIOWrapper.flush
+## if you want to write a file to hard drive, you can use file.close(),
+## or file.flush() without closing it.
+
+## for a python file object, <class '_io.TextIOWrapper'> 
+f = open("/tmp/a", "w")
+f
+#> <_io.TextIOWrapper name='/tmp/a' mode='w' encoding='UTF-8'>
+type(f)
+#> <class '_io.TextIOWrapper'>
+type(sys.stdout)
+#> <class '_io.TextIOWrapper'>
+
+## you can also use flush to make stdout display at once
+sys.stdout.flush()
+## since python 3.3, you can use "flush" parameter to do the same thing:
+print(*objects, sep="", end="\n", file=sys.stdout, flush=False)
+
+
+## get file integer descriptor (only an opened file have descriptor)
+sys.stdin.fileno()
+#> 0
+sys.stdout.fileno()
+#> 1
+sys.stderr.fileno()
+#> 2
+
+a = open("/tmp/a", "w")
+a.fileno()
+#> 3
+
+b = open("/tmp/a", "w")
+b.fileno()
+#> 4
+
+## close a, then descriptor of a will be released
+a.close()
+a.fileno()
+#> ValueError: I/O Operation on closed file
+
+c = open("/tmp/a", "w")
+c.fileno()
+#> 3
+
+
+##----------------------------------------------------------------------------
+## Indent could be spaces or tabs, odd and even are both ok.  But the rule is
+## a little bit strange:
+def a():
+ print("a")                  #=====>   works ! even it is ONE space
+
+def a():
+  print("a")
+  if True:
+            print("a2")      #=====>   works !
+
+def a():
+  print("a")
+  if True:
+   print("a2")               #=====>   works !
+
+def a():
+  print("a")
+  if True:
+  print("a2")                #=====>   IndentationError !
+
+## if you do not use space but tab, thing could be different, but the rule is
+## not pretty anyway.
+
+
+##----------------------------------------------------------------------------
+## bytes iterate type --> int
+for i in b"a": print(type(i))
+#> <class 'int'>
+
+print(type(b"a"))
+#> <class 'bytes'>
+
+
+##----------------------------------------------------------------------------
+## python is dynamic, when calling a function through the function name, i.e.
+## the variable name, it evaluate and get the function object. BUT, that's what
+## happened in the FUNCTION CALLING, NOT THE FUNCTION DEFINITION
+## in the function definition, it just make records of variables with scope.
+## this is the 'late binding' in python, BUT, function argument with default
+## value is different,
+## the binding of an arguement with default value happens at the time that the
+## function is defined. And the assignment happens for only one time.
+var = 3
+def t(par): print("outer, and par is {}".format(par))
+def a(): t(var)
+a()
+#> outer, and par is 3
+def t(par): print("outer 2, and par is {}".format(par))
+a()
+#> outer 2, and par is 3
+## create a scope by creating a function
+def test():
+    var = 4
+    def t(par): print("inner, and par is {}".format(par))
+    a()
+
+test()
+#> outer 2, and par is 3
+
+## for the same reason:
+def a(x, y): return x * y
+def b(): a(1, 2, 3)  #====> no Error
+b()
+#> TypeError: a() takes exactly 2 positional arguements (3 given)
+## a(1, 2, 3) will not execute until b is called
+
+def a(): z()  #====> no Error
+a()
+#> NameError: name 'z' is not defined
+z = 3
+a()
+#> TypeError: 'int' object is not callable
+
+
+##----------------------------------------------------------------------------
+## the default value for a function arguement is only evaluated once, at the 
+## time that the function is defined
+def foo(bar=[]):
+    bar.append("baz")
+    return bar
+
+foo()
+#> ["baz"]
+foo()
+#> ["baz", "baz"]
+foo()
+#> ["baz", "baz", "baz"]
+foo([]) # not use the default argument
+#> ['baz']
+foo([]) # again
+#> ['baz']
+
+## another example:
+var = [1]
+def x(a=var): print(a)
+x()
+#> [1]
+var[0] = "a"
+x()
+#> ['a']
+var = "b"
+x()
+#> ['a']
+
+
+##----------------------------------------------------------------------------
+## binds varialbles in closures
+def create_multipliers():
+    return [lambda x: i * x for i in range(4)]
+
+for multiplier in create_multipliers():
+    print(multiplier(2), end=", ")
+#> 6, 6, 6, 6, 
+
+## That's because lambdas are using the same `i`, it's a variable, not a
+## value. So use `default value` to solve this problem
+
+def create_multipliers():
+    return [lambda x, i=i: i * x for i in range(4)]
+
+for multiplier in create_multipliers():
+    print(multiplier(2), end=", ")
+#> 0, 2, 4, 6, 
+
+
+##----------------------------------------------------------------------------
+## python have different "binding level"(I don't know what it is called)
+## for a common symbol like "blah"
+blah = 1
+blah
+#> 1
+del blah
+blah
+#> NameError: name 'blah' is not defined
+
+## but for a special symbol like print
+print(1)
+#> 1
+print = 2
+print(1)
+#> TypeError: 'int' object is not callable
+del print
+print(1)
+#> 1
+## see, the del did not really delete the symbol "print"
+
+
+##----------------------------------------------------------------------------
+## an opened file is an iterator(with `__next__' defined)
+for i in open("tt"): print(i)     #====>   will print all lines in file "tt"
+
+
+##----------------------------------------------------------------------------
+## GENERATOR and COMPREHENSION
+## `yield' sometimes works just like `return'
+## a function with yield inside is different from a normal function
+def h():
+    print("print inside h executed")
+    yield "ret"
+
+a = h()
+a
+#> <generator object h at 0x.....>
+a.__next__()
+#> print inside h executed
+#  "ret"
+a.__next__()
+#> StopIteration    # this is an exception
+
+a = h()
+tt = a.__next__()
+#> print inside h executed
+tt
+#> "ret"
+
+## so you can use it with a for loop:
+def g(n):
+    for i in range(n):
+        yield i ** 2
+
+for i in g(5):
+    print("{} : ".format(i), end="")
+#> 0 : 1 : 4 : 9 : 16 : 
+
+
+## generator can be created by "()"
+a = (i for i in range(10) if i > 5)
+a
+#> <generator object <genexpr> at 0xb70d9c84>
+a.__next__()
+#> 6
+a.__next__()
+#> 7
+
+## the "()" is not necessary if you are creating the generator inside
+## existing parentheses, e.g.
+print(i for i in range(3))
+#> <generator object <genexpr> at 0xb6a3a1e8>
+"".join(str(i + 10) for i in range(3))
+#> '101112'
+
+## call `list' on generator or use `in' will call __next__ in some way
+a = (i for i in range(8))
+list(a)
+#> [0, 1, 2, 3, 4, 5, 6, 7]
+list(a)
+#> []
+a = (i for i in range(8))
+2 in a
+#> True
+list(a)
+#> [3, 4, 5, 6, 7]
+
+
+## list comprehension looks like generator
+[i * 2 for i in range(10) if i ** 2 < 10]
+#> [0, 2, 4, 6]
+
+## so does dict comprehension
+{k.upper(): v for k, v in {"a": 1, "b": 2}.items()}
+#> {'A': 1, 'B': 2}
+
+## and set comprehension
+{i * 2 for i in range(10) if i ** 2 < 10}
+#> {0, 2, 4, 6}
+
+
+## you can use several `for' together
+[str(a) + str(b) for a in range(3) for b in range(5, 8, 1)]
+#> ['05', '06', '07', '15', '16', '17', '25', '26', '27']
+
+## for comparation:
+[[str(a) + str(b) for a in range(3)] for b in range(5, 8, 1)]
+#> [['05', '15', '25'], ['06', '16', '26'], ['07', '17', '27']]
+
+[str(a) + str(b) for a in range(3) for b in range(5, 8, 1)
+    if a % 2 != 0]
+#> ['15', '16', '17']
+[str(a) + str(b) for a in range(3) for b in range(5, 8, 1)
+    if a % 2 != 0 if b % 2 == 0]
+#> ['16']
+
+
+
+##----------------------------------------------------------------------------
+## map, filter
+## unlike most programming language, python put the function as first argument,
+## and the sequence as second argument.
+
+## filter
+filter(lambda x: x % 2 != 0 and x < 10, range(32))
+#> <filter object at 0x......>
+list(filter(lambda x: x % 2 != 0 and x < 10, range(32)))
+#> [1, 3, 5, 7, 9]
+
+## map with single parameter
+map(lambda x: x + 2, range(3))
+#> <map object at 0x......>
+list(map(lambda x: x + 2, range(3)))
+#> [2, 3, 4]
+
+## the lambda is not called when creating the map object
+m = map(lambda x: print(x), [1, 2, 3])  # no output
+list(m)
+#> 1
+#  2
+#  3
+#  [None, None, None]
+
+## the lambda is not called until we call `list(m)'
+
+## this is just like generator
+g = (print(i) for i in [1,2,3]) # no output
+list(g)
+#> 1
+#  2
+#  3
+#  [None, None, None]
+
+
+## map with multiple parameter
+map(lambda a, b: a + b, range(3), range(10,13))
+#> <map object at 0x......>
+list(map(lambda a, b: a + b, range(3), range(10,13)))
+#> [10, 12, 14]
+
+## if only one arguement is given to a two-parameter lambda
+map(lambda a, b: a + b, range(3))
+#> <map object at 0x......>
+## but:
+list(map(lambda a, b: a + b, range(3)))
+#> TypeError: <lambda>() takes exactly 2 arguments (1 given)
+
+## same reason: the lambda is not called when creating the map object
+
+
+## reduce
+functools.reduce(lambda x, y: x + y, range(101))
+#> 5050
+
+
+## zip
+list(zip("abc", "def"))
+#> [('a', 'd'), ('b', 'e'), ('c', 'f')]
+list(zip("abc", b"def"))
+#> [('a', 100), ('b', 101), ('c', 102)]
+list(zip("abc", [1, 2, 3]))
+#> [('a', 1), ('b', 2), ('c', 3)]
+
+## the rest elements will be simply ignored
+list(zip("abc", "defg"))
+#> [('a', 'd'), ('b', 'e'), ('c', 'f')]
+list(zip("abcd", [1, 2, 3]))
+#> [('a', 1), ('b', 2), ('c', 3)]
+list(zip("abc", [1, 2, 3, 4]))
+#> [('a', 1), ('b', 2), ('c', 3)]
+
+## map can do what zip does:
+list(map(lambda a, b: (a, b), "abc", [1,2,3,4]))
+#> [('a', 1), ('b', 2), ('c', 3)]
+
+
+
+## "map" can do what "list comprehension" does sometimes
+[a.upper() for a in ["a", "b", "c"]]
+#> ['A', 'B', 'C']
+list(map(lambda a: a.upper(), ["a", "b", "c"]))
+#> ['A', 'B', 'C']
+
+## but list comprehension can eliminate elements by 'if'.
+[a.upper() for a in ["a", "b", "c"] if a != 'a']
+#> ['B', 'C']
+
+## map can not do that, only filter can eliminate elements.
+## map can do this:
+list(map(lambda a: a.upper() if a != 'a' else a, ["a", "b", "c"]))
+#> ['a', 'B', 'C']
+
+## but list comprehension can do this, too
+[a.upper() if a != 'a' else a for a in ["a", "b", "c"]]
+#> ['a', 'B', 'C']
+
+## list comprehension can do anything that single-argument-map can do !
+## it's just like a map + filter
+
+
+
+##----------------------------------------------------------------------------
+## special method : `__repr__'
+class A:
+    def __repr__(self): return "< Class A, ;) >"
+
+a = A()
+a
+#> < Class A, ;) >
+
+## when `__str__' is not defined, will use `__repr__' instead
+print(a)
+#> < Class A, ;) >
+
+## `__repr__' for numbers
+(1).__repr__()
+#> '1'
+(0x32).__repr__()
+#> '50'
+0x32    # just like `print((0x32).__repr__())'
+#> 50
+## `__str__' works just like `__repr__'
+(0x32).__str__()
+#> '50'
+
+
+## `__repr__' along with `__str__':
+class A:
+    def __repr__(self):
+        return "<-_- repr>"
+    def __str__(self):
+        return "<^_- str>"
+
+a = A()
+a
+#> <-_- repr>
+print(a)
+#> <^_- str>
+repr(a)
+#> '<-_- repr>'
+str(a)
+#> '<^_- str>'
+
+
+##----------------------------------------------------------------------------
+## run a module from command line
+
+## create a simple http server with python3:
+#$ python3 -m http.server 8080
+
+## create a cgi server:
+#$ python3 -m http.server --cgi 8080
+
+## parse a markdown file
+#$ python3 -m markdown blog.md
+
+## or
+#$ cat blog.md | python3 -m markdown
+
+## -m will search module path of python and run the module
+## if test.py is in the current directory
+#$ python3 -m test
+## is equivalent to:
+#$ python3 test.py
+
+
+##----------------------------------------------------------------------------
+## from python3, pip is in the standard library of python. But you may get
+## some trouble when running "make install" if you compile install python.
+## It may fail installing pip if your env "LC_ALL" is unset.
+
+## use pip to install/uninstall packages
+#$ pip install ...
+#$ pip uninstall ...
+
+## upgrade a package
+#$ pip install packagename --upgrade
+
+## show the required packages
+#$ pip freeze
+## store the requirements into a file: pip freeze > requirements.txt
+
+## install all requirements from a file of package lists
+#$ pip install -r requirements.txt
+## do not install from the pypi.python.org, e.g.
+#$ pip install -r requirements.txt -i http://192.168.1.100:8000
+
+## PyPI(python package index). use mirror in China(douban, aliyun...). e.g.
+#$ pip install -i http://pypi.douban.com/simple/ flask
+#$ pip install -i http://pypi.aliyun.com/simple/ flask
+
+
+## install `PIL'(python imaging library), or `pillow' in python3
+#$ pip install pillow
+## on linux, you might need some libraries like `libjpeg' preinstalled.
+## debian:
+#$ apt-get install libjpeg8-dev libfreetype6-dev zlib1g-dev
+
+
+
+##----------------------------------------------------------------------------
+## `__file__' is not dynamic (unlike `__name__')
+
+## in a.py
+def log(*x): print("[{}]".format(__file__), *x)
+
+## in b.py
+from a import log
+log("this is file b.py")
+
+## then, you run this in command line:
+#$ python3 b.py
+#> [/home/pi/a.py] this is file b.py
+
+
+## `__file__` is sometimes absloute path, sometimes relative path
+## if not used as module, `__file__' is just like `argv[0]'
+
+## in a.py
+print("__file__ is : \"{}\"".format(__file__))
+
+#$ python3 pythonfiles/a.py
+#> __file__ is : "pythonfiles/a.py"
+
+#$ python3 ~/pythonfiles/a.py
+#> __file__ is : "/home/pi/pythonfiles/a.py"
+
+#$ ./pythonfiles/a.py
+#> __file__ is : "./pythonfiles/a.py"
+
+
+##----------------------------------------------------------------------------
+## raw string
+r"abc\n"
+#> 'abc\\n'
+"abc\n"
+#> 'abc\n'
+r'(\\*)(\(\?P<[^>]+>|\((?!\?))'
+#> '(\\\\*)(\\(\\?P<[^>]+>|\\((?!\\?))
+print(r'(\\*)(\(\?P<[^>]+>|\((?!\?))')
+#> (\\*)(\(\?P<[^>]+>|\((?!\?))
+print( '(\\*)(\(\?P<[^>]+>|\((?!\?))')
+#> (\*)(\(\?P<[^>]+>|\((?!\?))
+
+## !!!
+## when `\' followed by a non-special-meaning character, `\' just mean `\',
+## not escape leading character
+"\(" is "\\("
+#> True
+a = "a\\b\c\d\m"
+a
+#> 'a\\b\\c\\d\\m'
+
+print(a)
+#> a\b\c\d\m
+## this is different from C language, in C:
+
+#c printf("a\\b\c\d\m");
+#> a\bcdm
+
+
+##----------------------------------------------------------------------------
+a = "字"
+hex(ord(a))
+#> '0x5b57'
+json.dumps(a)
+#> '"\\u5b57"'
+a.encode("utf16")
+#> b'\xff\xfeW['      # "W"--"\x57", "["--"\x5b"
+a = "这种编码的官方名字"
+json.dumps(a)
+#> '"\\u8fd9\\u79cd\\u7f16\\u7801\\u7684\\u5b98\\u65b9\\u540d\\u5b57"'
+a.encode("utf16")
+#> b'\xff\xfe\xd9\x8f\xcdy\x16\x7f\x01x\x84v\x98[\xb9e\rTW['
+a.encode("utf32")
+#> b'\xff\xfe\x00\x00\xd9\x8f\x00\x00\xcdy\x00\x00\x16\x7f\x00\x00' \
+#  b'\x01x\x00\x00\x84v\x00\x00\x98[\x00\x00\xb9e\x00\x00\rT\x00\x00W[\x00\x00'
+
+
+##----------------------------------------------------------------------------
+## python `in' and `True'
+True in [0, 1, 2, 3]
+#> True
+True == 1
+#> True
+True == 2
+#> False
+False == 2
+#> False
+False == 0
+#> True
+False == ""
+#> False
+False == []
+#> False
+## sometimes, bool is not the right choice even if you are trying to store
+## a two-value thing
+
+
+##----------------------------------------------------------------------------
+## 'bool' is the child class of 'int', you can see that with "help(bool)"
+isinstance(True, int)
+#> True
+bool.__bases__
+#> (<class 'int'>,)
+
+
+##----------------------------------------------------------------------------
+## python dict items
+{"a": 1, "b": 2}.items()
+#> dict_items([('b', 2), ('a', 1)])
+list({"a": 1, "b": 2}.items())
+#> [('a', 1), ('b', 2)]
+for k, v in {"a": 1, "b": 2}.items():
+    print("key={}, value={}".format(k, v))
+#> key=a, value=1
+#  key=b, value=2
+
+
+##----------------------------------------------------------------------------
+## special variable `_', stores the value of previous expression
+3 * 2
+#> 6
+_
+#> 6
+"{}".format(32)
+#> '32'
+_
+#> '32'
+
+
+##----------------------------------------------------------------------------
+## `is` can know whether two variable refer to the same object
+a = [1, 2, 3]
+b = [1, 2, 3]
+a is b
+#> False
+
+[1, 2, 3] is [1, 2, 3]
+#> False
+
+## but there is another way: `id`
+a = [1, 2, 3]
+b = [1, 2, 3]
+id(a) == id(b)
+#> False
+
+## but take care
+id([1, 2, 3]) == id([1, 2, 3])
+#> True
+
+## things go different when you use list literal with `id`
+
+
+##----------------------------------------------------------------------------
+## NOT all immutable objects have pool
+## small int and string will not create new object when same data exist,
+## but tuples will, except for empty tuple
+a = 1
+b = 1
+a is b
+#> True
+
+a = 1000
+b = 1000
+a is b
+#> False
+
+a = 1.2
+b = 1.2
+a is b
+#> False
+
+a = "a"
+b = "a"
+a is b
+#> True
+
+a = ()
+b = ()
+a is b
+#> True
+
+a = (1,)
+b = (1,)
+a is b
+#> False
+
+a = []
+b = []
+a is b
+#> False
+
+a = {}
+b = {}
+a is b
+#> False
+
+
+##----------------------------------------------------------------------------
+# None with 'is'
+1 is not None
+#> True
+False is not None
+#> True
+None is not None
+#> False
+
+
+##----------------------------------------------------------------------------
+## isinstance
+isinstance("a", str)
+#> True
+isinstance(1, int)
+#> True
+isinstance((), tuple)
+#> True
+
+
+##----------------------------------------------------------------------------
+## issubclass
+issubclass(bool, int)
+#> True
+
+
+
+##----------------------------------------------------------------------------
+## instance attribute & class attribute
+## class attribute can be accessed via class or via an instance
+## before doing assignment on instance attribute, it point to the same
+## object as class attribute. after assignment, thing changed
+
+## IN PYTHON, ASSIGNMENT WILL ALWAYS TRY TO CREATE A NEW VARIABLE !
+
+## but you can still change the class attribute through instances,
+## you can use a list or dict as class attribute to avoid the assignment
+## e.g.
+class C:
+    def __call__(self): self.n[0] += 1  # NO assignment to self.n
+    n = [0]
+
+c = C()
+d = C()
+c.n is C.n
+#> True
+c.n is d.n
+#> True
+c.n
+#> [0]
+c()
+c.n
+#> [1]
+C.n
+#> [1]
+d.n
+#> [1]
+## do assignment to C.n will not change it. C.n and c.n still point to the
+## same object
+C.n = [10]
+c.n is C.n
+#> True
+c.n
+#> [10]
+## but after doing assignment to c.n, c.n and C.n will not point to the
+## same object anymore.
+c.n = [20]
+c.n is C.n
+#> False
+c()
+c.n
+#> [21]
+C.n
+#> [10]
+
+
+##----------------------------------------------------------------------------
+## setattr, getattr, delattr, hasattr
+## getattr(x, 'y') is equivalent to x.y
+## setattr(x, 'y', v) is equivalent to `x.y = v'.
+## delattr(x, 'y') is equivalent to `del x.y'
+## so why use getattr ? 
+## because, sometimes we need to access attribute through a variable,
+## not directly. you have to have attribute as a string,
+## as symbols can not stored in a variable !
+class A:
+    def __init__(self): self.name = "myname"
+    def method(self): print("this is a method")
+
+a = A()
+getattr(a, "name", "no name given")
+#> 'myname'
+getattr(a, "age", "no age given")
+#> 'no age given'
+getattr(a, "method", "default")
+#> <bound method A.method of <__main__.A object at 0xb70bf1ac>>
+getattr(a, "method", "default")()
+#> this is a method
+getattr(a, "method1", "default")
+#> 'default'
+getattr(a, "method1", "default")()
+#> TypeError: 'str' object is not callable
+
+setattr(a, "method1", lambda: print("method1 exists now"))
+getattr(a, "method1", "default")
+#> <function <lambda> at 0xb709992c>
+getattr(a, "method1", "default")()
+#> method1 exists now
+a.method1()
+#> method1 exists now
+
+delattr(a, "method1")
+getattr(a, "method1", "default")
+#> 'default'
+
+hasattr(a, "name")
+#> True
+hasattr(a, "age")
+#> False
+
+
+
+##----------------------------------------------------------------------------
+## if inside an expression, useful in lambda expression
+1 if True else 2
+#> 1
+1 if False else 2
+#> 2
+
+
+
+##----------------------------------------------------------------------------
+## classes are objects, all objects have attributes in it's "__dict__".
+class T:
+    def hello(self): print("name is", self.name)
+    name = "myname"
+
+T.__dict__
+#> dict_proxy({'__module__': '__main__', 'name': 'myname', 'hello': <function hello at 0xb6a9d4f8>, '__dict__': <attribute '__dict__' of 'T' objects>, '__weakref__': <attribute '__weakref__' of 'T' objects>, '__doc__': None})
+
+## Usually, o.x is just a syntax suger for o.__dict__["x"],
+str.__dict__["format"] is str.format
+#> True
+T.__dict__["hello"] is T.hello
+#> True
+
+## BUT !!! (I don't know reason yet)
+int.__dict__["from_bytes"] is int.from_bytes
+#> False
+int.__dict__["from_bytes"]
+#> <method 'from_bytes' of 'int' objects>
+int.from_bytes
+#> <built-in method from_bytes of type object at 0x105debcb0>
+
+t = T()
+t
+#> <__main__.T object at 0xb71453ac>
+t.__dict__
+#> {}
+
+t.name = "x"
+t.__dict__
+#> {'name': 'x'}
+## you can add new attribute to an object dynamicly(__slots__ can make limits)
+t.age = 80
+t.__dict__
+#> {'name': 'x', 'age': 80}
+
+
+## !! T.hello is a function, not a method
+T.hello
+#> <function T.hello at 0x107441488>
+t.hello
+#> <bound method T.hello of <__main__.T object at 0x107444320>>
+T.hello()
+#> TypeError: hello() missing 1 required positional argument: 'self'
+T.hello(t)
+#> name is myname
+t.hello()
+#> name is myname
+
+## unlike javascript, "invocation pattern" of python function does NOT matter.
+## JS have NO concept for "class", which make many things different.
+## In python, method is function for class, but `method` for instance.
+## even if you do another assignment
+x = t.hello
+x
+#> <bound method T.hello of <__main__.T object at 0x107444320>>
+x()
+#> name is myname
+x(t)
+#> TypeError: hello() takes 1 positional argument but 2 were given
+
+
+## but like javascript, you can dynamicly add new methods for objects, too
+T.blah = lambda: print("this is blah")
+t.blah()
+#> TypeError: <lambda>() takes 0 positional arguments but 1 was given
+T.blah = lambda self: print("this is blah")
+t.blah()
+#> this is blah
+
+## but the built-in methods can NOT be overwritten
+str.format = lambda self: print("this is format")
+#> TypeError: can't set attributes of built-in/extension type 'str'
+
+
+
+##----------------------------------------------------------------------------
+## descriptors are special objects who have __get__, __set__, __delete__...
+## when evaluating obj.attr, if attr have a __get__ method, python will call
+## it and return the value returned by attr.__get__()
+## but class attribute only !!
+class MyDescriptor:
+    def __get__(self, obj, owner):
+        print("from MyDescriptor.__get__, val = ", obj.val)
+    def __set__(self, obj, val):
+        print("from MyDescriptor.__set__")
+        obj.val = val
+
+class MyClass:
+    def __init__(self): self.val = 3
+    desc = MyDescriptor()
+
+myobj = MyClass()
+myobj.desc
+#> from MyDescriptor.__get__, val =  3
+myobj.desc = 4
+#> from MyDescriptor.__set__
+myobj.desc
+#> from MyDescriptor.__get__, val =  4
+myobj.val
+#> 4
+
+
+
+##----------------------------------------------------------------------------
+## functools
+
+## partial
+int("a", base=16)
+#> 10
+int16 = functools.partial(int, base=16)
+int16("a")
+#> 10
+
+
+## update_wrapper
+def a():
+    " this is function a "
+    print("a called")
+
+def b():
+    print("b called")
+
+a.__doc__
+#> ' this is function a '
+a.__dict__
+#> {}
+a()
+#> a called
+b.__doc__
+#> None
+b.__dict__
+#> {}
+b()
+#> b called
+
+functools.update_wrapper(b, a)
+b.__name__
+#> 'a'
+b.__doc__
+#> ' this is function a '
+a.__dict__
+#> {}
+b.__dict__
+#> {'__wrapped__': <function a at 0xb71e5734>}
+b()
+#> b called
+
+## or you can just use "functools.wraps" to define b, this function will apply
+## update_wrapper() to a wrapper function
+@functools.wraps(a)
+def b():
+    print("b called")
+
+b.__name__
+#> 'a'
+b.__doc__
+#> ' this is function a '
+
+
+## one useful example: (the decorator will make the function lost its __doc__)
+## unless you use update_wrapper
+def mydecorator(f):
+    def t(*args, **kwargs):
+        print("decorated")
+        f(*args, **kwargs)
+    # without this, doc string of the decorated function will lost
+    functools.update_wrapper(t, f)
+    return t
+
+## you can also do it like this:
+def mydecorator(f):
+    @functools.wraps(f)
+    def t(*args, **kwargs):
+        print("decorated")
+        f(*args, **kwargs)
+    return t
+
+@mydecorator
+def testfun(*args):
+    """hello, this is doc string"""
+    print(*args)
+
+testfun.__doc__
+#> 'hello, this is doc string'
+
+
+
+##----------------------------------------------------------------------------
+## contex manager, with ... as
+## File objects return themselves from __enter__() to allow open() to be
+## used as the context expression in a with statement
+f = open("/tmp/a", "w")
+f.__enter__
+#> <built-in method __enter__ of io.TextIOWrapper objects at 0xb6aaff30>
+f.__enter__() is f
+#> True
+
+class withtest:
+    def __enter__(self):
+        print("__enter__ called.")
+        return "returned by __enter__"
+    def __exit__(self, typ, val, traceback):
+        print("__exit__ called. and typ={}, val={}, traceback={}" \
+              .format(typ, val, traceback))
+        return "returned by __exit__"
+
+a = withtest()
+with a: pass
+#> __enter__ called.
+#  __exit__ called. and typ=None, val=None, traceback=None
+
+with withtest() as f:
+    print("f is an instance of {}: {}".format(type(f), f))
+#> __enter__ called.
+#  f is an instance of <class 'str'>: returned by __enter__
+#  __exit__ called. and typ=None, val=None, traceback=None
+
+
+
+##----------------------------------------------------------------------------
+## even do return inside "try" part, the "finally" part will still execute.
+## but there are some tricks:
+##  "try" part executes before "finally" part, and "finally" part executes
+##  before "return".
+outter_var = [1]
+def test():
+    try: return "outter_var is now: {}".format(outter_var)
+    finally: outter_var[0] += 1
+test()
+#> 'outter_var is now: [1]'
+
+## this does NOT mean "return" is done before "finally" is executed, this is
+## because str.format had created the string object before finally part is
+## executed.
+
+## see this example:
+outter_var = [1]
+def test():
+    try: return outter_var  # don't use str.format, just return outter_var
+    finally: outter_var[0] += 1
+
+test()
+#> [2]
+
+
+
+##----------------------------------------------------------------------------
+## traceback exception
+## if an exception is raised and not handled, it will go to the caller, then
+## the caller of the caller ...
+## it's just like a stack
+#
+## in ttt.py:
+def a(p): 1 / p
+def b(p): a(p)
+def c(p): b(p)
+def d(): c(0)
+d()
+#$ python3 ttt.py
+#> Traceback (most recent call last):
+#    File "ttt.py", line 5, in <module>
+#      d()
+#    File "ttt.py", line 4, in d
+#      def d(): c(0)
+#    File "ttt.py", line 3, in c
+#      def c(p): b(p)
+#    File "ttt.py", line 2, in b
+#      def b(p): a(p)
+#    File "ttt.py", line 1, in a
+#      def a(p): 1 / p
+#  ZeroDivisionError: division by zero
+
+## the REAL problem-place printed last, outmost caller first
+
+## but in some other languages, like ruby:
+## in ttt.rb:
+def a(p) 1 / p end
+def b(p) a(p) end
+def c(p) b(p) end
+def d() c(0) end
+d()
+#$ ruby ttt.rb
+#> ttt.rb:1:in `/': divided by 0 (ZeroDivisionError)
+#  	from ttt.rb:1:in `a'
+#  	from ttt.rb:2:in `b'
+#  	from ttt.rb:3:in `c'
+#  	from ttt.rb:4:in `d'
+#  	from ttt.rb:5:in `<main>'
+
+## the REAL problem-place printed first, outmost caller last
+## the traceback print of java is just like ruby
+
+
+##----------------------------------------------------------------------------
+## True, False, None is not like 1, "a", (1,), ...
+1 = 2
+#> SyntaxError: can't assign to literal
+"a" = 1
+#> SyntaxError: can't assign to literal
+(1,) = 2
+#> SyntaxError: can't assign to literal
+[1,] = 2
+#> SyntaxError: can't assign to literal
+{1:2} = 3
+#> SyntaxError: can't assign to literal
+## but
+True = 1
+#> SyntaxError: can't assign to keyword
+False = 1
+#> SyntaxError: can't assign to keyword
+None = 1
+#> SyntaxError: can't assign to keyword
+## and
+__debug__ = 1
+#> SyntaxError: assignment to keyword
+
+## True, False, None, __debug__, Ellipsis, NotImplemented
+## they are called `Built-in Constants'
+## the names True, False, None and __debug__ cannot be reassigned
+## __debug__ is true if Python was not started with an -O option
+
+
+##----------------------------------------------------------------------------
+## assert
+assert expression
+## is equivalent to
+if __debug__:
+    if not expression: raise AssertionError
+
+assert expression1, expression2
+## is equivalent to
+if __debug__:
+    if not expression: raise AssertionError(expression2)
+
+assert 1 > 3, 1 + 3
+#> AssertionError: 4
+
+
+##----------------------------------------------------------------------------
+## function : sorted(iterable, key=None reverse=False) --> new sorted list
+## in python2, it's
+## sorted(iterable, cmp=None, key=None, reverse=False) --> new sorted list
+## both `cmp' and `key' are functions, `cmp' takes 2 parameters and `key'
+## takes 1
+## python3 has only `key', no `cmp' anymore
+a = [("a", 2), ("b", 3), ("c", 1)]
+sorted(a)
+#> [('a', 2), ('b', 3), ('c', 1)]
+sorted(a, key=lambda x: x[1])
+#> [('c', 1), ('a', 2), ('b', 3)]
+sorted(a, key=lambda x: x[1], reverse=True)
+#> [('b', 3), ('a', 2), ('c', 1)]
+a = [("abc", "d"), ("e", "f"), ("abcdefg", "hijklmn"), ("ef", "g")]
+sorted(a)
+#> [('abc', 'd'), ('abcdefg', 'hijklmn'), ('e', 'f'), ('ef', 'g')]
+sorted(a, key=lambda x: len(x[0]) + len(x[1]))
+#> [('e', 'f'), ('ef', 'g'), ('abc', 'd'), ('abcdefg', 'hijklmn')]
+
+## L.sort(key=None, reverse=False) works just like sorted, only it will change
+## the original list, and return None.
+
+
+##----------------------------------------------------------------------------
+## __lt__ and __gt__ are each other's reflection,
+## __le__ and __ge__ are each other's reflection,
+## __eq__ and __ne__ are their own reflection.
+acc = functools.partial(functools.reduce, lambda x, y: x + y)
+class MyTuple:
+    def __init__(self, *ele): self.tup = ele
+    def __lt__(self, other):
+        return True if acc(self.tup) < acc(other.tup) else False
+
+(1,2,3) < (4,)
+#> True
+MyTuple(1,2,3) < MyTuple(4)
+#> False
+## `>' works even __gt__ is not defined, __lt__ will be called in a special way
+MyTuple(1,2,3) > MyTuple(4)
+#> True
+MyTuple(1,2,3) <= MyTuple(4)
+#> TypeError: unorderable types: MyTuple() <= MyTuple()
+
+## more examples:
+class A: pass
+A() < (1, 2, 3)
+#> TypeError: unorderable types: A() < tuple()
+A() < A()
+#> TypeError: unorderable types: A() < A()
+A().__lt__
+#> <method-wrapper '__lt__' of A object at 0xb6a91530>
+A().__lt__(1)
+#> NotImplemented
+
+class A:
+    def __lt__(self, other): return True
+
+A() < (1,2,3)
+#> True
+A() < {}
+#> True
+A().__lt__
+#> <bound method A.__lt__ of <__main__.A object at 0xb6a904d0>>
+A().__lt__({})
+#> True
+A().__gt__
+#> <method-wrapper '__gt__' of A object at 0xb6a91530>
+
+
+## the default operation of __lt__, __gt__ ... for some built-in objects
+(1, 2) < (1, 3)
+#> True
+(1, 2) < (1, 1)
+#> False
+(1, 2) <= (1, 2)
+#> True
+## list works just like tuple
+[1, 2] < [1, 3]
+#> True
+## so does str
+"12" < "13"
+#> True
+## and bytes
+b"12" < b"13"
+#> True
+## dict is totally different
+{1: 2} < {3: 4}
+#> TypeError: unorderable types: dict() < dict()
+
+
+##----------------------------------------------------------------------------
+## `__new__' is called before `__init__', it creates the object and return it
+class A:
+    def __new__(cls): return 1
+A
+#> <class '__main__.A'>
+A()
+#> 1
+A().__class__
+#> <class 'int'>
+A().__repr__
+#> <method-wrapper '__repr__' of int object at 0x2d4054>
+
+
+##----------------------------------------------------------------------------
+## metaclasses are the `stuff' that creates classes
+## `type' is in fact a metaclass ! it's the default metaclass python uses.
+## all custom metaclasss will need to use `type' by inheriting it or
+## calling it.
+
+## `int number' is `int object'
+(1).__repr__
+#> <method-wrapper '__repr__' of int object at 0x2d4054>
+
+## `int class' is `type object'
+int.__call__
+#> <method-wrapper '__call__' of type object at 0x29cc0c>
+
+## `type' has two completely different uses according to the arguments you
+## pass to it (it's an issue due to backwards compatibility in python)
+
+## THE FIRST USE: return type of an object(what create the object)
+## in this situation, `type(x)' is equivalent to `x.__class__'
+type(object) #-> the object's type
+## e.g.
+type(1)
+#> <class 'int'>
+type(int)
+#> <class 'type'>
+type(type)
+#> <class 'type'>
+class A: pass
+type(A)
+#> <class 'type'>
+
+## all classes are created by metaclasses(usually by `type') but if it
+## specified a customised metaclass, things could change, see example
+## below(not the following one)
+
+## THE SECOND USE: create a new class
+type(name, bases, dict) #-> a new type
+## e.g.
+myclass = type("my..class", (), {"ww": [1]}) # ww is class attribute
+myclass
+#> <class '__main__.my..class'>
+a = myclass()
+a
+#> <__main__.my..class object at 0xb69b8e90>
+a.ww
+#> [1]
+b = myclass()
+b.ww
+#> [1]
+a.ww[0] = 3
+a.ww
+#> [3]
+b.ww
+#> [3]  # see, it's class attribute
+
+class2 = type("myclass2", (myclass,), {})   # inherit (2nd argument)
+c = class2()
+c.ww
+#> [3]
+c.ww[0] += 1
+c.ww
+#> [4]
+a.ww
+#> [4]
+
+## add method to the class
+def echo_ww(self): print("..yeah!..:", self.ww)
+class3 = type("myclass3", (myclass,), {"echo": echo_ww})
+d = class3()
+d.ww
+#> [4]
+d.echo
+#> <bound method myclass3.echo_ww of <__main__.myclass3 object at 0xb68fafd0>>
+d.echo()
+#> ..yeah!.. [4]
+
+## the class creation process can be customised by passing the `metaclass'
+## keyword argument in the class definition line, or by inheriting from an
+## existing class that included such an argument.
+## (in python2, it's about the `__metaclass__' attribute)
+
+## both `MyClass' and `MySubClass' are instances of `Meta'
+class Meta(type): pass
+class MyClass(metaclass=Meta): pass
+class MySubClass(MyClass): pass
+## in python2, it's:
+## class MyClass():
+##     __metaclass__ = Meta
+##     pass
+
+## metaclass can actually be any callable, it doesn't need to be a formal class
+## the metaclass will automatically get passed the same argument that you 
+## usually pass to `type'
+## e.g. define a new metaclass(as function)
+def upper_attr(clsname, bases, attrs):
+    upper_attr = {n.upper(): v for n, v in attrs.items()}
+    return type(clsname, bases, upper_attr)
+
+class Foo(metaclass=upper_attr):
+    attr1, attr2, attr3 = 1, 2, 3
+
+dir(Foo)
+#> ['ATTR1', 'ATTR2', 'ATTR3', '__MODULE__', '__class__', ...]
+type(Foo)
+#> <class 'type'>
+
+## another way: (more OOP)
+class UpperAttrMetaClass(type):
+    def __new__(cls, clsname, bases, attrs):
+        upper_attr = {n.upper(): v for n, v in attrs.items()}
+        return type.__new__(cls, clsname, bases, upper_attr)
+
+class Foo(metaclass=UpperAttrMetaClass):
+    attr1, attr2, attr3 = 1, 2, 3
+
+dir(Foo)
+#> ['ATTR1', 'ATTR2', 'ATTR3', '__MODULE__', '__class__', ...]
+## same result !
+
+## in this case, `type(Foo)' is not `type' anymore, it will be the customised
+## metaclass, because it is created by that metaclass
+type(Foo)
+#> <class '__main__.UpperAttrMetaClass'>
+
+## but the metaclass itself is created by `type'
+type(UpperAttrMetaClass)
+#> <class 'type'>
+
+
+##----------------------------------------------------------------------------
+## method-wrapper, slot wrapper, they are related with C-implemented things
+## * <slot wrapper> which (at least) wraps a C-implemented function. Behaves
+##   like an <unbound method> in CPython2 (at least sometimes) or a <function>
+##   in CPython3
+## * <method-wrapper> which wraps a C-implemented function as a bound method.
+##   Instances of this type have an __self__ attribute which is used as first
+##   argument when it is called.
+object.__ne__
+#> <slot wrapper '__ne__' of 'object' objects>
+type(object.__ne__)
+#> <class 'wrapper_descriptor'>
+object().__ne__
+#> <method-wrapper '__ne__' of object object at 0xb6bc3930>
+type(object().__ne__)
+#> <class 'method-wrapper'>
+object.__class__.__call__
+#> <slot wrapper '__call__' of 'type' objects>
+
+
+##----------------------------------------------------------------------------
+## __getitem__, slice, []
+"123456789"[1:4:2]
+#> '24'
+## it's same as
+"123456789"[slice(1, 4, 2)]
+#> '24'
+## because '1:4:2' will be parsed, and convert to 'slice(1, 4, 2)', and give to 
+## "123456789".__getitem__() as argument.
+## if ':' does not exist in '[]', then the object inside '[]' will be passed
+## to '__getitem__' directly, so 'slice(1, 4, 2)' is passed to '__getitem__'
+## directly
+
+class S:
+    def __getitem__(self, index): return index
+
+S()[1]
+#> 1
+S()["blah"]
+#> 'blah'
+S()["a", "b", {1: 2}, [3, 4]]
+#> ('a', 'b', {1: 2}, [3, 4])
+S()[1:]
+#> slice(1, None, None)
+S()[1::5, 3:1:6, 2:10]
+#> (slice(1, None, 5), slice(3, 1, 6), slice(2, 10, None))
+
+## ^ it's a tuple ! `[]' only support one object inside. And in python, `,'
+## will make a tuple, so `1::5, 3:1:6, 2:10:' is actually a tuple
+## but if you write
+S()[(1::5, 3:1:6, 2:10)]
+#> SyntaxError: invalid Syntax
+## `:' have to be written inside `[]', not `()'
+
+a = [1, 2, 3, 4, 5]
+a.__getitem__(slice(1, 4, 2))   # same as a[1:4:2]
+#> [2, 4]
+
+[].__getitem__
+#> <built-in method __getitem__ of list object at 0xb6a18378>
+{}.__getitem__
+#> <built-in method __getitem__ of dict object at 0xb6aaa540>
+## but !
+().__getitem__
+#> <method-wrapper '__getitem__' of tuple object at 0xb6b01030>
+
+a = slice(1, 2)
+a
+#> slice(1, 2, None)
+a.start
+#> 1
+a.stop
+#> 2
+a.step
+#> None
+
+## list indices: no float, int only !
+a = [1, 2, 3, 4]
+a[2/2]
+#> TypeError: list indices must be integers, not float
+a[2/2:]
+#> TypeError: slice indices must be integers or None or have an __index__ method
+a[2//2:]
+#> [2, 3, 4]
+
+## but slice itself won't care about this
+a = slice(1.1, 2/2, 3.3)
+a.start, a.stop, a.step
+#> (1.1, 1.0, 3.3)
+
+
+##----------------------------------------------------------------------------
+## function, class object all have a `__name__' attribute, not just modules
+print.__name__
+#> 'print'
+def x(): pass
+x.__name__
+#> 'x'
+int.__name__
+#> 'int'
+
+
+## an opened file have a `name' attribute, it's not `__name__'
+f = open("/tmp/a", "w")
+f.name
+#> '/tmp/a'
+
+
+##----------------------------------------------------------------------------
+## attributes(including methods) might be overwritten
+class A:
+    def a(self): pass
+    a = 1
+
+A.a
+#> 1
+
+class A:
+    a = 1
+    def a(self): pass
+
+A.a
+#> <function a at 0x76a57540>
+
+
+##----------------------------------------------------------------------------
+## Exception, use `help(Exception)' you can see
+class Exception(BaseException)
+class BaseException(object)
+## defining a user-defined exception(just inherit Exception)
+class MyException(Exception):
+    pass
+## then you can raise it, like
+raise MyException("this is my exception")
+#> __main__.MyException: this is my exception
+
+
+##----------------------------------------------------------------------------
+## gzip, bz2, zlib related:
+## file header:
+##     gzip: b'\x1f\x8b'
+##     bz2 : b'BZ'
+##     zlib: b'x\x9c'
+## decompress a file, e.g. deltas.gz
+with open("./deltas.gz", "rb") as i:
+    with open("./output.txt", "wb") as o:
+        o.write(gzip.decompress(i.read()))
+## it's same as: `gzip -d deltas.gz'
+## things better than `gzip' command:
+##  1. the origin file won't change. (`gzip -d' will remove the original file)
+##  2. the output file name is decided by you
+##
+## so, a compressed file is just a normal file who contains data that is
+## compressed.
+
+
+##----------------------------------------------------------------------------
+## int <-> byte convert
+(254).to_bytes(1, "big")
+#> b'\xfe'
+(256).to_bytes(1, "big")
+#> OverflowError: int too big to convert
+(256).to_bytes(2, "big")
+#> b'\x01\x00'
+
+## for signed number
+(254).to_bytes(1, "big", signed=True)
+#> OverflowError: int too big to convert
+(-1).to_bytes(1, "big", signed=True)
+#> b'\xff'
+
+int.from_bytes(b'\xff', "big")
+#> 255
+int.from_bytes(b'\xff', "big", signed=True)
+#> -1
+
+## `int.from_bytes' is a static method, you can use it like this:
+(1).from_bytes(b'\xff', "big")
+#> 255
+
+## for more kind of datatypes, like floating point, you need `struct' module.
+
+
+##----------------------------------------------------------------------------
+## to use `print' function in python2
+print(1, 2) # in python2
+#> (1, 2)
+from __future__ import print_function
+print(1, 2)
+#> 1 2
+
+
+##----------------------------------------------------------------------------
+## one way to solve some compatibility problem of module
+try:
+    from functools import reduce
+except:
+    pass
+## `reduce' is a built-in function in python2, but not in python3
+
+
+##----------------------------------------------------------------------------
+## `.pyd', `.pyc', `.pyo'
+## `.pyc' & `.pyo': bytecode file (compiled from python file),
+## `.pyd'         : binary   file (usually written in C language)
+
+
+##----------------------------------------------------------------------------
+## complex number. `abs' works different for complex
+a = complex(3, 4)
+a
+#> (3+4j)
+abs(a)
+#> 5.0
+
+
+##----------------------------------------------------------------------------
+## nan in python(it's a float)
+float("nan")    # "Nan", "NAN" works, too
+#> nan
+float("nan").__class__
+#> <class 'float'>
+nan
+#> NameError: name 'nan' is not defined
+
+math.isnan(3.1)
+#> False
+math.isnan(float("nan"))
+#> True
+
+
+##----------------------------------------------------------------------------
+## built-in function `sum'. sum(iterable[, start]) -> value
+sum([1, 2, 3])
+#> 6
+sum([1, 2, 3], 1)
+#> 7
+sum(["a", "b"])
+#> TypeError: unsupported operand type(s) for +: 'int' and 'str'
+sum(["a", "b"], "c")
+#> TypeError: sum() can's sum strings [use ''.join(seq) instead]
+
+
+##----------------------------------------------------------------------------
+## the iter in `for', some tips:
+for i in range(3): pass
+i
+#> 2
+## see ! it's 2, not 3. not like "for (i = 0; i < 3; i++) {}" in C.
+
+
+##----------------------------------------------------------------------------
+## Caution !
+## When using "chr" function, don't pass negative number to it. The error info
+## is not wrong, but it had confused you for 2 times.
+##  (you thought you passed 0x110000 as argument, but it's range(0x110000))
+chr(-1)
+#> ValueError: chr() arg not in range(0x110000)
+
+

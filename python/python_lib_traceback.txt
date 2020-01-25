@@ -1,0 +1,58 @@
+## vim: ft=python :
+
+
+## traceback module
+## the module use `traceback objects'(the object type that is stored in the
+## `sys.last_traceback' variable and returned as the 3rd item of
+## `sys.exc_info()'.
+
+
+## `sys.exc_info()` is a tuple like this:
+try: a
+except: sys.exc_info()
+#> (<class 'NameError'>, NameError("name 'a' is not defined",), <traceback object at 0x10f801108>)
+
+
+## one important method:
+traceback.print_exception(type, value, traceback, limit=None, file=None, ...)
+## another important method:
+traceback.print_exc(limit=None, file=None, chain=True)
+## it's a shorthand for :
+traceback.print_exception(*sys.exc_info())
+
+## e.g.
+a
+#> Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#  NameError: name 'a' is not defined
+
+## `print_exc()' have the same print as the default behave of python
+try: a
+except: traceback.print_exc()
+#> Traceback (most recent call last):
+#    File "<stdin>", line 1, in <module>
+#  NameError: name 'a' is not defined
+
+## `print_tb' will simply print the traceback only
+
+try: a
+except: traceback.print_tb(sys.exc_info()[2])
+#    File "<stdin>", line 1, in <module>
+
+def a(): b()
+def b(): c
+try: a()
+except: traceback.print_tb(sys.exc_info()[2])
+#>   File "<stdin>", line 1, in <module>
+#    File "<stdin>", line 1, in a
+#    File "<stdin>", line 1, in b
+
+try: a()
+except: traceback.print_exc()
+#> Traceback (most recent call last):
+#>   File "<stdin>", line 1, in <module>
+#    File "<stdin>", line 1, in a
+#    File "<stdin>", line 1, in b
+#  NameError: name 'c' is not defined
+
+

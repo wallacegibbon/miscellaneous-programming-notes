@@ -1,0 +1,82 @@
+## vim: ft=elixir :
+
+## in erlang, string is char list; but in elixir, string is binary
+is_binary "abc"
+#> true
+"abc" == <<?a, ?b, ?c>>
+#> true
+"abc" == [?a, ?b, ?c]
+#> false
+
+a = "中"
+byte_size a
+#> 3
+String.length a
+#> 1
+?中
+#> 20013
+
+
+## string interpolation (related with to_string function)
+a = "mr.blah"
+"hello, #{:world}, and #{a}"
+#> "hello, world, and mr.blah"
+
+## but for some complex type, this will not working
+"tuple test: #{ {:a, 1} }"
+#> ** (Protocol.UndefinedError) protocol String.Chars not implemented for {:a, 1}
+
+## you need "inspect"
+"tuple test: #{inspect {:a, 1} }"
+#> "tuple test: {:a, 1}"
+
+
+## binary concatenation
+"hello" <> " " <> "world!"
+#> "hello world!"
+
+<<1,2,3>> <> <<4>>
+#> <<1, 2, 3, 4>>
+
+"hello" <> <<0>>
+#> <<104, 101, 108, 108, 111, 0>>
+
+<<255>>
+#> <<255>>
+<<256>> # truncated
+#> <<0>>
+<<256 :: size 16>> # use 2 bytes to store the number
+#> <<1, 0>>
+<<256 :: utf8>>
+#> "Ā"
+<<256 :: utf8, 0>>
+#> <<196, 128, 0>>
+
+## bitstring
+is_binary <<1 :: size 1>>
+#> false
+is_bitstring << 1 :: size 1>>
+#> true
+
+## with pattern matching
+"he" <> val = "hello"
+val
+#> "llo"
+
+
+## single quote "'" will make char list
+'hello' == [?h, ?e, ?l, ?l, ?o]
+#> true
+
+## you can make a char list from a string
+to_char_list "hello"
+#> 'hello'
+
+
+String.upcase("abcde")
+#> "ABCDE"
+
+String.downcase("ABCDE")
+#> "abcde"
+
+

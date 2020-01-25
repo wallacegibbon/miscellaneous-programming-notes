@@ -1,0 +1,20 @@
+<!--
+vim: ft=html :
+-->
+
+<!--
+With HTML5, you don't need to import jQuery just for easier dom manipulation,
+you have `document.querySelector()` and `document.querySelectorAll()`
+-->
+<script>
+var a = document.querySelectorAll("div.myClass");
+var b = document.querySelector("#myId");
+</script>
+
+<!--
+`document.elementFromPoint(x, y)` and `document.elementsFromPoint(x, y)` are
+interesting functions, you can test them on any website
+  (using browser's dev tool)
+-->
+
+

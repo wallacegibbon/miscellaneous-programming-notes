@@ -1,0 +1,20 @@
+%% vim: ft=erlang :
+
+
+%%-----------------------------------------------------------------------------
+%% ETS(Erlang Term Storage), DETS(Disk ETS)
+%%-----------------------------------------------------------------------------
+% create:
+ets:new(...)
+dets:open_file(...)
+
+% insert
+ets:insert(TableId, X)  % X is a tuple or a list of tuple
+
+% lookup
+ets:lookup(TableId, Key)  % return a list of tuple
+
+% delete
+ets:delete(TableId)
+
+

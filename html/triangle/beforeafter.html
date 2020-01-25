@@ -1,0 +1,29 @@
+<style>
+.container {
+  position: relative;
+  margin-left: 20px;
+  width: 200px;
+  height: 20px;
+
+  color: white;
+  background-color: orange;
+}
+
+.container:before {
+  content: "";
+  left: -20px;
+  position: absolute;
+  border-top: 20px solid transparent;
+  border-right: 20px solid orange;
+}
+
+.container:after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  border-bottom: 20px solid transparent;
+  border-left: 20px solid orange;
+}
+</style>
+
+<div class="container">Hello, this is a test</div>

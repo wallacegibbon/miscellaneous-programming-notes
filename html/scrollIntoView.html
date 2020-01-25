@@ -1,0 +1,22 @@
+<body>
+
+<script>
+//////////////////////////////////////////////////////////////////////////////
+var count = 100;
+
+for (var i = 0; i < count; i++) {
+  var ele = document.createElement("h1");
+  ele.setAttribute("id", "obj_" + i);
+  ele.innerText = i;
+  document.body.appendChild(ele);
+}
+
+window.onclick = function(e) {
+  var target = "#obj_" + Math.floor(count / 2);
+  document.querySelector(target).scrollIntoView(); // default argument: true
+  //document.querySelector(target).scrollIntoView(false);
+};
+
+</script>
+
+</body>

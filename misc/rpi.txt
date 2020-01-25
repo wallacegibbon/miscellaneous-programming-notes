@@ -1,0 +1,14 @@
+## vim: ft=sh :
+
+## in /boot/config.txt:
+
+#  to rotate the screen, just set `display_rotate'(the default value is 0) to one of the following value:
+#  display_rotate  result
+#  --------------  ----------------------------
+#  0               no rotation
+#  1               rotate  90 degrees clockwise
+#  2               rotate 180 degrees clockwise
+#  3               rotate 270 degrees clockwise
+#  0x10000         horizontal flip
+#  0x20000         vertical flip
+

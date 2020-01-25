@@ -1,0 +1,61 @@
+## vim: ft=elixir :
+
+
+## the most useful: "=~" & "Regex.run". one for check, one for capture.
+
+Regex.run ~r"https?://([^/]+)/(.*)", "http://www.baidu.com/s?a"
+#> ["http://www.baidu.com/s?a", "www.baidu.com", "s?a"]
+
+"http://www.baidu.com/s?a" =~ ~r"https?://[^/]+/.*"
+#> true
+
+##  (Elixir) Regex.run    ->  (JS) regex.exec
+##  (Elixir) =~           ->  (JS) regex.test
+
+## in JS,
+## new RegExp("https?://([^/]+)/(.*)").exec("http://www.baidu.com/s?a")
+## > [ "http://www.baidu.com/s?a", "www.baidu.com", "s?a" ]
+## new RegExp("https?://[^/]+/.*").test("http://www.baidu.com/s?a")
+## > true
+
+
+## to use named capture
+Regex.named_captures ~r/a(?<v1>.*)h(?<v2>.*)n/, "abcdefghijklmn"
+#> %{"v1" => "bcdefg", "v2" => "ijklm"}
+
+
+
+## there are many useful modifiers:
+#   s   dotall, "." match newlines, set newline to anycrlf
+#   m   multiline, affect ^, $, \A, \z
+#   i   caseless
+#   u   unicode, affect \w, \W, \s
+#   x   extended, I never used this
+# ....
+## you can use "h Regex" in iex to see more.
+
+## e.g.
+"ab\r\ncd" =~ ~r/ab.*cd/
+#> false
+"ab\r\ncd" =~ ~r/ab.*cd/s
+#> true
+
+
+
+## the "greedy-matching" problem
+
+## greey mode is the default mode. "*" will make the final "?" ignored
+Regex.run ~r/a(b.*(cd)?)/, "abxxcd"
+#> ["abxxcd", "bxxcd"]
+
+## by following the "*" with a "?", make it "non-greeding".
+## you can imagine that the "?" make the "*" be optional
+Regex.run ~r/a(b.*?(cd)?)/, "abcd"
+#> ["abcd", "bcd", "cd"]
+
+## but in this case, it will become greedy again:
+Regex.run ~r/a(b.*?(cd)?)/, "abxxcd"
+#> ["ab", "b"]
+
+
+

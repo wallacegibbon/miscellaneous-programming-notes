@@ -1,0 +1,46 @@
+## vim: ft=sh :
+
+## create a new project:
+$> django-admin startproject sitename .
+
+## create the db:
+$> python manage.py migrate
+
+
+## start the server:
+$> python manage.py runserver
+## on Windows, you may fail with "UnicodeDecodeError", run:
+$> python manage.py runserver 0:8000
+
+
+## create an application:
+$> python manage.py startapp blog
+
+
+## to *install* the app, you need to edit "prjname/settings.py", add "blog" into
+## INSTALLED_APPS.
+
+## then you may need to edit "blog/models.py"
+
+## create table in you database
+## make Django know that we have some changes in our model.
+$> python manage.py makemigrations blog
+
+## apply to our database
+$> python manage.py migrate blog
+
+
+## now change appname/admin.py before using Django's admin function.
+
+## then you can go to "http://localhost:8000/admin", and login.
+## you will need to create the super user first.
+$> python manage.py createsuperuser
+
+## then you can change the database through a web interface, it's really
+## comfortable!
+
+
+## start the django console:
+$> python manage.py shell
+
+

@@ -1,0 +1,11 @@
+## vim: ft=python :
+
+## hashlib
+hashlib.sha1(b"abcdefg").digest()
+#> b'/\xb5\xe14\x19\xfc\x89$he\xe7\xa3$\xf4v\xecbN\x87@'
+hashlib.sha1(b"abcdefg").hexdigest()
+#> '2fb5e13419fc89246865e7a324f476ec624e8740'
+hashlib.md5(b"abcdefg").hexdigest()
+#> '7ac66c0f148de9519b8bd264312c4d64'
+
+

@@ -1,0 +1,61 @@
+<style>
+
+body {
+  background-color: #eee;
+}
+
+.container {
+  width: 400px;
+  margin: 20px auto;
+  background-color: white;
+
+  padding-top: 20px;
+}
+
+.container h1 {
+  position: relative;
+  padding: 10px 30px 20px;
+  margin: 0 -10px;
+  height: 28px;
+  color: white;
+
+  background: #87a800;
+  text-align: center;
+}
+
+.container h1:before, .container h1:after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  border-style: solid;
+  border-color: transparent #647d01;
+}
+
+.container h1:before {
+  left: 0;
+  border-width: 0 10px 10px 0;
+}
+
+.container h1:after {
+  right: 0;
+  border-width: 0 0 10px 10px;
+}
+
+.container p {
+  padding: 10px;
+  line-height: 25px;
+}
+</style>
+
+<body>
+
+<div class="container">
+  <h1>The Cool Ribbon</h1>
+  <p>
+  this is an example shows how to create a cool ribbon using CSS3.
+  The book "CSS Design Essentials Vol.2" is cool !
+  This can be used on my own website, which will make the content look better.
+  </p>
+</div>
+
+</body>

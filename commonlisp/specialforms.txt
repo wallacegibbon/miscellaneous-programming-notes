@@ -1,0 +1,183 @@
+;;; -*- mode: Lisp; -*-
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; "#"(the number sign) signals the beginning of a complicated syntactic
+;;; structure.
+
+;;; integers notated in radices other than 10: #nnrddddd or #nnRddddd
+;;; #25R-7H is -192
+
+;;; special abbreviations: #b = #2r, #o = #8r, #x = #16r
+;;; another way of writing 213:
+#2r11010101  #b11010101  #b+11010101
+
+;;; rational number in radices other than 10:
+#xbc/ad ;=>188/173
+#o-101/75 ;=> -65/61
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; float point number
+
+;;; there are 4 kinds of float numbers in common lisp:
+;;;     short-float, single-float, double-float, long-float
+;;;
+;;; implementations may choose to implement some of them.
+;;; in x64,sbcl 1.4.5.Debian,
+;;;     single-float = short-float, double-float = long-float
+(typep 1.0l0 'double-float) ;=> T
+(typep 1.0l0 'single-float) ;=> NIL
+
+(typep 1.0s0 'double-float) ;=> NIL
+(typep 1.0s0 'single-float) ;=> T
+
+
+;;; `0.` is integer zero, not a floating-point zero ! `.0` is floating-point
+
+;;; exponent maker: e s f d l (ignore case) (s -> short, d -> double l -> long)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; lambda list
+;;;
+;;; the order have to be: &optional &rest &key
+
+;;; keyword argument
+(defun foo (&key radix (type 'integer)) ...)
+;;; means exactly the same as
+(defun foo (&key ((:radix radix)) ((:type type) 'integer)) ...)
+
+;;; the keyword in lambda-list can be any symbol
+(defun foo (&key ((key1 keyval) nil) key2) `(,keyval ,key2))
+(foo 'key1 1 :key2 2) ;=> (1 2)
+
+;;; optional argument
+((lambda (a b) (+ a (* b 3))) 4 5) ;=> 19
+((lambda (a &optional (b 2)) (+ a (* b 3))) 4 5) ;=> 19
+((lambda (a &optional (b 2)) (+ a (* b 3))) 4) ;=> 10
+
+;;; more examples for &optional
+((lambda (&optional (a 2 b) (c 3 d) &rest x) (list a b c d x))
+ ) ;=> (2 NIL 3 NIL NIL)
+
+((lambda (&optional (a 2 b) (c 3 d) &rest x) (list a b c d x))
+ 6) ;=> (6 T 3 NIL NIL)
+
+((lambda (&optional (a 2 b) (c 3 d) &rest x) (list a b c d x))
+ 6 3) ;=> (6 T 3 T NIL)
+
+((lambda (&optional (a 2 b) (c 3 d) &rest x) (list a b c d x))
+ 6 3 8) ;=> (6 T 3 T (8))
+
+((lambda (&optional (a 2 b) (c 3 d) &rest x) (list a b c d x))
+ 6 3 8 9 10 11) ;=> (6 T 3 T (8 9 10 11))
+
+;;; more examples for &key
+((lambda (a b &key c d) (list a b c d))
+ 1 2) ;=> (1 2 NIL NIL)
+
+((lambda (a b &key c d) (list a b c d))
+ 1 2 :c 6) ;=> (1 2 6 NIL)
+
+((lambda (a b &key c d) (list a b c d))
+ 1 2 :d 8) ;=> (1 2 NIL 8)
+
+((lambda (a b &key c d) (list a b c d))
+ 1 2 :c 6 :d 8) ;=> (1 2 6 8)
+
+((lambda (a b &key c d) (list a b c d))
+ 1 2 :d 8 :c 6) ;=> (1 2 6 8)
+
+((lambda (a b &key c d) (list a b c d))
+ :a 1 :d 8 :c 6) ;=> (:A 1 6 8)
+
+((lambda (a b &key c d) (list a b c d))
+ :a :b :c :d) ;=> (:A :B :D NIL)
+
+;;; examples of mixtures:
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ 1) ;=> (1 3 NIL 1 NIL)
+
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ 1 2) ;=> (1 2 NIL 1 NIL)
+
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ :c 7) ;=> (:C 7 NIL :C NIL)
+
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ 1 6 :c 7) ;=> (1 6 7 1 (:C 7))
+
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ 1 6 :d 8) ;=> (1 6 NIL 8 (:D 8))
+
+((lambda (a &optional (b 3) &rest x &key c (d a))
+   (list a b c d x))
+ 1 6 :d 8 :c 9 :d 10) ;=> (1 6 9 8 (:D 8 :C 9 :D 10))
+
+;;; without &allow-other-keys, the unspecified keywrod argument :c will be
+;;; invalid
+((lambda (&rest x &key a b &allow-other-keys) (list a b x))
+ :a 1 :b 2 :c 3) ;=> (1 2 (:A 1 :B 2 :C 3))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; the 4 equality predicates:
+;;;    eq (the most specific), eql, equal, equalp (the most general)
+;;;
+;;; anything that eq will be eql.
+
+;;; equalp was added primarily in order to have a version of equal that would
+;;; ignore type differences when comparing numbers and case differences when
+;;; comparing characters.
+(equalp #\A #\a) ;=> T
+(equalp 1 1.0) ;=> T
+
+(equal #\A #\a) ;=> NIL
+(equal 1 1.0) ;=> NIL
+
+;;; in common lisp, the implementation is permitted to make copies of characters
+;;; and numbers at any time. (for performance improvements)
+;;; so things like (eq 1 1) might be true of false, depending on the
+;;; implementation.
+;;; that's why we need eql. eql is the same as eq, except that if the arguments
+;;; are characters or numbers of the same type then their values are compared.
+;;;
+;;; it is for this reason that eql, not eq, is the default comparison predicate
+;;; for the common sequence functions.
+;;;
+(eql 1 1) ;=> T (always)
+(eq 1 1) ;=> T (still true in sbcl 1.3.1, but you should not depend on this)
+
+;;; a rough rule of thumb is that two objects are equal if and only if their
+;;; printed representations are the same.
+(equal '(a b c) '(a b c)) ;=> T
+(eql '(a b c) '(a b c)) ;=> NIL
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; special forms and macros are treated as function when it comes to bindings
+(symbol-function 'eval) ;=> #<FUNCTION EVAL>
+(symbol-function 'format) ;=> #<FUNCTION FORMAT>
+(symbol-function 'defun) ;=> #<CLOSURE (:MACRO DEFUN) {1000C33FEB}>
+(symbol-function 'if) ;=> #<CLOSURE (:SPECIAL IF) {10014F4DBB}>
+
+;;; fboundp is true when the symbol names a special form or macro.
+(fboundp 'eval) ;=> T
+(fboundp 'format) ;=> T
+(fboundp 'defun) ;=> T
+(fboundp 'if) ;=> T
+
+;;; for further predication, use macro-function and special-operator-p
+(macro-function 'eval) ;=> NIL
+(macro-function 'defun) ;=> #<FUNCTION (MACRO-FUNCTION DEFUN) {10005A9B6B}>
+(macro-function 'if) ;=> NIL
+
+(special-operator-p 'eval) ;=> NIL
+(special-operator-p 'defun) ;=> NIL
+(special-operator-p 'if) ;=> T
+

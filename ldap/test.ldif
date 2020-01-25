@@ -1,0 +1,10 @@
+dn: cn=Tom Riddle,ou=Admin,ou=Corporate,dc=wx,dc=me
+objectClass: inetOrgPerson
+cn: Tom Riddle
+sn: Lord Voldemort
+
+dn: cn=Nick Wilde,ou=Admin,ou=Corporate,dc=wx,dc=me
+objectClass: inetOrgPerson
+cn: Nick Wilde
+sn: Nick
+

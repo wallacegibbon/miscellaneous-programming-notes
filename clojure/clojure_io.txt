@@ -1,0 +1,119 @@
+;; vim: ft=clojure :
+
+
+(require '[clojure.java.io :as io])
+;> nil
+
+;;-----------------------------------------------------------------------------
+;; file function can make a java.io.File object
+;;-----------------------------------------------------------------------------
+(io/as-file "/tmp/zzz")
+;> #<File /tmp/zzz>
+
+(io/as-url "http://baidu.com")
+;> #<URL http://baidu.com>
+
+;; check file exists
+(.exists (io/as-file "a.txt"))
+;> false
+
+
+;;-----------------------------------------------------------------------------
+;; reader and writer 
+;; reader function will create a java.io.BufferedReader
+;; writer function will create a java.io.BufferedWriter
+;;-----------------------------------------------------------------------------
+
+;;-----------------------------------------------------------------------------
+;; open a file use "with-open", then no need for calling .close on the file
+;;-----------------------------------------------------------------------------
+
+
+;;-----------------------------------------------------------------------------
+;; write to file
+;;-----------------------------------------------------------------------------
+;; write a sting to a file
+(spit "/tmp/a.txt" "hello, this is just a test\nbye")
+;> nil
+
+;; more general way:
+(with-open [wtr (io/writer "/tmp/a.txt")]
+  (.write wtr "hello, world!\n"))
+
+;; append
+(with-open [wtr (io/writer "/tmp/a.txt" :append true)]
+  (.write wtr "hello, world!\n"))
+
+;;-----------------------------------------------------------------------------
+;; read from file
+;;-----------------------------------------------------------------------------
+;; read all contents in a file and return as string:
+(slurp "/tmp/a.txt")
+;> "hello, world!\nhello, world!\nhello, world!\n"
+
+;; slurp support url, too
+(slurp "http://www.baidu.com")
+;> "<!DOCTYPE html><!--STATUS OK--><html><head><meta http-equiv=\"...
+
+;; read one line:
+(with-open [rdr (io/reader "/tmp/a.txt")]
+  (.readLine rdr))
+;> "hello, world!"
+
+
+;;-----------------------------------------------------------------------------
+;; copy is a cool function
+;; .flush will flush content to disk
+;;-----------------------------------------------------------------------------
+(with-open [rdr (io/reader "/dev/stdin" :encoding "utf-8")
+            wtr (io/writer "/tmp/a.txt" :append true)]
+  (io/copy rdr wtr)
+  (.flush wtr))
+
+
+;;-----------------------------------------------------------------------------
+;; to write binary to file, you need io/output-stream.
+;; and you can not write a string to file, you have to write bytes
+;; because java.io.BufferedOutputStream only support:
+;;    write(byte[] buffer, int offset, int length)
+;;    write(int oneByte)
+;;    flush()
+;;    close()
+;;-----------------------------------------------------------------------------
+(defn s-to-bytes [string] (byte-array (map int (seq "what"))))
+
+(with-open [w (io/output-stream "/tmp/a.bin")]
+  (.write w 3)
+  (.write w 4)
+  (.write w (s-to-bytes "what is this?") 0 4))
+
+
+
+;;-----------------------------------------------------------------------------
+;; directory related operations. (use io/file, too)
+;;-----------------------------------------------------------------------------
+;; check file and directory
+(.isDirectory (io/file "/home/wx/"))
+;> true
+(.isFile (io/file "/home/wx/"))
+;> false
+
+;; check existence
+(.exists (io/file "/home/wx"))
+;> true
+(.exists (io/file "/tmp/blah"))
+;> false
+
+;; create new directory
+(.mkdir (io/file "/tmp/blah"))
+;> true
+
+;; list files of a directory
+(.list (io/file "/tmp/"))
+;> #object["[Ljava.lang.String;" 0x36c098 "[Ljava.lang.String;@36c098"]
+
+(seq (.list (io/file "/tmp/")))
+;> (".Test-unix" ".X0-lock" ".XIM-unix" ".X11-unix" ".ICE-unix" ...)
+
+
+

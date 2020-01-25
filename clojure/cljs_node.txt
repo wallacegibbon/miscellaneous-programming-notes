@@ -1,0 +1,49 @@
+;; vim: ft=clojure :
+
+
+;;-----------------------------------------------------------------------------
+;; the nodejs have a Buffer type, it's pretty handy for binary data.
+;;-----------------------------------------------------------------------------
+(def a (js/Buffer. "abcdefghijklmn"))
+;> #'cljs.user/a
+(def b (.slice a 3 6))
+;> #'cljs.user/b
+a
+;> #object[Buffer abcdefghijklmn]
+b
+;> #object[Buffer def]
+(.write b "01" 0 3)
+;> 2
+a
+;> #object[Buffer abc01fghijklmn]
+b
+;> #object[Buffer 01f]
+
+;; change b, and a will be changed, .slice did NOT create a new Buffer
+
+
+
+;;-----------------------------------------------------------------------------
+;; url parsing for nodejs
+;;-----------------------------------------------------------------------------
+(def url (js/require "url"))
+;> #'cljs.user/url
+(def x (.parse url "https://test.it.com/search?wd1=aaa&wd2=bbb"))
+;> #'cljs.user/x
+(.-host x)
+;> "test.it.com"
+(.-pathname x)
+;> "/search"
+(.-query x)
+;> "wd1=aaa&wd2=bbb"
+
+;; if you pass a true to .parse, -query will change
+(def x (.parse url "https://test.it.com/search?wd1=aaa&wd2=bbb" true))
+;> #'cljs.user/x
+(.-query x)
+;> #js {:wd1 "aaa", :wd2 "bbb"}
+(js->clj (.-query x))
+;> {"wd1" "aaa", "wd2" "bbb"}
+
+
+

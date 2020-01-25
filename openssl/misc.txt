@@ -1,0 +1,10 @@
+## vim: ft=sh :
+
+## User openssl to encrypt/decrypt a file
+
+## Assuming the file is a.tar.bz2, and the password is "aaaaa". Encrypt it:
+openssl des3 -salt -k aaaaa -in a.tar.bz2 -out a.tar.bz2.des3
+
+## Decrypt the file:
+openssl enc -des3 -d -in a.tar.bz2.des3 -out a.tar.bz2
+

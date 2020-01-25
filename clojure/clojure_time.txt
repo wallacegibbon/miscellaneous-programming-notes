@@ -1,0 +1,58 @@
+;; vim: ft=clojure :
+
+;;;----------------------------------------------------------------------------
+;;;----------------------------------------------------------------------------
+
+
+;;-----------------------------------------------------------------------------
+;; ways to get timestamp
+;;-----------------------------------------------------------------------------
+;; the fastest way:
+(System/currentTimeMillis) ;or (. System currentTimeMillis)
+;> 1457069872298
+
+;; other ways
+(.. java.util.Calendar getInstance getTimeInMillis)
+;> 1457069855146
+
+(.getTime (java.util.Date.))
+;> 1457069970829
+
+
+;;-----------------------------------------------------------------------------
+;; in java 8, there is a library called java.time
+;;-----------------------------------------------------------------------------
+;; to get the current time
+(java.time.LocalDateTime/now)
+;> #<LocalDateTime 2016-03-04T13:49:26.234>
+
+(str (java.time.LocalDateTime/now))
+;> "2016-03-04T13:49:55.625"
+
+;; some other classes
+(java.time.Year/now)
+;> #<Year 2016>
+
+;; !! Month is an Enum, not a class
+(java.time.Month/now)
+;> CompilerException java.lang.NoSuchFieldException: now, ...
+
+(java.time.YearMonth/now)
+;> #<YearMonth 2016-03>
+
+(java.time.MonthDay/now)
+;> #<MonthDay --03-04>
+
+;; !! DayOfWeek is an Enum, too
+(java.time.DayOfWeek/now)
+;> CompilerException java.lang.NoSuchFieldException: now, ...
+
+;; create a Year object of a certain time
+(java.time.Year/of 1990)
+;> #<Year 1990>
+
+(str (java.time.Year/of 1990))
+;> "1990"
+
+
+

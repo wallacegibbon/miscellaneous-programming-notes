@@ -1,0 +1,67 @@
+## vim: ft=elixir :
+
+## Structs are maps with a __struct__ key.
+
+## define a struct
+defmodule User do
+  defstruct name: "John", age: 27
+end
+
+a = %User{age: 28}
+#> %User{age: 28, name: "John"}
+
+Map.keys a
+#> [:__struct__, :age, :name]
+
+a.__struct__
+#> User
+
+
+## protocols are a mechanism to achieve polymorphism in elixir.
+defprotocol Blank do
+  @doc "Return true if data is considered blank/empty"
+  def blank?(data)
+end
+
+## implement protocol on a certain type
+defimpl Blank, for: List do
+  def blank?([]), do: true
+  def blank?(_), do: false
+end
+
+defimpl Blank, for: User do
+  def blank?(user), do: (if user.age < 10 do true else false end)
+end
+
+##
+Blank.blank? [1, 2]
+#> false
+Blank.blank? []
+#> true
+
+Blank.blank? a
+#> false
+b = %User{age: 9}
+#> %User{age: 9, name: "John"}
+Blank.blank? b
+#> true
+
+## umimplemented type will raise error
+Blank.blank? 0
+#> ** (Protocol.UndefinedError) protocol Blank not implemented for 0
+
+
+
+to_string a
+#> ** (Protocol.UndefinedError) protocol String.Chars not implemented for %User{age
+
+## to use "to_string", you just need to implement String.Chars protocol
+defimpl String.Chars, for: User do
+  def to_string(user), do: "yeah, I am #{user.name} !"
+end
+
+to_string a
+#> "yeah, I am John !"
+
+
+

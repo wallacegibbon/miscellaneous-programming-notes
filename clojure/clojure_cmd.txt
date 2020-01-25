@@ -1,0 +1,113 @@
+## vim: ft=sh :
+
+###----------------------------------------------------------------------------
+### to use clojure, you need java 5 or higher.
+###----------------------------------------------------------------------------
+## run clojure:
+java -cp clojure-${VERSION}.jar clojure.main
+## you can use rlwrap to add readline functionality
+rlwrap java -cp clojure-${VERSION}.jar clojure.main
+
+## a more useful setting:
+rlwrap -r -c -b "(){}[],^%\$#@\"\";:''|\\" java -cp clojure...
+## -r remember all words you typed and java prints
+## -c complete filenames
+## -b set characters that will break words, for example, the "-" is word
+##    breaker by default, but it's not a breaker in clojure, so if you don't
+##    set "-b ...", then readline will treat "abc-def" as "abc" and "def" on
+##    completion. but if you set -b and don NOT put '-' to the -b option, then
+##    readline will treat "abc-def" as "abc-def" when try to complete words.
+
+
+## you can use `man java` to see details
+java [ options ] class [ argument ... ]
+java [ options ] -jar file.jar [ argument ... ]
+## the argument stands for "The arguments passed to the main function."
+
+
+## in source file: .../clojure/src/jvm/clojure/main.java,
+## you can see the source code:
+## package clojure;
+## public class main{
+## ...
+## public static void main(String[] args) {
+## ...
+## }
+## }
+
+## so in `java -cp clojure-x.x.jar clojure.main`, the "main" is not
+## the function named "main", but the class named "main".
+## the "clojure.main.main" is the function that being called.
+
+## !!!
+## the unix command "clojure" is a script that calls java to start clojure
+
+## an example of running the snake game program in clojure
+java -cp ~/javalib/clojure-1.8.0.jar:. clojure.main -e "(require 'snake)(snake/game)"
+
+
+## the `-e "..."` is passed to function "clojure.main.main" as argument
+
+
+##-----------------------------------------------------------------------------
+## build clojure from source
+##-----------------------------------------------------------------------------
+git clone git://github.com/clojure/clojure.git
+cd clojure
+
+## then you can use Ant or Maven
+## Install with Ant:
+## One-time setup:
+./antsetup.sh
+## To build:
+ant
+
+## Install with Maven:
+## To build: (The built JARs will be in target/)
+mvn package
+## To build without testing:
+mvn package -Dmaven.test.skip=true
+## To build and install in local Maven repository: (will be in ~/.m2/...)
+mvn install
+## To build a ZIP distribution: (The built .zip will be in target/)
+mvn package -Pdistribution
+
+
+##-----------------------------------------------------------------------------
+## install by lein (leiningen)
+##-----------------------------------------------------------------------------
+## download the lein script first
+wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+chmod +x lein
+cp lein /usr/local/bin
+
+## just run lein, and it will download the self-install packages, and install
+## the lein program.
+HTTP_PROXY="116.52.184.243:8090" lein
+
+##-----------------------------------------------------------------------------
+## creating a new project
+##-----------------------------------------------------------------------------
+lein new app my-stuff
+
+## get deps
+lein deps
+
+## start repl
+lein repl
+
+## show lein classpath
+lein classpath
+
+
+## lein have problem adding user-defined classpath, it's easier to run java
+## instead, but you need to add lein classpaths:
+lein classpath > LEIN_CLASSPATH
+## then you edit LEIN_CLASSPATH to add new classpath
+## and run:
+java -cp `cat LEIN_CLASSPATH` clojure.main -e "..."
+
+## an example (run the -main):
+time cat sample.json | java -cp `cat LEIN_CLASSPATH` clojure.main -e "(require 'img-out.core)(img-out.core/-main)"
+
+

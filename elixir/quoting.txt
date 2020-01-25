@@ -1,0 +1,113 @@
+## vim: ft=elixir :
+
+
+## An Elixir program can be represented by its own data structure. Like lisp.
+## quote            is just like '
+## unquote          is just like ,
+## unquote_splicing is just like ,@
+
+
+## The building block of an elixir program is a tuple with 3 elements.
+## For example, the function call sum(1, 2, 3) is represented internally as:
+{:sum, [], [1, 2, 3]}
+
+## which means:
+#   { <function_name>,  <metadata>, <arguments_list> }
+#   { atom | tuple,     list,       list | atom }
+
+
+## Variables are also represented using such triplets, excepts the last element
+## is an atom, instead of a list.
+quote do: x
+#> {:x, [], Elixir}
+
+## function call is a little bit different
+quote do: x()
+#> {:x, [], []}
+
+
+## you can get the representation of any expression by using the "quote" macro:
+quote do: sum 1, 2, 3
+#> {:sum, [], [1, 2, 3]}
+
+quote do: 1 + 2
+#> {:+, [context: Elixir, import: Kernel], [1, 2]}
+
+## a more complex one:
+quote do: sum 1, 2 + 3, 4
+#> {:sum, [], [1, {:+, [context: Elixir, import: Kernel], [2, 3]}, 4]}
+
+
+## this is what happend when you do "Module.function args":
+quote do: String.upcase("foo")
+#> {{:., [], [{:__aliases__, [alias: false], [:String]}, :upcase]}, [], ["foo"]}
+
+
+## multiple expression(delimit with newline or ;) is presented as ":__block__".
+quote do: (:a ; :b ; :c)
+#> {:__block__, [], [:a, :b, :c]}
+
+
+
+## Only two-item tuples are considered literals in Elixir and return themselves
+## when quoted. Therefore all other tuples are represented in the AST as calls
+## to the :{} special form.
+quote do: {1, 2}
+#> {1, 2}
+quote do: {1, 2, 3}
+#> {:{}, [], [1, 2, 3]}
+quote do: {}
+#> {:{}, [], []}
+
+## but all lists are literals
+quote do: []
+#> []
+quote do: [1, 2, 3]
+#> [1, 2, 3]
+
+## all maps are NOT literals
+quote do: %{}
+#> {:%{}, [], []}
+quote do: %{a: 1}
+#> {:%{}, [], [a: 1]}
+
+
+
+## these two are the same:
+if true do :this else :that end
+#> :this
+if(true, do: :this, else: :that)
+#> :this
+
+## this is why:
+quote do: (if true do :this else :that end)
+#> {:if, [context: Elixir, import: Kernel], [true, [do: :this, else: :that]]}
+quote do: if(true, do: :this, else: :that)
+#> {:if, [context: Elixir, import: Kernel], [true, [do: :this, else: :that]]}
+
+
+
+## put it back using Macro.to_string:
+Macro.to_string(quote do: sum 1, 2 + 3, 4)
+#> "sum(1, 2 + 3, 4)"
+
+
+## unquote
+number = 13
+Macro.to_string(quote do: 11 + number)
+#> "11 + number"
+
+Macro.to_string(quote do: 11 + unquote(number))
+#> "11 + 13"
+
+
+## unquote_splicing
+inner = [3, 4, 5]
+Macro.to_string(quote do: [1, 2, unquote(inner), 6])
+#> "[1, 2, [3, 4, 5], 6]"
+
+Macro.to_string(quote do: [1, 2, unquote_splicing(inner), 6])
+#> "[1, 2, 3, 4, 5, 6]"
+
+
+

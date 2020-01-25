@@ -1,0 +1,67 @@
+# vim: ft=sh :
+
+
+## list all sessions:
+tmux ls
+
+## start a new session with name 'mysession'
+tmux new -s mysession
+tmux new -s mysession -d  # create the session background
+
+# attach to a existing session
+tmux attach -t mysession
+
+
+# the default prefix is C-b, change it by editing the ~/.tmux.conf
+#   set -g prefix ^a
+#   unbind ^b
+#   bind a send-prefix
+
+
+# session related operations:
+#     check/change sessions             prefix s
+#     detach from a session             prefix d
+#     rename the current session        prefix $
+
+
+# window related operations:
+#     create new window                 prefix c
+#     switch to previous active window  prefix <space>
+#     close a window                    prefix &
+#     use window number N to switch     prefix N
+#     switch to last/previous window    prefix l
+#     switch to next window             prefix n
+
+
+# pane related operations:
+#     check all pane numbers            prefix q
+#     create a new pane vertically      prefix "
+#     create a new pane horizontally    prefix %
+#     toggle max mode                   prefix z
+#     switch to last/previous pane      prefix ;
+#     change to next pane               prefix o
+
+# misc operations:
+#     run a tmux command                prefix :
+#     see help info                     prefix ?
+
+
+# select, copy, paste
+# every pane have it's own mode. one pane in copy mode will NOT affect
+# the mode of other panes.
+set-window-option -g mode-keys vi
+# then
+prefix [  # enter copy mode
+<space>   # start select
+<enter>   # stop and exit copy mode
+prefix ]  # pastee
+
+## Suspend
+prefix C-z
+
+## Detach
+prefix d
+
+## Change Pane Place
+prefix C-o
+

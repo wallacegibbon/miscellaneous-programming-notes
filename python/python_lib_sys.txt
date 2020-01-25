@@ -1,0 +1,102 @@
+## vim: ft=python :
+
+
+## sys can show all built-in modules:
+sys.builtin_module_names
+#> ('_ast', ... '_thread', ... 'posix', ... 'sys', ...)
+
+## python platform check
+sys.platform
+#> 'linux'
+## or
+platform.system()
+#> 'Linux'
+
+
+## different system may have different filesystem encoding
+sys.getfilesystemencoding()
+#> 'utf-8'
+
+## get information of the running python
+sys.executable
+#> '/usr/bin/python3'
+sys.version
+#> '3.4.2 (default, Oct  8 2014, 13:18:07) \n[GCC 4.9.1]'
+sys.version_info # python 3.4.2
+#> sys.version_info(major=3, minor=4, micro=2, releaselevel='final'...)
+sys.version_info.major
+#> 3
+
+## get related modules(imported by the running file)
+sys.modules
+#> {'reprlib': <module 'reprlib' from '/usr/lib/python3.4/reprlib.py'>, ...}
+
+## python modules have the __file__ attribute
+import urllib
+urllib.__file__
+#> '/usr/lib/python3.4/urllib/__init__.py'
+
+## ! some module have no __file__ attribute
+list(sys.modules.values())[1]
+#> <module 'tarfile' from '/usr/lib/python3.4/tarfile.py'>
+list(sys.modules.values())[2]
+#> <module 'pyexpat.model'>
+
+## list all module file path
+for i in sys.modules.values():
+    try: print(i.__file__)
+    except AttributeError: pass
+#> /usr/lib/python3.4/reprlib.py
+#  /usr/lib/python3.4/tarfile.py
+#  ...
+
+
+## python str is ucs2 or ucs4
+## UCS : universal character set
+sys.maxunicode
+#> 1114111  -->   ucs4
+## or
+#> 65535    -->   ucs2
+## if you want to change it, do it when compiling python
+## e.g. make python to use ucs4:
+## python2: --enable-unicode=ucs4 (--enable-unicode=ucs2 will use ucs2)
+## python3: --with-wide-unicode
+
+## BOM(byte order mark)
+## 0xff 0xfe       :   UTF-16 LITTLE endian
+## 0xfe 0xff       :   UTF-16 BIG endian
+## 0xef 0xbb 0xbf  :   UTF-8
+
+
+## sys.exc_info -> (type, value, traceback):
+##   information about the most recent exception caught by an exception
+##   clause in the current stack frame or in an older stack frame.
+## you have to call sys.exc_info inside the `except:' part
+sys.exc_info()
+#> (None, None, None)
+
+
+try: unknownname
+except: print(sys.exc_info())
+#> (<class 'NameError'>,
+#   NameError("name 'unknownname' is not defined",),
+#   <traceback object at 0xb723a48c>)
+
+##  ^ the `traceback object' is not the `traceback module'
+
+try: a
+except NameError as e: print(e)
+#> name 'a' is not defined
+## it works just like
+try: a
+except: print(sys.exc_info()[1])
+#> name 'a' is not defined
+
+## BUT !!!
+## just one question. the return value (type, value, traceback):
+try: a
+except: print(sys.exc_info()[0] is sys.exc_info()[1].__class__)
+#> True
+## why do we need `type' when we have `value' ?
+
+

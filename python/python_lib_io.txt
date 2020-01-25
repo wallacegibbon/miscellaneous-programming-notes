@@ -1,0 +1,34 @@
+## vim: ft=python :
+
+
+## there's no `StringIO' and `cStringIO' module in python3, you should use
+## io.StringIO or io.BytesIO
+a = io.StringIO("blah")
+a.read()
+#> 'blah'
+print("hello", file=a)
+a.tell()
+#> 10
+a.seek(0)
+a.read()
+#> 'blahhello\n'
+
+## the default value might LOST if you do not `read' or `seek' before `write',
+## because the file pointer is 0 at first
+a = io.StringIO("blahblah")
+a.tell()
+#> 0
+a.write("**")
+a.seek(0)
+a.read()
+#> '**ahblah'
+
+b = io.BytesIO(b"blah")
+b.write(b"great")
+b.tell()
+#> 5
+b.seek(0)
+b.read()
+#> b'great'
+
+

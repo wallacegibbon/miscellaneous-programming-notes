@@ -1,0 +1,57 @@
+;; vim: ft=clojure :
+
+
+;; the #".." is a syntax sugar for re-pattern
+(re-pattern "\\d+")
+;> #"\d+"
+
+;;-----------------------------------------------------------------------------
+;; re-matcher will return a matcher any way, even the string is not matched
+;; to check matched or not, you can call re-matches
+;;-----------------------------------------------------------------------------
+(re-matcher #"\d+" "abc12345def")
+;> #<Matcher java.util.regex.Matcher[pattern=\d+ region=0,11 lastmatch=]>
+
+(re-matcher #"\d+" "abcxyzxydef")
+;> #<Matcher java.util.regex.Matcher[pattern=\d+ region=0,11 lastmatch=]>
+
+;; re-matches mean: match the whole string, not part of it
+(re-matches #"\d+" "abc12345def")
+;> nil
+(re-matches #".*\d+" "abc12345def")
+;> nil
+(re-matches #".*\d+.*" "abc12345def")
+;> "abc12345def"
+
+
+;;-----------------------------------------------------------------------------
+;; use re-find and re-seq if you want to get the substring that have been
+;; matched
+;;-----------------------------------------------------------------------------
+(re-find (re-matcher #"\d(\d+)\d" "abc12345def"))
+;> ["12345" "234"]
+
+;; re-find can accept string instead of a Matcher
+(re-find #"\d(\d+)\d" "abc12345def")
+;> ["12345" "234"]
+
+;; the escaped group is supported
+(re-find #"\d(?:\d+)\d" "abc12345def")
+;> "12345"
+
+;; if the string is not matched, you will get nil
+(re-find #"\d+" "abcxyzxydef")
+;> nil
+
+(re-find #"\d(\d+)\d" "abc12345def")
+;> ["12345" "234"]
+(re-seq #"\d(\d+)\d" "abc12345def")
+;> (["12345" "234"])
+
+(re-find #"(?:\d+)" "abc123abc456abc789")
+;> "123"
+(re-seq #"(?:\d+)" "abc123abc456abc789")
+;> ("123" "456" "789")
+
+
+

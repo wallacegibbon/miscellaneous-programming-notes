@@ -1,0 +1,16 @@
+## vim: ft=sh :
+
+## to see the start up info (which config file is loaded), run this
+vim --version
+#> ...
+#     system vimrc file: "$VIM/vimrc"
+#       user vimrc file: "$HOME/.vimrc"
+#        user exrc file: "$HOME/.exrc"
+#    fall-back for $VIM: "/usr/share/vim"
+
+## which means `/usr/share/vim/vimrc` is the first one to load.
+## On Mac OS X, that file set `modelines=0`, so if you want to use modeline,
+## you need to reset modelines in your own .vimrc
+
+
+

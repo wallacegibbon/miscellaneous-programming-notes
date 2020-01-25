@@ -1,0 +1,1538 @@
+;; vim: ft=clojure :
+
+;;-----------------------------------------------------------------------------
+;; load-file will load a clojure file, and return the last function
+;;-----------------------------------------------------------------------------
+(load-file "fibonacci.clj")
+;> #'user/lazy-seq-fibo
+
+(def x (load-file "fibonacci.clj"))
+;> #'user/lazy-seq-fibo
+
+(take 10 (x))
+;> (0 1 1N 2N 3N 5N 8N 13N 21N 34N)
+
+
+
+;;-----------------------------------------------------------------------------
+;; define functions of different argument number
+;;-----------------------------------------------------------------------------
+;; functions in clojure support this:
+(defn smart-mul
+  ([a] (println "you give one number, so i did" a "*" a "=" (* a a)))
+  ([a b] (println a "*" b "=" (* a b))))
+;> #'user/smart-mul
+(smart-mul 3)
+;> you give one number, so i did 3 * 3 = 9
+;  nil
+(smart-mul 3 4)
+;> 3 * 4 = 12
+;  nil
+
+;; lambda expression support this, too
+((fn ([a] (* a a)) ([a b] (* a b))) 3)
+;> 9
+((fn ([a] (* a a)) ([a b] (* a b))) 3 4)
+;> 12
+
+;; actually, all power comes from fn, defn is just a wrapper
+(macroexpand '(defn x [a] (* a a)))
+;> (def x (clojure.core/fn ([a] (* a a))))
+(macroexpand '(defn x ([a] (* a a)) ([a b] (* a b))))
+;> (def x (clojure.core/fn ([a] (* a a)) ([a b] (* a b))))
+
+;; lambda can have name
+(fn add [a b] (+ a b))
+;> #object[user$eval21$add__22 0x19105a8 "user$eval21$add__22@19105a8"]
+(fn [a b] (+ a b))
+;> #object[user$eval25$fn__26 0x1202fce "user$eval25$fn__26@1202fce"]
+
+;; but you can NOT call it through the name, it's just useful in stack traces
+add
+;> CompilerException java.lang.RuntimeException: Unable to resolve symbol: add
+
+;; lambda expression can not have docstring
+(fn "doc for lambda expression" [n] (* n 2))
+;> IllegalArgumentException Parameter declaration what should be a vector...
+
+
+
+;;-----------------------------------------------------------------------------
+;; symbols and variables are different
+;;-----------------------------------------------------------------------------
+(def foo 10)
+;> #'user/foo
+;; now symbol "user/foo" bind to a variable, this variable bind to number 10
+
+;; you can use function "var" to get the variable that binds to a symbol
+(var foo)
+;> #'user/foo
+
+;; #' is a reader macro for "var" function
+#'foo
+;> #'user/foo
+
+
+
+;;-----------------------------------------------------------------------------
+;; reader macro
+;;-----------------------------------------------------------------------------
+;; ;        line comment
+;; \        character
+;; @        expand to deref
+;; ^        metadata
+;; '        expand to quote
+;; `        like quote, you can escape part of it with ~, ~@
+;; #'       expand to var
+;; #{}      create a set
+;; #()      create a function, like fn, but clearer
+;; #_       escape next form, you can use it to make multiple line comment
+;; #"..."   make a regular expression
+;; xx#      just like gensym
+
+;; example of multi-line comment
+#_(hello world)(println "yes")
+;> yes
+;  nil
+
+;; gensym is pretty useful when defining macros.
+(def a 'what)
+;> #'user/a
+
+(gensym a)
+;> what38
+(gensym a)
+;> what41
+
+`what#
+;> what__48__auto__
+`what#
+;> what__51__auto__
+
+
+
+;;-----------------------------------------------------------------------------
+;; java stack trace is not printed by default
+;;-----------------------------------------------------------------------------
+(/ 1 0)
+;> ArithmeticException Divide by zero  clojure.lang.Numbers.divide (Numbers.java:156)
+
+;; you need (pst) to show the stack trace
+(pst)
+;> ArithmeticException Divide by zero
+;          clojure.lang.Numbers.divide (Numbers.java:156)
+;          clojure.lang.Numbers.divide (Numbers.java:3731)
+;          ...
+
+
+
+;;-----------------------------------------------------------------------------
+;; call java api
+;;-----------------------------------------------------------------------------
+(System/getProperties)
+;> {"java.runtime.name" "OpenJDK Runtime Environment", ...}
+
+
+;; to create a new object, you got two ways:
+;;  (new class-name args)
+;;  (class-name. args)
+(new java.util.Random)
+;> #<Random java.util.Random@ad3d63>
+(java.util.Random.)
+;> #<Random java.util.Random@1c34b3c>
+
+
+;; call java method, you got two ways:
+;;  (. class-or-instance method-name args)
+;;    also can be written as: (. class-or-instance (method-name args))
+;;  (.method-name class-or-instance args)
+(def rnd (java.util.Random.))
+;> #'mytest/rnd
+
+(. rnd (nextInt 10)) ;also can be written as (. rnd nextInt 10)
+;> 6
+
+(.nextInt rnd 10)
+;> 8
+
+;; "." and ".." support both attribute and method, static and instance
+(. Math PI)
+;> 3.141592653589793
+(.. Math PI)
+;> 3.141592653589793
+Math/PI
+;> 3.141592653589793
+
+
+;; call methods in sequence, you need:
+;;  (.. class-or-instance (method1 args) (method2 args) ...)
+;; "hello".getClass().getClass() will be written as:
+(.. "hello" (getClass) (getClass))
+;> java.lang.Class
+
+;; methods with no arguments can be written without parentheses:
+(.. "hello" getClass getClass)
+;> java.lang.Class
+
+;; another example.
+(.. "abcdefg" (substring 1 5) (substring 0 2) toUpperCase)
+;> "BC"
+
+;; .. need .
+(macroexpand '(.. a (b c) (d e)))
+;> (. (. a (b c)) (d e))
+(macroexpand '(. (. a (b c)) (d e)))  ;no change
+;> (. (. a (b c)) (d e))
+
+
+;; all functions in clojure have implemented Callable and Runnable, so you can
+;; easily create a java thread
+(.start (Thread. (fn [] (println "Hello" (Thread/currentThread)))))
+;> nil
+;  Hello #<Thread Thread[Thread-0,5,main]>
+
+
+
+
+;;-----------------------------------------------------------------------------
+;; doto
+;; argument: ([x & forms])
+;; Evaluates x then calls all of the methods and functions with the
+;; value of x supplied at the front of the given arguments.
+;;-----------------------------------------------------------------------------
+(doto
+ (java.util.HashMap.)
+ (.put "a" 1)
+ (.put "b" 2))
+;> {"b" 2, "a" 1} ; it's java.util.HashMap, NOT clojure.lang.PersistentArrayMap
+
+
+
+;;-----------------------------------------------------------------------------
+;; ->> and -> are similar, but -> insert to second, ->> insert to last
+;;-----------------------------------------------------------------------------
+(macroexpand '(->> (a b) (c d)))
+;> (c d (a b))
+(macroexpand '(-> (a b) (c d)))
+;> (c (a b) d)
+
+(macroexpand '(->> [\a \b \c] (map (int %))))
+;> (map (int %) [\a \b \c])
+(macroexpand '(-> [\a \b \c] (map (int %))))
+;> (map [\a \b \c] (int %))
+
+(->>
+ "a quick brown fox jumps over the lazy dog"
+ (map #(+ 1 (int %)))
+ (map char)
+ (apply str)
+ (.toUpperCase))
+;> "B!RVJDL!CSPXO!GPY!KVNQT!PWFS!UIF!MB{Z!EPH"
+
+
+;; difference between doto, .. and -> :
+(macroexpand '(-> a (b c) (d e)))
+;> (d (b a c) e)
+(macroexpand '(.. a (b c) (d e)))
+;> (. (. a (b c)) (d e))
+(macroexpand '(doto a (b c) (d e)))
+;> (let* [G__58 a] (b G__58 c) (d G__58 e) G__58) ;which is same as:
+;; (let* [x a] (b x c) (d x e) x)
+
+
+
+;;-----------------------------------------------------------------------------
+;; special variables: *1, *2, *3
+;; they stores the latest evaluation results
+;;-----------------------------------------------------------------------------
+
+
+;;-----------------------------------------------------------------------------
+;; use clojure library: require & use
+;; use java    library: import
+;;-----------------------------------------------------------------------------
+(require 'example.introduction)
+;> nil
+
+;; then you can call functions in example.introduction
+(take 10 example.introduction/fibs)
+;> (0 1 1 2 3 5 8 13 21 34)
+
+;; use alias
+(require '[example.introduction :as eg])
+;> nil
+(take 10 eg/fibs)
+;> (0 1 1 2 3 5 8 13 21 34)
+
+;; you can use refer to map the names to current namespace
+(refer 'example.introduction)
+;> nil
+(take 10 fibs)
+;> (0 1 1 2 3 5 8 13 21 34)
+
+;; you can do refer with require to bind SOME names local
+(require '[clojure.repl :refer [source]])
+;> nil
+;; then you just use (source cond) directly
+
+
+;; "use" is just like "require the lib" and "refer all names in the lib"
+(use 'example.introduction)
+;> nil
+(take 10 fibs)
+;> (0 1 1 2 3 5 8 13 21 34)
+
+;; only import some symbol
+(use '[clojure.java.io :only (reader writer)])
+;; or
+(use '[clojure.java.io :only [reader writer]])
+
+;; to reload the library
+(use :reload 'example.introduction)
+;> nil
+
+;; to load java class
+(import '(java.io InputStream File))
+;> java.io.File
+(.exists (File. "/tmp"))
+;> true
+
+
+;; import can support multiple list as arguments
+(import '(java.util Random Locale)
+        '(java.text MessageFormat))
+;> java.text.MessageFormat
+
+Random
+;> java.util.Random
+
+MessageFormat
+;> java.text.MessageFormat
+
+
+
+;;-----------------------------------------------------------------------------
+;; document
+;;-----------------------------------------------------------------------------
+(doc str)
+;> -------------------------
+;  clojure.core/str
+;  ([] [x] [x & ys])
+;    With no args, returns the empty string. With one arg x, ...
+
+(defn test "this is just a test function, to test doc function" [])
+;> #'user/test
+(doc test)
+;> -------------------------
+;  user/test
+;  ([])
+;    this is just a test function, to test doc function
+;  nil
+
+;; find-doc is just like doc, but it support regular expression or string
+;; e.g. find all predicates(functions end with ?):
+(find-doc #"\?$")
+;> -------------------------
+;  clojure.pprint/integral?
+;  ...
+;  clojure.pprint/pretty-writer?
+;  ...
+;  clojure.core/associative?
+;  ...
+;  clojure.core/bound?
+;  ...
+
+
+;; doc return nil, the content is written to stdout, not returned by the
+;; function
+(def a (doc print))
+;> ([& more])
+;    Prints the object(s) to output stream ...
+;  #'user/a
+
+a
+;> nil
+
+
+;; if you want to see document of java
+(javadoc java.net.URL)  ; will open the web page with in browser
+;> true
+
+;; use (clojure.repl/source javadoc), you will see that "javadoc" will call
+;; "javadoc-url" and "browse-url", who have not source available.
+;; but use (doc javadoc/javadoc-url), you can know that javadoc-url will try
+;; *local-javadocs* first, then *remote-javadocs*, and return a url string.
+(require '[clojure.java.javadoc :as javadoc])
+;> nil
+javadoc/*local-javadocs*
+;> #object[clojure.lang.Ref 0x317ba2 {:status :ready, :val ()}]
+
+javadoc/*remote-javadocs*
+;> #object[clojure.lang.Ref 0xe8bcbc {:status :ready, :val {"java." "http://java.sun.com/javase/7/docs/api/", "javax." "http://java.sun.com/javase/7/docs/api/", "org.apache.commons.codec." "http://commons.apache.org/codec/api-release/", "org.apache.commons.io." "http://commons.apache.org/io/api-release/", "org.apache.commons.lang." "http://commons.apache.org/lang/api-release/", "org.ietf.jgss." "http://java.sun.com/javase/7/docs/api/", "org.omg." "http://java.sun.com/javase/7/docs/api/", "org.w3c.dom." "http://java.sun.com/javase/7/docs/api/", "org.xml.sax." "http://java.sun.com/javase/7/docs/api/"}}]
+
+
+
+;;-----------------------------------------------------------------------------
+;; you can use "source" function in repl library to see the source code
+;;-----------------------------------------------------------------------------
+(clojure.repl/source identity)
+;> (defn identity
+;    "Returns its argument."
+;    {:added "1.0"
+;     :static true}
+;    [x] x)
+;  nil
+
+
+
+;;-----------------------------------------------------------------------------
+;; java reflect api: class, ancestors, instance?
+;;-----------------------------------------------------------------------------
+(class "string")  ; clojure string    is java string
+;> java.lang.String
+(class \a)        ; clojure character is java character
+;> java.lang.Character
+
+(ancestors (class "string"))
+;> #{java.io.Serializable java.lang.Object ...}
+(instance? java.lang.String "a")
+;> true
+
+
+
+;;-----------------------------------------------------------------------------
+;; string and characters
+;; clojure leave most string function unpacked, you can use the java method
+;;-----------------------------------------------------------------------------
+(.toUpperCase "hello")
+;> "HELLO"
+(Character/toUpperCase \s)
+;> \S
+
+;; but clojure have a wrapper for toString: str.
+;; and "str" is better as it supports multiple arguments and will ignore nil
+(str 1 2 nil 3)
+;> "123"
+
+(str \h \e \y \space \y \o \u)
+;> "hey you"
+
+;; you can use string along with characters
+(str \h \e \y \space "xx")
+;> "hey xx"
+
+;; some special characters
+\backspace          ;  8
+\tab                ;  9
+\newline            ; 10
+\formfeed           ; 12
+\return             ; 13
+\space              ; 32
+
+
+
+;;-----------------------------------------------------------------------------
+;; bool
+;; anything besides false and nil are true
+;;-----------------------------------------------------------------------------
+;; some useful predicates:
+(true? expr)
+(false? expr)
+(nil? expr)
+(zero? expr)
+
+(string? expr)
+(keyword? expr)
+(symbol? expr)
+
+;; more complex ones
+(every? odd? [1 3 5])
+;> true
+(not-any? even? [1 3 5])
+;> true
+
+(every? odd? [1 3 4])
+;> false
+(not-every? odd? [1 3 4])
+;> true
+
+;; !!! some is NOT predicate, it will return the first element that matched
+(some #(first %) [[] [nil] [1 2]])
+;> 1
+
+;; but it works like predicate sometimes
+(some odd? [1 4 6])
+;> true
+
+;; it's just like:
+(not-every? even? [1 4 6])
+;> true
+
+
+
+;;-----------------------------------------------------------------------------
+;; set
+;; cons, conj can work on all sequence, including set
+;;-----------------------------------------------------------------------------
+(class #{1 2 3})
+;> clojure.lang.PersistentHashSet
+(cons :a #{1 2 3})
+;> (:a 1 3 2)
+
+;; to make a set from a list
+(set [1 2 3 3 2 1])
+;> #{1 3 2}
+
+;; or
+(apply hash-set [1 2 3 3 2 1])
+;> #{1 3 2}
+
+
+;;-----------------------------------------------------------------------------
+;; map
+;; data in clojure is immutable, you can use any clojure data as the key of
+;; the hash map. Usually we use keyword.
+;;-----------------------------------------------------------------------------
+(class {:a 1 :b 2})
+;> clojure.lang.PersistentArrayMap
+
+;; use get function to get the element
+(get {1 2 3 4} 1 "nothing")
+;> 2
+({1 2 3 4} 1 "nothing") ; map is function itself
+;> 2
+
+(def inventors {"Lisp" "McCarthy" "Clojure" "Hickey"})
+;> #'user/inventors
+
+(inventors "Lisp")
+;> "McCarthy"
+
+(inventors "Erlang")
+;> nil
+
+
+;; it's better to use keywords as key, because keywords is function, too.
+(def inventors {:Lisp "McCarthy" :Clojure "Hickey"})
+;> #'user/inventors
+
+(inventors :Clojure)
+;> "Hickey"
+(:Clojure inventors)
+;> "Hickey"
+
+;; to make a map from a sequence, use hash-map. (map is used for other thing)
+(apply hash-map [:a 1 :b 2])
+;> {:b 2, :a 1}
+
+
+
+;;-----------------------------------------------------------------------------
+;; record
+;;-----------------------------------------------------------------------------
+(defrecord Book [title author]) ; title and author will become keyword
+;> user.Book
+(class Book)
+;> java.lang.Class
+
+;; create a record instance (3 ways)
+(->Book "blah" "xx")
+;> #user.Book{:title "blah", :author "xx"}
+(Book. "blah" "xx") ; same as (new Book "blah" "xx")
+;> #user.Book{:title "blah", :author "xx"}
+#user.Book{:title "blah" :author "xx"}
+;> #user.Book{:title "blah", :author "xx"}
+
+(def b (->Book "blah" "xx"))
+;> #'user/b
+
+(b :title)
+;> ClassCastException user.Book cannot be cast to clojure.lang.IFn ...
+
+(:title b)
+;> "blah"
+
+
+
+;;-----------------------------------------------------------------------------
+;; assoc
+;; update elements, works on vector and map
+;;-----------------------------------------------------------------------------
+(assoc [1 2 3] 1 :a)
+;> [1 :a 3]
+(assoc [1 2 3] 3 :a)
+;> [1 2 3 :a]
+(assoc [1 2 3] 4 :a)
+;> IndexOutOfBoundsException   clojure.lang.PersistentVector.assocN...
+
+(assoc {:a 1 :b 2} :a 3)
+;> {:b 2, :a 3}
+(assoc {:a 1 :b 2} :c 3)
+;> {:c 3, :b 2, :a 1}
+
+
+
+;;-----------------------------------------------------------------------------
+;; change namespace
+;; you need (clojure.core/use clojure.core) when you enter a new namespace.
+;; clojure will automatically load java.lang only
+;;-----------------------------------------------------------------------------
+;; change namespace:
+(in-ns 'myapp)
+;> #<Namespace myapp>
+
+;; get namespace:
+*ns*
+;> #<Namespace myapp>
+
+
+;; you'd better:
+(clojure.core/use 'clojure.core)
+;> nil
+
+;; and if you want to use doc or source, you need:
+(clojure.core/use 'clojure.repl)
+
+
+;; ns macro can do a lot of thing: change namespace, do require and import
+(ns mytest
+  (:require [clojure.string :as str])
+  (:import (java.io File)))
+
+
+
+
+;;-----------------------------------------------------------------------------
+;; cond and case
+;; the cond need a :else to specify the situation that NO match
+;; the case do NOT need a keyword like :else
+;;-----------------------------------------------------------------------------
+(cond
+  (= 1 2) "this is false, should not appear"
+  (= 3 4) "this is wrong"
+  :else "yes, the else part")
+;> "yes, the else part"
+
+;; in "case", you should write symbol WITHOUT quote
+(case 'c
+  a "not match, should not appear"  ; should not write 'a
+  b "should not appear, either"
+  "unlike cond, no :else")
+;> "unlike cond, no :else"
+
+
+
+
+;;-----------------------------------------------------------------------------
+;; do accept any number of forms, but return the result of the last form only
+;;-----------------------------------------------------------------------------
+;; e.g.
+(defn is-small?
+  [number]
+  (if (< number 100)
+    "yes"
+    (do
+     (println "Saw a big number" number)
+     "no")))
+
+
+
+;;-----------------------------------------------------------------------------
+;; loop ... recur
+;;    (loop [bindings *] exprs*)
+;;-----------------------------------------------------------------------------
+(loop [result [] x 5]
+  (if (zero? x)
+    result
+    (recur (conj result x) (dec x))))
+;> [5 4 3 2 1]
+
+;; "loop" is not necessary for "recur"
+(defn countdown
+  [result x]
+  (if (zero? x)
+    result
+    (recur (conj result x) (dec x))))
+;> #'user/countdown
+(countdown [] 5)
+;> [5 4 3 2 1]
+
+
+
+;;-----------------------------------------------------------------------------
+;; meta data
+;;
+;; keyname                usage
+;; ---------              ---------------------------------
+;; :arglists              argument information
+;; :doc                   document string
+;; :file                  source file name
+;; :line                  source line number
+;; :macro                 will be true if it is a macro
+;; :name                  local name
+;; :ns                    namespace
+;; :tag                   expected argument of return type
+;;-----------------------------------------------------------------------------
+(meta #'str)
+;> {:added "1.0", :ns #<Namespace clojure.core>, :name str,...}
+(meta #'defn)
+;> {:macro true, ...}
+(meta #'fn)
+;> {..., :macro true, ...}
+(meta #'cond)
+;> {:macro true, ...}
+(meta #'case)
+;> {:macro true, ...}
+(meta #'..)
+;> {:macro true, ...}
+
+;; most meta data is created by clojure compiler, if you want to add your own
+;; meta data, you need to use ^
+(defn ^{:tag String} shout [^{:tag String} s] (.toUpperCase s))
+;> #'user/should
+(meta #'shout)
+;> {..., :tag java.lang.String, ...}
+
+(defn shout [^{:tag String} s] (.toUpperCase s))
+;> #'user/should
+(meta #'shout)
+;> {...}  ; no :tag field
+
+;; ^{:tag Classname} can also be written as ^Classname
+(defn ^String shout [^String s] (.toUpperCase s))
+
+
+;; another way to specify meta data
+(defn shout "blah" {:tag String} [s] (.toUpperCase s))
+;> #'user/should
+(meta #'shout)
+;> {..., :tag java.lang.String, ..., :doc "blah"}
+
+;; the doc string is not necessary
+(defn shout {:tag String} [s] (.toUpperCase s))
+;> #'user/should
+(meta #'shout)
+;> {..., :tag java.lang.String, ...}
+
+;; meta data can be written at last if you use defn in this form
+(defn shout
+  ([s] (.toUpperCase s))
+  {:tag String})
+
+
+
+
+;;-----------------------------------------------------------------------------
+;; destructuring
+;;  use array to destructuring sequence   data, including array, list.
+;;  use map   to destructuring associated data, including map.
+;;
+;; Clojure supports abstract structural binding, often called destructuring,
+;; in let binding lists, fn parameter lists, and any macro that expands into
+;; a let or fn.
+;;-----------------------------------------------------------------------------
+;; without destructuring, you have to write this:
+(defn approach1
+  [numbers]
+  (let [n1 (first numbers) n3 (nth numbers 2)]
+    (+ n1 n3)))
+;> #'user/approach1
+(approach1 [4 5 6 7])
+;> 10
+
+;; with destructuring, you can write:
+(defn approach2 [[n1 _ n3]] (+ n1 n3))
+;> #'user/approach2
+(approach2 [4 5 6 7])
+;> 10
+(approach2 '(4 5 6 7))  ; list works, too
+;> 10
+
+;; & can be used in destructuring, too
+(defn name-summary
+  [[name1 name2 & others]]
+  (println (str name1 ", " name2) "and" (count others) "others"))
+;> #'user/name-summary
+(name-summary ["Moe" "Larry" "Curly" "Shemp"])
+;> Moe, Larry and 2 others
+;  nil
+
+;; :as can get the whole data to be destructuring
+(defn first-and-third-percentage
+  [[n1 _ n3 :as coll]]
+  (/ (+ n1 n3) (apply + coll)))
+;> #'user/first-and-third-percentage
+(first-and-third-percentage [4 5 6 7])
+;> 5/11
+
+;; map
+(defn summer-sales-percentage
+  [{june :june july :july august :august :as all}]
+  (/ (+ june july august) (apply + (vals all))))
+;> #'user/summer-sales-percentage
+(def sales
+  {:january   100 :february 200 :march      0 :april    300
+   :may       200 :june     100 :july     400 :august   500
+   :september 200 :october  300 :november 400 :december 600})
+;> #'user/sales
+(summer-sales-percentage sales)
+;> 10/33
+
+;; with & and {}, you can use things like keyword-argument in python.
+;; it's "&" that made the magic!
+(defn keyword-arg-test
+  [& {a :key1 b :key2}]
+  [a b])
+;> #'user/keyword-arg-test
+
+(keyword-arg-test :key2 3)  ;see ! keyword argument
+;> [nil 3]
+
+;; let can do this, too.
+(let [[& {a :key1 b :key2}] [:key2 3]]
+  [a b])
+;> [nil 3]
+
+;; without &, things does not work
+(let [{a :key1 b :key2} [[:key2 3]]]
+  [a b])
+;> [nil nil]
+
+
+;; destructuring on let, more examples:
+(let [[_ _ z] [1 2 3]]
+  z)
+;> 3
+
+(let [{name :name} {:name "harry" :job "wizard"}]
+  name)
+;> "harry"
+
+;; a more complex way to bind
+(let [{:keys [name job]} {:name "harry" :job "wizard"}]
+  [name job])
+;> ["harry" "wizard"]
+
+;; when key is not found, the bind is set to nil
+(let [{:keys [name job]} {:name "harry"}]
+  [name job])
+;> ["harry" nil]
+
+;; you can use :or to set a default value for job
+(let [{:keys [name job] :or {job "bbb"}} {:name "harry"}]
+  [name job])
+;> ["harry" "bbb"]
+
+(let [{a :key1 :or {a "blah"}} {:key2 3}]
+  a)
+;> "blah"
+
+;; "_" is a legal symbol, when use it multiple times,
+;; it's actually bind multiple times
+(let [[_ _ z] [1 2 3]]
+  _)
+;> 2
+
+
+
+;;-----------------------------------------------------------------------------
+;; ref and STM
+;;  related functions: ref, ref-set, dosync, alter, commute
+;;-----------------------------------------------------------------------------
+(def current-track (ref "Mars, the Bringer of War"))
+;> #'user/current-track
+(deref current-track)
+;> "Mars, the Bringer of War"
+
+;; deref is just like @
+@current-track
+;> "Mars, the Bringer of War"
+
+;; change the value of a ref:
+(ref-set current-track "Venus, the Bringer of Peace")
+;> IllegalStateException No transaction running...
+
+;; you need transaction !!
+(dosync
+ (ref-set current-track "Venus, the Bringer of Peace"))
+;> "Venus, the Bringer of Peace"
+
+@current-track
+;> "Venus, the Bringer of Peace"
+
+;; the variable (def xxx) is not necessary
+(dosync (ref-set (ref "a") "b"))
+;> "b"
+
+;; when you want to do read and write on a ref
+(dosync
+ (ref-set messages (conj @messages new-msg)))
+
+;; there is a better way: alter
+(dosync
+ (alter messages conj new-msg))
+
+
+
+;;-----------------------------------------------------------------------------
+;; "atom" is a lightweight mechanism, similar to "ref", no need transaction
+;;  related functions: atom, reset!, swap!
+;;-----------------------------------------------------------------------------
+(def current-track (atom "Venus, the Bringer of Peace"))
+;> #'user/current-track
+@current-track
+;> "Venus, the Bringer of Peace"
+
+;; change the value of an atom:
+(reset! current-track "Credo")  ; do NOT need dosync
+;> "Credo"
+@current-track
+;> "Credo"
+
+(def current-track (atom {:title "Credo" :composer "Byrd"}))
+;> #'user/current-track
+(reset! current-track {:title "Spem in Alium" :composer "Tallis"})
+;> {:title "Spem in Alium", :composer "Tallis"}
+
+;; do read and wirte, use swap!
+(swap! current-track assoc :title "Sancte Deus")
+;> {:title "Sancte Deus", :composer "Tallis"}
+
+
+
+;;-----------------------------------------------------------------------------
+;; curring <-> partial
+;;-----------------------------------------------------------------------------
+(def add-2 (partial + 2))
+;> #'user/add-2
+(add-2 3)
+;> 5
+(map add-2 '(1 2 3 4 5))
+;> (3 4 5 6 7)
+
+
+
+;;-----------------------------------------------------------------------------
+;; comprehension
+;; for  , doseq are macros
+;; dorun, doall are functions, doall calls dorun: (clojure.repl/source doall)
+;;-----------------------------------------------------------------------------
+(for [x [:a :b] y [1 2 3]]
+  {x y})
+;> ({:a 1} {:a 2} {:a 3} {:b 1} {:b 2} {:b 3})
+
+;; use guard
+(for [x [:a :b] y [1 2 3] :when (odd? y)]
+  {x y})
+;> ({:a 1} {:a 3} {:b 1} {:b 3})
+
+;; map works, too
+(for [[x y] {:a 1 :b 2 :c 3}]
+  (str x y))
+;> (":a1" ":b2" ":c3")
+
+
+;; "for" returns a lazy sequence:
+(class (for [x [:a :b] y [1 2 3]] {x y}))
+;> clojure.lang.LazySeq
+
+;; a useful way to create sequence: (range start? end step?)
+(range 10)
+;> (0 1 2 3 4 5 6 7 8 9)
+
+(range 4 10)
+;> (4 5 6 7 8 9)
+
+(range 4 10 3)
+;> (4 7)
+
+;; "range" returns a lazy sequence, too.
+(class (range 10))
+;> clojure.lang.LazySeq
+
+
+;; doseq is just like for, only it doesn't collect the result
+(doseq [x [:a :b] y [1 2 3]]
+  {x y})
+;> nil
+
+(doseq [x [:a :b] y [1 2 3]]
+  (print "-" {x y} "-"))
+;> - {:a 1} -- {:a 2} -- {:a 3} -- {:b 1} -- {:b 2} -- {:b 3} -nil
+
+(doseq [x [:a :b] y [1 2 3] :when (odd? y)]
+  (print "-" {x y} "-"))
+;> - {:a 1} -- {:a 3} -- {:b 1} -- {:b 3} -nil
+
+
+;; dorun is just like doseq, only it doesn't support comprehension
+(doseq [i [1 2 3]] (print "-" i "-"))
+;> - 1 -- 2 -- 3 -nil
+
+;; the following "dorun" do the same job:
+(dorun (map #(print "-" % "-") [1 2 3]))
+;> - 1 -- 2 -- 3 -nil
+
+;; doall is just like dorun, only it collect all result into a sequence:
+(doall (map #(print "-" % "-") [1 2 3]))
+;> - 1 -- 2 -- 3 -(nil nil nil)
+
+;; dorun with for, works just like doseq
+(dorun
+ (for [x [:a :b] y [1 2 3] :when (odd? y)]
+   (print "-" {x y} "-")))
+;> - {:a 1} -- {:a 3} -- {:b 1} -- {:b 3} -nil
+
+
+
+;;-----------------------------------------------------------------------------
+;; do something for multiple times
+;;-----------------------------------------------------------------------------
+;; you can do this: (like python)
+(doseq [x (range 3)] (println "x is now" x))
+
+;; or you can just do: (like c)
+(dotimes [x 3] (println "x is now" x))
+
+
+
+;;-----------------------------------------------------------------------------
+;; multi-method
+;;  define it use "defmulti" and "defmethod"
+;; multi-method create a clojure.lang.MultiFn object, not a function !
+;;-----------------------------------------------------------------------------
+;; class is the dispatch function, if :default is not specified, you have to
+;; use :default. (defmulti ... :default :default) is the default option
+(defmulti class-of class :default :blah)
+;> #'user/class-of
+(defmethod class-of Number
+  [arg]
+  (println arg "is Number"))
+;> #<MultiFn clojure.lang.MultiFn@155606d>
+(defmethod class-of String
+  [arg]
+  (println arg "is String"))
+;> #<MultiFn clojure.lang.MultiFn@155606d>
+
+class-of
+;> #object[clojure.lang.MultiFn 0x1d8ae8b "clojure.lang.MultiFn@1d8ae8b"]
+
+;; see, it's not a function.
+
+(class-of 1)
+;> 1 is Number
+;  nil
+
+(class-of "blah")
+;> blah is not Number
+;  nil
+
+(class-of 'mysymbol)
+;> IllegalArgumentException No method ... class clojure.lang.Symbol ...
+
+;; you need a default method:
+(defmethod class-of :blah
+  [arg]
+  (println arg "is unknown"))
+
+(class-of 'mysymbol)
+;> mysymbol is unknown
+;  nil
+
+
+;; another example:
+(defmulti both-odd? (fn [a b] [(odd? a) (odd? b)]))
+(defmethod both-odd? [true true]
+  [arg1 arg2]
+  (println "yes, both odd"))
+(defmethod both-odd? [true false]
+  [arg1 arg2]
+  (println "only" arg1 "is odd"))
+(defmethod both-odd? :default
+  [arg1 arg2]
+  (println "what a mess~"))
+
+(both-odd? 1 3)
+;> yes, both odd
+;  nil
+(both-odd? 1 2)
+;> only 1 is odd
+;  nil
+(both-odd? 2 1)
+;> what a mess~
+;  nil
+
+
+
+;;-----------------------------------------------------------------------------
+;; something about "apply"
+;;  the last argument of apply have to be a sequence
+;;-----------------------------------------------------------------------------
+(apply + [1 2 3 4 5 6])
+;> 21
+(apply + 1 2 3 [4 5 6])
+;> 21
+(apply + 1 2 3 4 5 [6])
+;> 21
+(apply + 1 2 3 4 5 6 [])
+;> 21
+(apply + 1 2 3 4 5 6)
+;> IllegalArgumentException Don't know how to create ISeq from: java.lang.Long
+
+
+
+;;-----------------------------------------------------------------------------
+;; "==" and "="
+;;-----------------------------------------------------------------------------
+(= 1 1.0)
+;> false
+(== 1 1.0)
+;> true
+
+
+
+;;-----------------------------------------------------------------------------
+;; #(...) is a new way to define lambda expression, % is %1. %& is supported
+;;  #(%) = (fn [x] (x))
+;;-----------------------------------------------------------------------------
+(apply (fn [] (+ 1 1)) '())
+;> 2
+(apply #(+ 1 1) '())
+;> 2
+
+(apply (fn [a b] (+ a b)) [1 2])
+;> 3
+(apply #(+ %1 %2) [1 2])
+;> 3
+
+(apply #(%) [:a])
+;> IllegalArgumentException Wrong number of args passed to keyword: :a
+;   clojure.lang.Keyword.throwArity
+
+;; reason:
+(:a)
+;> IllegalArgumentException Wrong number of args passed to keyword: :a
+;   clojure.lang.Keyword.throwArity
+
+(apply #(%) [(fn [] "blah")])
+;> "blah"
+
+(apply #(%1 %2) [{:a 666} :a])
+;> 666
+
+(apply #(%) [#(.toString (java.util.Date.))])
+;> "Mon Feb 22 13:08:04 CST 2016"
+
+;; it support &, too
+'#(reduce + %&)
+;> (fn* [& rest__184#] (reduce + rest__184#))
+
+(#(reduce + %&) 1 2 3 4 5)
+;> 15
+
+
+
+;;-----------------------------------------------------------------------------
+;; quotient and remainder, use quot and rem
+;;-----------------------------------------------------------------------------
+(quot 10 3)
+;> 3
+(rem 10 3)
+;> 1
+
+
+
+;;-----------------------------------------------------------------------------
+;; convert between keyword and string
+;;-----------------------------------------------------------------------------
+(keyword "a")
+;> :a
+(name :a)
+;> "a"
+
+;; keyword can have namespace, too
+(name :blah/what)
+;> "what"
+(namespace :blah/what)
+;> "blah"
+
+;; name function works for symbol, too
+(name 'a)
+;> "a"
+
+(name 'blah/what)
+;> "what"
+
+(namespace 'blah/what)
+;> "blah"
+
+
+
+;;-----------------------------------------------------------------------------
+;; make map from a list of vector
+;;-----------------------------------------------------------------------------
+;; the pair have to be vector
+(into {} '((:a 1) (:b 2)))
+;> ClassCastException clojure.lang.Keyword cannot be cast to ...
+
+(into {} '([:a 1] [:b 2]))
+;> {:a 1, :b 2}
+
+(into {} [[:a 1] [:b 2]])
+;> {:a 1, :b 2}
+
+
+
+;;-----------------------------------------------------------------------------
+;; byte function is similar to int function, only it doesn't support number
+;; that is bigger than 127
+;;-----------------------------------------------------------------------------
+(int \a)
+;> 97
+(byte \a)
+;> 97
+
+(int 128)
+;> 128
+(byte 128)
+;> IllegalArgumentException Value out of range for byte: 128
+
+
+
+;;-----------------------------------------------------------------------------
+;; protocol and datatype
+;;-----------------------------------------------------------------------------
+;; define some util functions for this test game
+(def directions [:north :east :south :west])
+(defn turn [base amount] (rem (+ base amount) (count directions)))
+
+;; define a protocol
+(defprotocol Compass
+  (direction [c] "this is comment for direction, blah...")
+  (left [c] "hello, this is comment for left")
+  (right [c]))
+;> Compass
+
+(doc direction)
+;> ([c])
+;    this is comment for direction, blah...
+;  nil
+
+(doc right)
+;> ([c])
+;    nil
+;  nil
+
+;; define a datatype
+(defrecord SimpleCompass
+  [bearing]
+  Compass
+  ;(direction "yeah, new comments" [_] (directions bearing)) ;invalid
+  (direction [_] (directions bearing))
+  (left [_] (SimpleCompass. (turn bearing 3)))
+  (right [_] (SimpleCompass. (turn bearing 1)))
+  Object
+  (toString [this] (str "[" (direction this) "]")))
+;> user.SimpleCompass
+
+(def c (SimpleCompass. 0))
+;> #'user/c
+
+c
+;> #user.SimpleCompass{:bearing 0}
+
+(left c)
+;> #user.SimpleCompass{:bearing 3}
+
+(str c)
+;> "[:north]"
+
+(str (left c))
+;> "[:west]"
+
+
+
+;;-----------------------------------------------------------------------------
+;; call shell command
+;;-----------------------------------------------------------------------------
+(clojure.java.shell/sh "ls" "-a" "/tmp")
+;> {:exit 0, :out ".\n..\n.font-unix\nhsperfdata_wx\n.ICE-unix\norbit-wx\n.Test-unix\ntmux-1000\n.X0-lock\n.X11-unix\n.XIM-unix\n", :err ""}
+
+(clojure.java.shell/sh "ls" "/tmp")
+;> {:exit 0, :out "hsperfdata_wx\norbit-wx\ntmux-1000\n", :err ""}
+
+
+
+;;-----------------------------------------------------------------------------
+;; useful function: time
+;;  Evaluates expr and prints the time it took.  Returns the value of expr.
+;;-----------------------------------------------------------------------------
+(time (println "hello"))
+;> hello
+;  "Elapsed time: 0.324692 msecs"
+;  nil
+
+(time (Thread/sleep 3))
+;> "Elapsed time: 3.245804 msecs"
+;  nil
+
+
+
+;;-----------------------------------------------------------------------------
+;; (find-doc "-array")
+;;
+;; make arrays
+;; make clojure array:
+;;    byte-array   , short-array , int-array , long-array
+;;    float-array  , double-array, char-array, boolean-array
+;;    object-array*
+;; make java array:
+;;    into-array, make-array
+;;-----------------------------------------------------------------------------
+;; make clojure array
+(byte-array [1 2 3 4 5])
+;> #<byte[] [B@d9fc12>
+
+(long-array [1 2 3 4 5])
+;> #<long[] [J@19a6904>
+
+(long-array 10 3)
+;> #<long[] [J@22e90c>
+
+(seq (long-array 10 3))
+;> (3 3 3 3 3 3 3 3 3 3)
+
+(seq (double-array 10 3.14))
+;> (3.14 3.14 3.14 3.14 3.14 3.14 3.14 3.14 3.14 3.14)
+
+
+;; make array from a set
+(into-array String [])
+;> #<String[] [Ljava.lang.String;@7a84e1>
+
+;; the default type is Object
+(into-array [])
+;> #<Object[] [Ljava.lang.Object;@12a4caf>
+
+(into-array Long [1 2 3 4 5])
+;> #<Long[] [Ljava.lang.Long;@1c674d8>
+
+;; the type is not necessary sometimes
+(into-array [1 2 3 4 5])
+;> #<Long[] [Ljava.lang.Long;@12cff6b>
+
+
+;; java class like Integer, Float have a field called TYPE
+Integer/TYPE
+;> int
+Double/TYPE
+;> double
+
+;; make empty array
+(make-array String 3)
+;> #<String[] [Ljava.lang.String;@1b97fd0>
+
+(seq (make-array String 3))
+;> (nil nil nil)
+
+;; make-array can create an array of multiple dimensions
+(map seq (make-array String 3 2))
+;> ((nil nil) (nil nil) (nil nil))
+
+(map #(map seq %) (make-array String 2 3 2))
+;> (((nil nil) (nil nil) (nil nil)) ((nil nil) (nil nil) (nil nil)))
+
+
+
+;;-----------------------------------------------------------------------------
+;; some string methods (java String methods)
+;;-----------------------------------------------------------------------------
+(.trim "   a b cd   ")
+;> "a b cd"
+
+(.replace "   a b cd   " " " "-")
+;> "---a-b-cd---"
+
+;; get substring, you have more than one way:
+(.substring "abcdefg" 0 5)
+;> "abcde"
+(subs "abcdefg" 0 5)
+;> "abcde"
+
+;; a similar function "subvec" work on vectors
+(subvec [1 2 3 4 5] 1 3)
+;> [2 3]
+
+
+;; you should clojure.string to do this, as this way will work on cljs, too
+(require '[clojure.string :as string])
+;> nil
+
+(string/trim "   a b cd   ")
+;> "a b cd"
+
+(string/replace "   a b cd   " " " "-")
+;> "---a-b-cd---"
+
+(string/split "ab c d efg h" #"\s")
+;> ["ab" "c" "d" "efg" "h"]
+
+
+
+;;-----------------------------------------------------------------------------
+;; serialize and un-serialize
+;;    read  read-string
+;;    pr    pr-str
+;;-----------------------------------------------------------------------------
+(read)  ;get input from stdin
+;< (+ 1 2)
+;> (+ 1 2)
+
+;; read can take input stream as argument, *in* is the default
+;; assume the content in "/tmp/b" is "(+ 1 2)"
+(import '(java.io PushbackReader))
+(read (PushbackReader. (io/reader "/tmp/b")))
+;> (+ 1 2)
+
+(read-string "(+ 1 2)")
+;> (+ 1 2)
+
+(pr '(+ 1 2))
+;> (+ 1 2)nil
+
+(pr-str '(+ 1 2))
+;> "(+ 1 2)"
+
+
+
+;;-----------------------------------------------------------------------------
+;; number literal
+;;-----------------------------------------------------------------------------
+42, 0xff, 2r111, 040      long (64-bit signed)
+3.14, 2.1321e10           double (ieee 64-bit float-point)
+42N                       clojure.lang.BigInt (big integer)
+0.01M                     java.math.BigDecimal (big float-number)
+22/7                      clojure.lang.Ratio
+
+;; clojure support number definition like erlang, in erlang: 16#c. = 12
+16rc
+;> 12
+
+
+
+;;-----------------------------------------------------------------------------
+;; quote can let you see the evaluation result that reader returns
+;;-----------------------------------------------------------------------------
+'x
+;> x
+''x
+;> (quote x)
+'''x
+;> (quote (quote x))
+'@x
+;> (clojure.core/deref x)
+'#(%1 %2)
+;> (fn* [p1__137# p2__138#] (p1__137# p2__138#))
+'`(a ~b ~@c)
+;> (clojure.core/seq (clojure.core/concat (clojure.core/list (quote user/a)) (clojure.core/list b) c))
+
+
+
+;;-----------------------------------------------------------------------------
+;; there is NO dotted pair in clojure
+;;-----------------------------------------------------------------------------
+;; in common lisp or scheme, (cons 1 2) -> (1 . 2)
+(cons 1 2)
+;> IllegalArgumentException Don't know how to create ISeq from: java.lang.Long
+;  ...
+
+
+
+;;-----------------------------------------------------------------------------
+;; some normal function usage
+;;-----------------------------------------------------------------------------
+;; cycle
+(take 5 (cycle [1 2]))
+;> (1 2 1 2 1)
+
+;; identity is a special function, it returns it's argument
+(identity 4)
+;> 4
+
+;; identity is useful when working with other functions
+(filter identity [1 2 3 nil 4 false true 1234])
+;> (1 2 3 4 true 1234)
+
+(map #(%1 %2) (cycle [inc identity]) [1 2 3 4 5 6 7 8 9])
+;> (2 2 4 4 6 6 8 8 10)
+
+(partition-by identity (sort "abcdaabccc"))
+;> ((\a \a \a) (\b \b) (\c \c \c \c) (\d))
+;; in cljs, the result is:
+;> (("a" "a" "a") ("b" "b") ("c" "c" "c" "c") ("d"))
+
+(map first (partition-by identity [1 1 2 3 3 1 1 5 5]))
+;> (1 2 3 1 5)
+
+(group-by identity "abracadabra")
+;> {\a [\a \a \a \a \a], \b [\b \b], \r [\r \r], \c [\c], \d [\d]}
+;; in cljs, it's:
+;> {"a" ["a" "a" "a" "a" "a"], "b" ["b" "b"], "r" ["r" "r"], "c" ["c"], "d" ["d"]}
+
+
+;; select-keys
+(select-keys {:a 1 :b 2 :c 3} [:a :c])
+;> {:a 1, :c 3}
+
+;; works on vector, too
+(select-keys [:a :b :c] [0 0 1])
+;> {0 :a, 1 :b}
+
+
+
+;;-----------------------------------------------------------------------------
+;; defonce
+;; document in http://clojuredocs.org/clojure.core/defonce said that defonce is
+;; NOT thread safe, I didn't test it in multiple thread environment
+;;-----------------------------------------------------------------------------
+(def t (atom []))
+;> #'cljs.user/t
+(defonce z (swap! t conj 1))
+;> #'cljs.user/z
+@t
+;> [1]
+z
+;> [1]
+
+;; when calling defonce again:
+(defonce z (swap! t conj 1))
+;> nil
+;; the second argument of defonce is not executed this time
+@t
+;> [1]
+z
+;> [1]
+
+(defonce w (swap! t conj 1))
+;> #'cljs.user/w
+
+@t
+;> [1 1]
+
+;; defonce will work only if you use it all the time, def won't buy it,
+;; it will work as usual anyway
+(def z 3)
+;> #'cljs.user/z
+z
+;> 3
+
+
+
+;;-----------------------------------------------------------------------------
+;; the useful "zip" (zip two sequence) is called "zipmap" in clojure
+;;-----------------------------------------------------------------------------
+(zipmap [:a :b :c] [1 2 3])
+;> {:a 1, :b 2, :c 3}
+
+
+

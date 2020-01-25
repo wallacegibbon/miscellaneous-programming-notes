@@ -1,0 +1,19 @@
+## vim: ft=elixir :
+
+## EEx stands for Embedded Elixir. It's the template engine in Stdlib
+
+## rules:
+## <%  Elixir expression - inline with output %>
+## <%= Elixir expression - replace with output %>
+## <%% Elixir quotation  - returns the contents inside %>
+## <%% Comments          - discarded from source %>
+
+
+EEx.eval_string "foo <%= bar %>", [bar: "baz"]
+#> "foo baz"
+
+## another way:
+EEx.eval_string "foo <%= @bar %>", assigns: [bar: "baz"]
+#> "foo baz"
+
+

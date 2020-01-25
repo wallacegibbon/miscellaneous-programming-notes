@@ -1,0 +1,20 @@
+## vim:ft=sh
+
+## JDK
+JAVA_HOME=/usr/local/jdk1.8.0_65
+JAVA_BIN=$JAVA_HOME/bin
+PATH=$PATH:$JAVA_BIN
+CLASSPATH=$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+export JAVA_HOME JAVA_BIN PATH CLASSPATH
+
+## tomcat
+CATALINA_HOME=/usr/local/apache-tomcat-8.0.28/  # the place tomcat installled
+CLASSPATH=$CLASSPATH:$CATALINA_HOME/lib/servlet-api.jar
+CLASSPATH=$CLASSPATH:.
+## the "."(current directory) should be added to CLASSPATH, so that you can
+## run "java balh(blah is a class file)" in command line
+export CATALINA_HOME CLASSPATH
+
+# you can use CATALINA_BASE to specify the root direcotry:
+CATALINA_BASE=/home/tt/servlet_test/ startup.sh # start tomcat
+

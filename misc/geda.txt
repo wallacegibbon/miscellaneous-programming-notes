@@ -1,0 +1,55 @@
+## vi: ft=conf :
+
+key           effect
+#========     ======================================================
+v,e           view extents: zoom so that the whole schematic in view
+w             choose an area of the view to zoom in to
+u             undo
+shift-r       redo
+
+i             insert component
+n             draw net
+
+m             move
+delete        delete
+e,r           rotate
+e,i           mirror
+e,c           copy
+
+a,a           add attribute
+e,e           edit attributes
+a,t           add text
+e,x           edit text
+
+o,g           show/hide grid
+t,u           auto-number text
+
+f,s           save file
+
+
+# way to use geda:
+
+# in your work directory, create some directories and files before running
+# geda. e.g. project named "led"
+$ ls -F
+symbols/  footprints/  gschemrc  gafrc  led.sch  led.prj
+
+
+# in "gafrc" and "gschemrc":
+(component-library "./symbols")
+
+# in led.prj
+elements-dir ./footprints
+schematics ./led.sch
+output-name led
+
+
+# now, here you go
+gschem led.sch
+grenum led.sch
+gsch2pcb led.prj
+pcb led.pcb # you need type "o"(optimise rats nest) to make rats nest visable
+# the pcb software can create gerber file
+gerbv led.*.gbr led.*.cnc
+
+

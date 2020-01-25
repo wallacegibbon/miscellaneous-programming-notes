@@ -1,0 +1,26 @@
+## vim: ft=sh :
+
+##############################################################################
+## The mongodb server
+
+## The default db path is '/data/db'
+mongod --dbpath /srv/mongodb
+
+## On Ubuntu, if you install mongodb with apt-get, you can also start it with
+## start script.
+service mongod start
+
+
+##############################################################################
+## The mongodb client
+
+## When start, mongo checks the $HOME/.mongorc.js. If found, mongo interprets
+## the content of .mongorc.js before displaying the prompt for the first time.
+
+## connect to server. (The default port is 28015)
+mongo --username <user> --password <pass> --host <host> --port <port>
+
+## for simplicity
+mongo -u <user> -p <pass> --host <host> --port <port>
+
+

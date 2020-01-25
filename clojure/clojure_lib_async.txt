@@ -1,0 +1,76 @@
+;; vim: ft=clojure :
+
+
+;;-----------------------------------------------------------------------------
+;; before using
+;;-----------------------------------------------------------------------------
+;; in cljs, go is supplied as a macro in a clj file, you need require-macros
+(require-macros '[cljs.core.async.macros :refer [go go-loop alt!]])
+(require '[cljs.core.async :refer [chan close! >! <!]])
+
+;; in clojure, it's simpler
+(require '[clojure.core.async :refer [go go-loop alt! chan close! >! <!]])
+
+;;-----------------------------------------------------------------------------
+;; the >!! and <!! are block version, only supported in clojure, as it need
+;; threads.
+;; the >! and <! are non-block version, supported both on clojure, and cljs
+;;-----------------------------------------------------------------------------
+
+;; The go block itself immediately returns a channel, on which it will
+;; eventually put the value of the last expression of the body (if non-nil),
+;; and then close.
+
+;; e.g.
+(defn cc
+  "a function that print it's argument, then return it's argument"
+  [x]
+  (go 
+   (println "cc: " x)
+   x))
+;> #'cljs.user/cc
+
+(defn foo
+  "a function that wait for the channel, then print some info"
+  [x]
+  (go
+   (when (and (= :ok (<! (cc x)))
+              (= :ok (<! (cc :ok))))
+     (print "after and"))))
+;> #'cljs.user/foo
+
+(foo :ok)
+;> #object[cljs.core.async.impl.channels.ManyToManyChannel]
+;  cc:  :ok
+;  cc:  :ok
+;  after and
+
+;; the "and" macro evaluated both argument, this is a bug for clojurescript's
+;; async.core
+(foo 1)
+;> #object[cljs.core.async.impl.channels.ManyToManyChannel]
+;  cc:  1
+;  cc:  :ok
+
+
+;; request-url is a function who take a url and a channel, request the url,
+;; and put the result to the channel (use >!), you can see the implementation
+;; in archive_cljs.git, client/cljs/client/remote-dir.cljs
+(let [c0 (chan) c1 (chan) c2 (chan)]
+  (request-url "http://www.google.com" c0)
+  (request-url "http://baidu.com" c1)
+  (request-url "http://127.0.0.1:8000" c2)
+  (go-loop []
+    (alt!
+     c0 ([x] (println "google result:" x))
+     c1 ([x] (println "baidu result:" x))
+     c2 ([x] (println "local result:" x)))
+    (recur)))
+;> local result: hello, /
+;  baidu result: <html>
+;  <meta http-equiv="refresh" content="0;url=http://www.baidu.com/">
+;  </html>
+;  
+;  google result: []
+
+

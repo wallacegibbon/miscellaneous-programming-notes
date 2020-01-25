@@ -1,0 +1,33 @@
+## vim: ft=conf :
+
+##---------------------------------------------------------------------------
+## filter destination ip
+ip.dst == 47.90.63.66
+
+## filter source ip
+ip.src == 192.168.18.103
+
+## filter port (both src and dst)
+tcp.port == 222
+
+## filter destination port only
+tcp.dstport == 80
+
+## filter source port only
+tcp.srcport == 222
+
+##---------------------------------------------------------------------------
+## filter protocol (just type the protocol)
+http
+
+## filter GET request
+http.request.method == GET
+
+## filter POST request
+http.request.method == POST
+
+##---------------------------------------------------------------------------
+## combine different filter
+ip.dst == 47.90.63.66 and http.request.method == GET
+
+

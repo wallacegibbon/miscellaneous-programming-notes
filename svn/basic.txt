@@ -1,0 +1,17 @@
+## vim: ft=sh :
+
+# `status`, `diff`, `log` in svn are similar to those same-name-command in git.
+svn status ./src
+svn diff ./src
+svn log ./src
+
+
+# `checkout` and `commit` for svn, is just like `pull` and `push` for git.
+svn checkout https://a.com/path/to/my/project
+svn commit https://a.com/path/to/my/project
+
+
+# Show configurations (just like `git config --list`)
+svn info
+
+

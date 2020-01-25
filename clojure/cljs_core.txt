@@ -1,0 +1,57 @@
+;; vim: ft=clojure :
+
+
+;;-----------------------------------------------------------------------------
+;; you can use "js/xxx" to access the global javascript objects
+;;-----------------------------------------------------------------------------
+js/console
+;> #object[Console [object Object]]
+
+;; like clojure, use "xxx." to create a new foreign object.
+(js/Array. 1 2 3 4 5 6)
+;> #js [1 2 3 4 5 6]
+(new js/Array 1 2 3 4 5 6)
+;> #js [1 2 3 4 5 6]
+
+
+
+;;-----------------------------------------------------------------------------
+;; convert js object to clojurescript object, use function: js->clj
+;;-----------------------------------------------------------------------------
+(js/Array. 1 2 3)
+;> #js [1 2 3]
+(js->clj (js/Array. 1 2 3))
+;> [1 2 3]
+
+
+
+;;-----------------------------------------------------------------------------
+;; access attributes and methods of javascript object
+;;-----------------------------------------------------------------------------
+;; use ".xxx" to access methods, (. obj method) and (. obj (method args))
+;; also works
+(.log js/console "hello")
+;> hello
+;  nil
+(. js/console log "hello")
+;> hello
+;  nil
+(. js/console (log "hello"))
+;> hello
+;  nil
+
+;; use ".-xxx" to access attributes, (. obj -attr) also works.
+(.-length (js/Array. 1 2 3))
+;> 3
+(. (js/Array. 1 2 3) -length)
+;> 3
+
+;; you can also use aget to access attributes, write attribute as string
+(aget (js/Array. 1 2 3) "length")
+;> 3
+
+;; object["prop1"]["prop2"]["prop3"] in js can be write like:
+(aget js/object "prop1" "prop2" "prop3")
+
+
+
