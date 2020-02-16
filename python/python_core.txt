@@ -595,7 +595,7 @@ str.maketrans("abc", "123")
 
 
 ##----------------------------------------------------------------------------
-## `S.format' in python3
+## `str.format' in python3
 
 ## named group
 "{ww}".format(3)
@@ -654,6 +654,14 @@ str.maketrans("abc", "123")
 ## wrong type will raise an exception
 "{:d}".format(3.14)
 #> ValueError: Unknown format code 'd' for object of type 'float'
+
+
+##----------------------------------------------------------------------------
+## f-string (since python3.6)
+## it's just like `format` method
+a = 10
+f"{a:*<8} -- {a:+^8} -- {a:_>8}"
+#> '10****** -- +++10+++ -- ______10'
 
 
 ##----------------------------------------------------------------------------
@@ -1037,7 +1045,7 @@ print(1)
 
 ##----------------------------------------------------------------------------
 ## an opened file is an iterator(with `__next__' defined)
-for i in open("tt"): print(i)     #====>   will print all lines in file "tt"
+for i in open("tt"): print(i)     #=> will print all lines in file "tt"
 
 
 ##----------------------------------------------------------------------------
@@ -1046,22 +1054,23 @@ for i in open("tt"): print(i)     #====>   will print all lines in file "tt"
 ## a function with yield inside is different from a normal function
 def h():
     print("print inside h executed")
-    yield "ret"
+    v = yield "ret"
+    print("value returned by yield:", v)
 
 a = h()
 a
 #> <generator object h at 0x.....>
-a.__next__()
+a.send(None) # None should be passed when `send` is called for the first time
 #> print inside h executed
 #  "ret"
-a.__next__()
-#> StopIteration    # this is an exception
+a.send(1)
+#> value returned by yield: 1
+#  Traceback (most recent call last):
+#  File "<stdin>", line 1, in <module>
+#  StopIteration
 
-a = h()
-tt = a.__next__()
-#> print inside h executed
-tt
-#> "ret"
+## `__next__()` can be used instead of `send()` if there is no argument to
+## pass
 
 ## so you can use it with a for loop:
 def g(n):
@@ -1073,7 +1082,20 @@ for i in g(5):
 #> 0 : 1 : 4 : 9 : 16 : 
 
 
-## generator can be created by "()"
+##----------------------------------------------------------------------------
+## yield from
+## For simple iterators, `yield from iterable` is essentially just a shortened
+## form of `for item in iterable: yield item`
+def g(x):
+    yield from range(x, 0, -1)
+    yield from range(x)
+
+list(g(5))
+#> [5, 4, 3, 2, 1, 0, 1, 2, 3, 4]
+
+
+##----------------------------------------------------------------------------
+## generator can also be created by "()"
 a = (i for i in range(10) if i > 5)
 a
 #> <generator object <genexpr> at 0xb70d9c84>
@@ -1081,6 +1103,10 @@ a.__next__()
 #> 6
 a.__next__()
 #> 7
+
+## `send` method also works
+a.send('blah')
+#> 8
 
 ## the "()" is not necessary if you are creating the generator inside
 ## existing parentheses, e.g.
