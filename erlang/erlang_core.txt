@@ -235,9 +235,10 @@ lists:sort([a, b, "abc", {1,2,3}, 5]).
 
 %%-----------------------------------------------------------------------------
 %% qlc
+%% `qlc:q` is not a real function, it is a parse_transform
 %%-----------------------------------------------------------------------------
-
-%% `qlc:q` is not a real function
+%% To use `qlc:q` the following compile option is needed in the source file:
+-compile({parse_transform,qlc})
 
 QH = qlc:q([{X,Y} || X <- [a,b], Y <- [1,2]]).
 %> {qlc_handle,{qlc_lc,#Fun<erl_eval.20.128620087>,
@@ -250,5 +251,24 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 %> ** exception error: bad argument
 %       in function  qlc:q/2
 %          called as qlc:q([{a,1},{a,2},{b,1},{b,2}],[])
+
+
+%%-----------------------------------------------------------------------------
+%% binary
+%% !!
+%% a binary field without size is only allowed at the end of a binary pattern
+%%
+%%-----------------------------------------------------------------------------
+<<1, 2, A:2/binary, B/binary>> = <<1, 2, 3, 4, 5, 6, 7, 8>>.
+%> <<1,2,3,4,5,6,7,8>>
+
+A.
+%> <<3,4>>
+
+B.
+%> <<5,6,7,8>>
+
+%% These 2 are similar: (both of them are friendly for recursion)
+<<A, B, C/binary>>, [A, B | C]
 
 
