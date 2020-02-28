@@ -12,45 +12,72 @@
 
 
 %%-----------------------------------------------------------------------------
-%% the "if" in erlang is special, it only support guard, so it only have
-%% limited power.
+%% the "if" in erlang only support guard, so it only have limited power.
 %%-----------------------------------------------------------------------------
-%% "case" can take the place of if:
-if                                    case dummy of
-  N > 0 -> positive;                    _ when N > 0 -> positive;
-end.                                  end.
-
-
-if length([]) -> 1; true -> 2 end.
-%> 2
-
 A = fun() -> true end.
 %> #Fun<erl_eval.20.54118792>
 
 if A() -> 1; true -> 2 end. % user defined function is not allow in "if"
 %> * 1: illegal guard expression
 
+%% "if" is not necessary in erlang, for example,
+if N > 0 -> positive end.
+%% is just like:
+case dummy of _ when N > 0 -> positive end.
+
+
+%%-----------------------------------------------------------------------------
+%% ";" is like "or" in guard, "," is like "and". "," has higher priority
+%%-----------------------------------------------------------------------------
+X = fun(A) when A > 3, A < 5; A > 8, A < 10 -> A end.
+%> #Fun<erl_eval.6.128620087>
+
+X(1).
+%> ** exception error: no function clause matching
+
+X(4).
+%> 4
+
+X(6).
+%> ** exception error: no function clause matching
+
+X(9).
+%> 9
+
+X(11).
+%> ** exception error: no function clause matching
+
 
 %%-----------------------------------------------------------------------------
 %% character
 %% Erlang has no character or string, it's integer and list.
 %%-----------------------------------------------------------------------------
-$c.           => 99
-$\r.          => 13
-$\n.          => 10
-[$a|"bcd"].   => "abcd"
-["a"|"bcd"].  => ["a", 98, 99, 100]
+$c.
+%> 99
+
+$\r.
+%> 13
+
+$\n.
+%> 10
+
+[$a|"bcd"].
+%> "abcd"
+
+["a"|"bcd"].
+%> ["a", 98, 99, 100]
 
 
 %%-----------------------------------------------------------------------------
 %% element & lists:nth, one for list, one for tuple
 %%    nth is not built-in, because usually, you should not use nth, it's slow
-%% for lists, hd and tl is normal operation.
+%%
 %% but for tuple, select element through index is fast and normal,
-%% so element is built-in.
+%% so `element(N, L)` is built-in.
 %%-----------------------------------------------------------------------------
 lists:nth(2, [a, b, c, d, e]).
 %> b
+
 element(2, {a, b, c, d, e}).
 %> b
 
@@ -58,11 +85,11 @@ element(2, {a, b, c, d, e}).
 %%-----------------------------------------------------------------------------
 %% there is no "reduce" in erlang, it's called "fold"
 %%-----------------------------------------------------------------------------
-lists:foldl(fun(X, V) -> io:format("~p,", [X]), V + X end, 1, [1,2,3]).
-%> 1,2,3,7
+lists:foldl(fun(X, V) -> [X | V] end, [], [1,2,3]).
+%> [3,2,1]
 
-lists:foldr(fun(X, V) -> io:format("~p,", [X]), V + X end, 1, [1,2,3]).
-%> 3,2,1,7
+lists:foldr(fun(X, V) -> [X | V] end, [], [1,2,3]).
+%> [1,2,3]
 
 
 %%-----------------------------------------------------------------------------
@@ -223,12 +250,6 @@ lists:sort([a, b, "abc", {1,2,3}, 5]).
 
 
 %%-----------------------------------------------------------------------------
-%% try...of... in erlang is like try...else... in python
-%% the "of" part is executed only when no exception was raised in try part.
-%%-----------------------------------------------------------------------------
-
-
-%%-----------------------------------------------------------------------------
 %% pre-defined macros: ?MODULE, ?FILE, ?LINE
 %%-----------------------------------------------------------------------------
 
@@ -249,8 +270,6 @@ qlc:e(QH).
 
 qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 %> ** exception error: bad argument
-%       in function  qlc:q/2
-%          called as qlc:q([{a,1},{a,2},{b,1},{b,2}],[])
 
 
 %%-----------------------------------------------------------------------------
