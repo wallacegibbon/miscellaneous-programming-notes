@@ -291,3 +291,21 @@ B.
 <<A, B, C/binary>>, [A, B | C]
 
 
+%%-----------------------------------------------------------------------------
+%% try...of...catch...after...end
+%%-----------------------------------------------------------------------------
+%% There can be multiple expressions in try, which is invalid in case:
+case 1,2,3,4,5 of 5 -> true end.
+%> * 1: syntax error before: ','
+
+try 1,2,3,4,5 of 5 -> true catch _ -> error end.
+%> true
+
+%% try can not be used without after or catch
+try 1 of 1 -> true end.
+%> * 1: syntax error before: 'end'
+
+try 1 of 1 -> true catch _ -> error end.
+%> true
+
+
