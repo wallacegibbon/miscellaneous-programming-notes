@@ -27,7 +27,11 @@ case dummy of _ when N > 0 -> positive end.
 
 
 %%-----------------------------------------------------------------------------
-%% ";" is like "or" in guard, "," is like "and". "," has higher priority
+%% Guard is constructed by "guard sequence" (seprated by ";"), "guard sequence"
+%% is constructed by "guard expressions" (seprated by ",").
+%%
+%% In other words, ";" is like "or" in guard, "," is like "and",
+%% and "," has higher priority
 %%-----------------------------------------------------------------------------
 X = fun(A) when A > 3, A < 5; A > 8, A < 10 -> A end.
 %> #Fun<erl_eval.6.128620087>
@@ -307,5 +311,27 @@ try 1 of 1 -> true end.
 
 try 1 of 1 -> true catch _ -> error end.
 %> true
+
+
+%%-----------------------------------------------------------------------------
+%% the AST of a function
+%%-----------------------------------------------------------------------------
+%% function contains clauses, a clause is like:
+%%  {clause, Line, [Args], [GuardSeqs], [Body]}
+
+F = "blah([A | B]) when A > 0, A < 5; A > 9, A < 11 -> B * 3.".
+
+erl_parse:parse_form(element(2, erl_scan:string(F))).
+%> {ok,{function,1,blah,1,
+%       [{clause,1,
+%         [{cons,1,{var,1,'A'},{var,1,'B'}}],
+%         [[{op,1,'>',{var,1,'A'},{integer,1,0}},
+%           {op,1,'<',{var,1,'A'},{integer,1,5}}],
+%          [{op,1,'>',{var,1,'A'},{integer,1,9}},
+%           {op,1,'<',{var,1,'A'},{integer,1,11}}]],
+%         [{op,1,'*',{var,1,'B'},{integer,1,3}}]}]}}
+
+erl_parse:parse_form(element(2, erl_scan:string("blah() -> 3."))).
+%> {ok,{function,1,blah,0,[{clause,1,[],[],[{integer,1,3}]}]}}
 
 
