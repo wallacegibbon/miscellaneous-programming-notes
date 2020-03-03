@@ -296,24 +296,6 @@ B.
 
 
 %%-----------------------------------------------------------------------------
-%% try...of...catch...after...end
-%%-----------------------------------------------------------------------------
-%% There can be multiple expressions in try, which is invalid in case:
-case 1,2,3,4,5 of 5 -> true end.
-%> * 1: syntax error before: ','
-
-try 1,2,3,4,5 of 5 -> true catch _ -> error end.
-%> true
-
-%% try can not be used without after or catch
-try 1 of 1 -> true end.
-%> * 1: syntax error before: 'end'
-
-try 1 of 1 -> true catch _ -> error end.
-%> true
-
-
-%%-----------------------------------------------------------------------------
 %% the AST of a function
 %%-----------------------------------------------------------------------------
 %% function contains clauses, a clause is like:
@@ -333,5 +315,48 @@ erl_parse:parse_form(element(2, erl_scan:string(F))).
 
 erl_parse:parse_form(element(2, erl_scan:string("blah() -> 3."))).
 %> {ok,{function,1,blah,0,[{clause,1,[],[],[{integer,1,3}]}]}}
+
+
+%%-----------------------------------------------------------------------------
+%% try...of...catch...after...end
+%%-----------------------------------------------------------------------------
+%% There can be multiple expressions in try, which is invalid in case:
+case 1,2,3,4,5 of 5 -> true end.
+%> * 1: syntax error before: ','
+
+try 1,2,3,4,5 of 5 -> true catch _ -> error end.
+%> true
+
+%% try can not be used without after or catch
+try 1 of 1 -> true end.
+%> * 1: syntax error before: 'end'
+
+try 1 of 1 -> true catch _ -> error end.
+%> true
+
+
+%% In try...of...catch...after...
+%% the "after" part will always be executed, even if the catch part raises an
+%% exception.
+try 1/0
+catch error:_ -> nothing
+after io:format("<<<after printing>>>~n")
+end.
+%> <<<after printing>>>
+%  nothing
+
+try 1/0
+catch error:_ -> 1/0
+after io:format("<<<after printing>>>~n")
+end.
+%> <<<after printing>>>
+%  ** exception error: an error occurred when evaluating an arithmetic expression
+
+%% In core erlang,
+%% a "try" with "after" is compiled a "try" with "catch".
+%% e.g. try A() after B() end  -->  try A(), B() catch B() end
+%%
+%% And a "try" with both "catch" and "after"
+%% is compiled into 2 "try" (nested).
 
 
