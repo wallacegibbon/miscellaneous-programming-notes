@@ -336,8 +336,8 @@ try 1 of 1 -> true catch _ -> error end.
 
 
 %% In try...of...catch...after...
-%% the "after" part will always be executed, even if the catch part raises an
-%% exception.
+%% the "after" part will always be executed, even if the "of" part
+%% or "catch" part raises an exception.
 try 1/0
 catch error:_ -> nothing
 after io:format("<<<after printing>>>~n")
@@ -352,11 +352,29 @@ end.
 %> <<<after printing>>>
 %  ** exception error: an error occurred when evaluating an arithmetic expression
 
+
 %% In core erlang,
 %% a "try" with "after" is compiled a "try" with "catch".
 %% e.g. try A() after B() end  -->  try A(), B() catch B() end
 %%
 %% And a "try" with both "catch" and "after"
 %% is compiled into 2 "try" (nested).
+
+
+%% In other languages who don't have the "of" part, the exception could be
+%% thrown by any expression in the "try" part.
+%% Erlang solved some of this problem by introducing the "of" part.
+%%
+%% When "catch" part is evaluated, you are sure that:
+%% 1. the exception is not thrown by the "of" part.
+%% 2. the "of" part is not evaluated.
+%%
+%% Because exceptions in "of" part will not be caught by "catch" part.
+%%
+try 1/0 of _ -> 1 catch error:Any -> Any end.
+%> badarith
+
+try 1 of _ -> 1/0 catch error:Any -> Any end.
+%> ** exception error: an error occurred when evaluating an arithmetic expression
 
 
