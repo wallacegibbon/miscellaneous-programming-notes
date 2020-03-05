@@ -378,3 +378,13 @@ try 1 of _ -> 1/0 catch error:Any -> Any end.
 %> ** exception error: an error occurred when evaluating an arithmetic expression
 
 
+%%-----------------------------------------------------------------------------
+%% Since R17, "fun" can have name. (good for defining recursive function)
+%%-----------------------------------------------------------------------------
+F = fun X(0) -> 1; X(N) -> N * X(N - 1) end.
+%> #Fun<erl_eval.30.128620087>
+
+F(10).
+%> 3628800
+
+
