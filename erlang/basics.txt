@@ -1,6 +1,4 @@
 %% vim: ft=erlang :
-
-
 %%-----------------------------------------------------------------------------
 %% these 4 operators are "right to left" (++, --, !, =)
 %%-----------------------------------------------------------------------------
@@ -405,5 +403,22 @@ erlang:process_info(self(), message_queue_data).
 
 erlang:process_info(self(), total_heap_size).
 %> {total_heap_size,13544}
+
+
+%%-----------------------------------------------------------------------------
+%% ETS(Erlang Term Storage), DETS(Disk ETS)
+%%-----------------------------------------------------------------------------
+% create:
+ets:new(...)
+dets:open_file(...)
+
+% insert
+ets:insert(TableId, X)  % X is a tuple or a list of tuple
+
+% lookup
+ets:lookup(TableId, Key)  % return a list of tuple
+
+% delete
+ets:delete(TableId)
 
 

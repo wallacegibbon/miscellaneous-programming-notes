@@ -1,5 +1,4 @@
 %% vim: ft=erlang :
-
 %%-----------------------------------------------------------------------------
 %% "-boot" specify the boot script
 %% start without loading ~/.erlang
