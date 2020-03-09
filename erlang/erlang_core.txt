@@ -388,3 +388,22 @@ F(10).
 %> 3628800
 
 
+%%-----------------------------------------------------------------------------
+%% process operations
+%%-----------------------------------------------------------------------------
+%% list all processes
+erlang:processes().
+%> [<0.0.0>,<0.1.0>,<0.2.0>,<0.3.0>,...]
+
+%% get information of a certain process
+erlang:process_info(self()).
+%> [{current_function,{erl_eval,do_apply,6}},...]
+
+%% get a certain infomration of a process
+erlang:process_info(self(), message_queue_data).
+%> {message_queue_data,on_heap}
+
+erlang:process_info(self(), total_heap_size).
+%> {total_heap_size,13544}
+
+
