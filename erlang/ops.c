@@ -20,7 +20,7 @@ void **ops = NULL;
 void
 blah(void *op)
 {
-    // "tmp" does NOT have to be static, but being static saves space.
+    // "tmp" does NOT have to be static, but being static is more efficient.
     static void *tmp[] = {&&op1, &&op2};
     if (op)
 	goto* op;
