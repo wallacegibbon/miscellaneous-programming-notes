@@ -101,115 +101,52 @@ lists:foldr(fun(X, V) -> [X | V] end, [], [1,2,3]).
 %%      use ":=" when possible
 %%-----------------------------------------------------------------------------
 %% create:
-Me = #{ name => "wittyfox", age => 19 }.
+Me = #{name => "wittyfox", age => 19}.
 %> #{age => 19,name => "wittyfox"}
 
 %% update:
-New_Me = Me#{ age => 20 }.
+Me#{age => 20}.
 %> #{age => 20,name => "wittyfox"}
 
 %% if you write a wrong key:
-Me#{ aeg => 20 }.
+Me#{aeg => 20}.
 %> #{aeg => 20,age => 19,name => "wittyfox"}
 
 %% if you do NOT want to add element by accident, use ":=" instead of "=>"
-Me#{ aeg := 20 }.
+Me#{aeg := 20}.
 %> ** exception error: {badkey,aeg}
 %    in function  maps:update/3
 %       called as maps:update(aeg,20,#{age => 19,name => "wittyfox"})
 
-%% pattern match: use ":=" only
-#{ age := Age } = Me.
+%% pattern match: have to use ":="
+#{age := Age} = Me.
 %> #{age => 19,name => "wittyfox"}
 Age.
 %> 19
 
 
 %%-----------------------------------------------------------------------------
-%% FUNCTIONS of map
-%%-----------------------------------------------------------------------------
-%% create:
-maps:new() % no argument
-%> #{}
+%% get and update
+%% the default value for get is after map, while the default value
+%% for update_with is before the map
+maps:get(a, #{a => 1, b => 2}).
+%> 1
 
-%% get all keys:
-maps:keys(Me)
-%> [age,name]
+maps:get(c, #{a => 1, b => 2}, 3).
+%> 3
 
-%% get all values:
-maps:values(Me)
-%> [19,"wittyfox"]
+maps:update(a, 3, #{a => 1, b => 2}).
+%> #{a => 3,b => 2}
 
-%% check key existence
-maps:is_key(age, Me).
-%> true
-
-maps:is_key(aeg, Me).
-%> false
-
-%% size, maps:size uses erlang:map_size
-maps:size(Me).
-%> 2
-
-map_size(Me).
-%> 2
-
-%% get value from key
-maps:get(age, Me).
-%> 19
-maps:get(aeg, Me).
-%> ** exception error: {badkey,aeg}
-
-%% get value from key with default value when key does not exist
-maps:get(aeg, Me, 20).
-%> 20
-
-%% find can do this, too
-maps:find(age, Me).
-%> {ok, 19}
-
-maps:find(aeg, Me).
-%> error
-
-
-%% update map like "=>"
-maps:put(gender, male, Me).
-%> #{age => 19,gender => male,name => "wittyfox"}
-
-
-%% update map like ":="
-maps:update(gender, male, Me).
-%> ** exception error: {badkey,gender}
-
-maps:update(age, 20, Me).
-%> #{age => 20,name => "wittyfox"}
-
-
-%% remove a set, will NOT raise exception even if the key does not exist
-maps:remove(age, Me).
-%> #{name => "wittyfox"}
-
-
-%% merge two map
-maps:merge(Me, #{ age => 10 }).
-%> #{age => 10,name => "wittyfox"}
-
-%% it's just like:
-Me#{ age => 10 }.
-
-%% transfrom between map and list
-maps:to_list(Me).
-%> [{age,19},{name,"wittyfox"}]
-
-maps:from_list([{name, "wittyfox"}, {age, 19}]).
-%> #{age => 19,name => "wittyfox"}
+maps:update_with(c, fun(V) -> V + 1 end, 3, #{a => 1, b => 2}).
+%> #{a => 1,b => 2,c => 3}
 
 
 %%-----------------------------------------------------------------------------
 %% "map", "fold", "with", "without"
 %% use "maps:to_list/1" transform to list and handle things as list, then
 %% use "maps:from_list/1" transform back to map.
-%%-----------------------------------------------------------------------------
+
 maps:map(fun (X, Y) -> io:format("~p => ~p~n", [X, Y]) end, Me).
 %> age => 19
 %  name => "wittyfox"
