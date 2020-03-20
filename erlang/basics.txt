@@ -359,3 +359,13 @@ ets:lookup(TableId, Key)  % return a list of tuple
 ets:delete(TableId)
 
 
+%%-----------------------------------------------------------------------------
+%% the filename of an module
+%%-----------------------------------------------------------------------------
+code:which(filename).
+%> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin/filename.beam"
+
+filename:dirname(code:which(filename)).
+%> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin"
+
+
