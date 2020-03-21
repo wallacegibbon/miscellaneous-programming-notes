@@ -341,6 +341,10 @@ erlang:process_info(self(), message_queue_data).
 erlang:process_info(self(), total_heap_size).
 %> {total_heap_size,13544}
 
+%% list all registered processes
+erlang:registered().
+%> [rex,erts_code_purger,kernel_refc,kernel_sup,init,...]
+
 
 %%-----------------------------------------------------------------------------
 %% ETS(Erlang Term Storage), DETS(Disk ETS)
@@ -367,5 +371,11 @@ code:which(filename).
 
 filename:dirname(code:which(filename)).
 %> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin"
+
+%% list all loaded modules
+code:all_loaded().
+%> [{io,"/usr/lib/erlang/lib/stdlib-3.7.1/ebin/io.beam"},
+%   {application,"/usr/lib/erlang/lib/kernel-6.2/ebin/application.beam"},
+%   ...]
 
 
