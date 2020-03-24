@@ -1,0 +1,41 @@
+this is just a prototype for a easier C language with better syntax.
+
+Here are some comparision to C language
+
+Operators
+
+&p						p@
+*p						p^
+***p						p^^^
+p[3]						(p+3)^
+p.m						p.m
+p->m						p^.m
+&p[3]						p+3
+uint8_t *p					p<u8^>
+void *p						p<void^>
+(uint8_t *)p					p!<u8^>
+(void *)p					p!<void^>
+((blah*)p[3])->m				(p+3)^!<blah^>^.m
+sizeof (blah *)					?<blah^>
+malloc(sizeof(struct A))			malloc(?<A>)
+
+
+
+Struct definition:
+
+typedef struct A {
+    int a; char *b; uint64_t counter;
+} A;
+
+A test = {1, "hello", 0};
+struct A test = {1, "hello", 0};
+
+
+
+struct A
+    a<int>, b<char^>, counter<u64>
+end
+
+test<A> = A{1, "hello", 0}
+
+
