@@ -1,0 +1,25 @@
+-- vim: ft=elm :
+
+
+-- operator precedences and associatives
+
+-- left            right
+9  >>              <<
+
+8                  ^
+
+7  * / // %
+
+6  + -
+
+5                  ++ ::
+
+4  ==  /=  >  <  <=  >=      -- no associative in this line
+
+3                  &&
+
+2                  ||
+
+0  |>              <|
+
+

@@ -1,0 +1,70 @@
+-- vim: ft=elm :
+
+------------------------------------------------------------------------------
+-- This package is usually used alongside elm/http to talk to servers or
+-- ports to talk to Javascript
+------------------------------------------------------------------------------
+
+
+import Json.Decode exposing(..)
+
+------------------------------------------------------------------------------
+-- primitive decoders
+------------------------------------------------------------------------------
+Json.Decode.decodeString Json.Decode.string "\"hello\""
+--> Ok "hello" : Result Json.Decode.Error String
+
+decodeString string "\"hello\""
+--> Ok "hello" : Result Error String
+
+decodeString string "true"
+--> Err (...) : Result Error String
+
+
+decodeString
+--> <function> : Decoder a -> String -> Result Error a
+
+string
+--> <internals> : Decoder String
+
+int
+--> <internals> : Decoder Int
+
+float
+--> <internals> : Decoder Float
+
+bool
+--> <internals> : Decoder Bool
+
+
+------------------------------------------------------------------------------
+-- data structure decoders
+------------------------------------------------------------------------------
+decodeString (nullable int) "13"
+--> Ok (Just 13) : Result Error (Maybe Int)
+
+decodeString (nullable int) "null"
+--> Ok Nothing : Result Error (Maybe Int)
+
+decodeString (nullable int) "true"
+--> Err (...) : Result Error (Maybe Int)
+
+nullable int
+--> <internals> : Decoder (Maybe Int)
+
+list int
+--> <internals> : Decoder (List Int)
+
+
+field "x" int
+--> <internals> : Decoder Int
+
+at ["a", "b"] int
+--> <internals> : Decoder Int
+
+decodeString (field "x" int) """ {"x": 3} """
+--> Ok 3 : Result Error Int
+
+decodeString (at ["x", "y"] int) """ {"x": {"y": 1}} """
+--> Ok 1 : Result Error Int
+
