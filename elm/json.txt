@@ -11,10 +11,10 @@ import Json.Decode exposing(..)
 ------------------------------------------------------------------------------
 -- primitive decoders
 ------------------------------------------------------------------------------
-Json.Decode.decodeString Json.Decode.string "\"hello\""
+Json.Decode.decodeString Json.Decode.string """ "hello" """
 --> Ok "hello" : Result Json.Decode.Error String
 
-decodeString string "\"hello\""
+decodeString string """ "hello" """
 --> Ok "hello" : Result Error String
 
 decodeString string "true"
@@ -55,16 +55,31 @@ nullable int
 list int
 --> <internals> : Decoder (List Int)
 
-
+-- field : String -> Decoder a -> Decoder a
 field "x" int
 --> <internals> : Decoder Int
 
+-- at : List String -> Decoder a -> Decoder a
 at ["a", "b"] int
 --> <internals> : Decoder Int
+
+-- index : Int -> Decoder a -> Decoder a
+index 0 string
+--> <internals> : Decoder String
 
 decodeString (field "x" int) """ {"x": 3} """
 --> Ok 3 : Result Error Int
 
 decodeString (at ["x", "y"] int) """ {"x": {"y": 1}} """
 --> Ok 1 : Result Error Int
+
+decodeString (field "x" (field "y" int)) """ {"x": {"y": 1}} """
+--> Ok 1 : Result Error Int
+
+decodeString (index 0 string) """ ["wallace", "daisy"] """
+--> Ok "wallace" : Result Error String
+
+decodeString (at ["x", "y"] (index 0 string)) """ {"x": {"y": ["a", "b"]}} """
+--> Ok "a" : Result Error String
+
 
