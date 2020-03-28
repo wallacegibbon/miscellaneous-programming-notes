@@ -55,6 +55,19 @@ nullable int
 list int
 --> <internals> : Decoder (List Int)
 
+array int
+--> <internals> : Decoder (Array.Array Int)
+
+dict int
+--> <internals> : Decoder (Dict.Dict String Int)
+
+keyValuePairs int
+--> <internals> : Decoder (List ( String, Int ))
+
+
+------------------------------------------------------------------------------
+-- object related
+
 -- field : String -> Decoder a -> Decoder a
 field "x" int
 --> <internals> : Decoder Int
@@ -81,5 +94,33 @@ decodeString (index 0 string) """ ["wallace", "daisy"] """
 
 decodeString (at ["x", "y"] (index 0 string)) """ {"x": {"y": ["a", "b"]}} """
 --> Ok "a" : Result Error String
+
+------------------------------------------------------------------------------
+-- map
+map : (a -> value) -> Decoder a -> Decoder value
+map2 : (a -> b -> value) -> Decoder a -> Decoder b -> Decoder value
+
+-- examples:
+-- map
+stringLength : Decoder Int
+stringLength =
+  map String.length string
+
+decodeString stringLength """ "hello" """
+--> Ok 5 : Result Error Int
+
+
+-- map3
+type alias Person = { name : String, age : Int, height : Float }
+
+person : Decoder Person
+person =
+  map3 Person
+    (at ["name"] string)
+    (at ["info","age"] int)
+    (at ["info","height"] float)
+
+decodeString person """ {"name": "tom", "info": {"age": 42, "height": 1.8}} """
+--> Ok { age = 42, height = 1.8, name = "tom" } : Result Error Person
 
 
