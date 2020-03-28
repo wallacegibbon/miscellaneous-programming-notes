@@ -111,7 +111,7 @@ decodeString stringLength """ "hello" """
 
 
 -- map3
-type alias Person = { name : String, age : Int, height : Float }
+type alias Person = {name : String, age : Int, height : Float}
 
 person : Decoder Person
 person =
