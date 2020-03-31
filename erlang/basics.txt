@@ -385,6 +385,15 @@ code:all_loaded().
 %   {application,"/usr/lib/erlang/lib/kernel-6.2/ebin/application.beam"},
 %   ...]
 
+%% get the path to the priv directory in an application.
+%%   (rebar will copy it from source to the build destination)
+code:priv_dir(blah).
+%> "/home/prj/blah/_build/default/lib/blah/priv"
+
+%% it is same as
+code:lib_dir(blah, priv).
+%> "/home/prj/blah/_build/default/lib/blah/priv"
+
 
 %%-----------------------------------------------------------------------------
 %% format
