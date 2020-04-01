@@ -41,6 +41,12 @@ erts_debug:df(modname).
 %$ rebar3 path (usage example: erl -pa `rebar3 path`)
 %$ rebar3 clean
 
+%% make release
+%$ rebar3 as prod release
+
+%% make release tarball
+%$ rebar3 as prod tar
+
 
 %%-----------------------------------------------------------------------------
 %% erlang.mk
