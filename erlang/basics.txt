@@ -10,6 +10,25 @@
 
 
 %%-----------------------------------------------------------------------------
+%% Atom, Variable, funtion call
+%%-----------------------------------------------------------------------------
+test() -> io:format("works~n").
+
+%% in Other function, make the following binding:
+A = test,
+
+%% then you can call test with:
+?MODULE:A().
+%  works
+%> ok
+
+%% you can't call test with A only:
+%%  (and it will raise a compilation warning: invalid function call)
+A().
+%  ** exception error: bad function test
+
+
+%%-----------------------------------------------------------------------------
 %% the "if" in erlang only support guard, so it only have limited power.
 %%-----------------------------------------------------------------------------
 A = fun() -> true end.
