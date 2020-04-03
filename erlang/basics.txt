@@ -413,6 +413,45 @@ code:priv_dir(blah).
 code:lib_dir(blah, priv).
 %> "/home/prj/blah/_build/default/lib/blah/priv"
 
+%% !!!
+%% module name conflict can be detected by "code:clash()".
+%% for example, I got a "lists.beam" in the current directory
+code:clash().
+%  ** ./lists.beam hides /usr/local/lib/erlang/lib/stdlib-3.11.2/ebin/lists.beam
+%  ** Found 1 name clashes in code paths
+%> ok
+
+%% erlang has a way to avoid the clash problem (sticky directory)
+l(lists).
+%  =ERROR REPORT==== 4-Apr-2020::01:22:56.321235 ===
+%  Can't load module 'lists' that resides in sticky dir
+%
+%> {error,sticky_directory}
+
+
+%% !!!
+%% there is a dangerous way to do dangerous things
+
+code:which(maps).
+%> "/usr/local/lib/erlang/lib/stdlib-3.11.2/ebin/maps.beam"
+
+code:unstick_dir("/usr/local/lib/erlang/lib/stdlib-3.11.2/ebin").
+%> ok
+
+c(maps).
+%> {ok,maps}
+
+maps:from_list([{a, 1}, {b, 2}]).
+%  ** exception error: undefined function maps:iterator/1
+%  ...
+
+
+%% !!!
+%% files like "lists.beam", "maps.beam" in the current directory can make
+%% erl crash at startup.
+%% the sticky mechanism can only protect erts while it is running.
+
+
 
 %%-----------------------------------------------------------------------------
 %% format
