@@ -413,6 +413,15 @@ code:priv_dir(blah).
 code:lib_dir(blah, priv).
 %> "/home/prj/blah/_build/default/lib/blah/priv"
 
+code:lib_dir(mnesia).
+%> "/usr/local/lib/erlang/lib/mnesia-4.16.2"
+
+code:lib_dir().
+%> "/usr/local/lib/erlang/lib"
+
+code:root_dir().
+%> "/usr/local/lib/erlang"
+
 %% !!!
 %% module name conflict can be detected by "code:clash()".
 %% for example, I got a "lists.beam" in the current directory
