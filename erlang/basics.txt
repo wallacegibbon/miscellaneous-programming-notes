@@ -484,3 +484,13 @@ io:format("~6.. w~n", [{1,2,3}]).
 %> ok
 
 
+%%-----------------------------------------------------------------------------
+%% fields in record can have default values by using the "_"
+%%-----------------------------------------------------------------------------
+-record(blah, {a, b, c}).
+
+io:format("~p~n", [#blah{a=1, _=default}]).
+%  {blah,1,default,default}
+%> ok
+
+
