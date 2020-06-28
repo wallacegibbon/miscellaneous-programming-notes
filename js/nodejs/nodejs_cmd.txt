@@ -48,3 +48,7 @@ node -e 'console.log(os.release());'
 node -e 'console.log(os.arch());'
 #> x64
 
+## if you want to print the result, `-p` is more convenient
+node -p 'os.arch()'
+#> x64
+

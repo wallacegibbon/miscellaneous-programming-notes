@@ -1,31 +1,47 @@
 // vim: ft=javascript :
 
 //////////////////////////////////////////////////////////////////////////////
-// You can NOT access `arguments` with the ES6 `=>`
-(function() { return arguments; })();
-//> {}
+// ArrayBuffer is just like the result of malloc in C. It can be manipulated
+// by "views" (like pointer type converting in C).
+// e.g.
+// TypedArray(Uint8Array, Float64Array...) are like (uint8_t *) and (double *)
+//
+new Uint32Array([2**16])
+//> Uint32Array [ 65536 ]
 
-(() => arguments)();
-//> ReferenceError: arguments is not defined
+// use 'buffer' attribute to get the raw buffer from a view
+new Uint32Array([2**16]).buffer
+//> ArrayBuffer { byteLength: 4 }
+
+// you can do
+new Uint8Array(new Uint32Array([2**16]).buffer)
+//> Uint8Array(4) [ 0, 0, 1, 0 ]
+
+new Uint8Array(new Uint32Array([2**16 - 1]).buffer)
+//> Uint8Array(4) [ 255, 255, 0, 0 ]
+
+new Uint8Array(new Float64Array([Math.PI]).buffer)
+//> Uint8Array(8) [ 24, 45, 68, 84, 251, 33, 9, 64 ]
 
 
 //////////////////////////////////////////////////////////////////////////////
-// `() => xx` is different from `() => { xx }`
-(() => 1)();
-//> 1
-(() => {1})();
-//> undefined
+// You can NOT access `arguments` with the ES6 `=>`
+(function() { return arguments; })()
+//> {}
+
+(() => arguments)()
+//> ReferenceError: arguments is not defined
 
 
 //////////////////////////////////////////////////////////////////////////////
 // To access the prototype chain of an object, just use `__proto__`, all
 // objects have this attribute
-var x = {};
-for (i in x) { console.log(i, ":", x[i]); }
+let x = {}
+for (let i in x) console.log(i, ":", x[i])
 //> undefined
 
-x.__proto__ = {ah: true, blah: true};
-for (i in x) { console.log(i, ":", x[i]); }
+x.__proto__ = { ah: true, blah: true }
+for (let i in x) console.log(i, ":", x[i])
 //  ah : true
 //  blah : true
 //> undefined
@@ -68,23 +84,19 @@ String.prototype.constructor === String
 //> false
 
 // To check whether a Array contains a certain element, use `indexOf`
-["a", "b"].indexOf("a");
+["a", "b"].indexOf("a")
 //> 0
-["a", "b"].indexOf("b");
+["a", "b"].indexOf("b")
 //> 1
-["a", "b"].indexOf("c");
+["a", "b"].indexOf("c")
 //> -1
 
 
 //////////////////////////////////////////////////////////////////////////////
-// a good way to check array
+// a good way to check array (outdated, you can use `Array.isArray` now
 function isArray(obj) {
-  return Object.prototype.toString.call(obj) === "[object Array]";
+  return Object.prototype.toString.call(obj) === "[object Array]"
 }
-
-// But usually, you can just use `Array.isArray` now, browsers and nodejs
-// support is already.
-
 
 // The reason why you need compare array in such a wierd way:
 //  "array created by different "iframe" don't share the same prototype !"
@@ -114,58 +126,58 @@ function isArray(obj) {
 // In the following example, the inner function is called in 
 // *function invocation pattern*,
 // in this case, `this` is bound to global object.
-var o = {i: 3};
+let o = { i: 3 }
 
 o.f1 = function() {
-  return (function() { return this.i; })();
-};
+  return (function() { return this.i })()
+}
 
 o.i
 //> 3
-o.f1();
+o.f1()
 //> undefined
 
-i = 9;
-o.f1();
+i = 9
+o.f1()
 //> 9
 
 
 // `new`: the *constructor invocation pattern*
 function Person() {}
-var p = new Person();
+let p = new Person()
 
 // This is what `new` does in the background:
-var p = {};
-p.__proto__ = Person.prototype;
-Person.call(p);
+let p = {}
+p.__proto__ = Person.prototype
+Person.call(p)
 
 
 //////////////////////////////////////////////////////////////////////////////
 // `apply` and `call`
 // They are just like the same name function in lisp
-func.apply(obj, [var1, var2, var3]);
-func.call(obj, var1, var2, var3);
+func.apply(obj, [var1, var2, var3])
+func.call(obj, var1, var2, var3)
 
 // An example to show how it works:
-function add() { return this.a + this.b; }
-add();
+function add() { return this.a + this.b }
+add()
 //> NaN
 
-var a = 1, b = 2;
-add();
+let a = 1, b = 2
+add()
 //> 3
 
-add.apply({a: 5, b: 3});
+add.apply({ a: 5, b: 3 })
 //> 8
 
 // this function have no argument, so "call" works the same as "apply":
-add.call({a: 5, b: 3});
+add.call({ a: 5, b: 3 })
 //> 8
 
 // An even simpler example:
-"what".toUpperCase();
+"what".toUpperCase()
 //> 'WHAT'
-"what".toUpperCase.call("blah");
+"what".toUpperCase.call("blah")
 //> 'BLAH'
 
 
@@ -175,45 +187,45 @@ add.call({a: 5, b: 3});
 // e.g.
 function a() { return this.m }
 //> [Function: a]
-a.bind({m: 2})();
+a.bind({ m: 2 })()
 //> 2
-a.bind({m: 4})();
+a.bind({ m: 4 })()
 //> 4
 
 
 //////////////////////////////////////////////////////////////////////////////
 // ! when using ES6's `=>`, `call`, `apply`, `bind` will not work
-var a = () => this.x;
-a();
+let a = () => this.x
+a()
 //> undefined
-a.call({x: 8});
+a.call({ x: 8 })
 //> undefined
-a.bind({x: 5})();
+a.bind({ x: 5 })()
 //> undefined
 
 
 //////////////////////////////////////////////////////////////////////////////
 // Something about multiple `.`
-var a = {name: "a", b: {name: "b"}};
-a.b.f = function() { return this.name; };
+let a = { name: "a", b: { name: "b" } }
+a.b.f = function() { return this.name }
 
-a.b.f();
+a.b.f()
 //> 'b'
 // So the `this` in this case is `a.b`, not `a` !
 
 
 //////////////////////////////////////////////////////////////////////////////
-// `Array.sort`
-var test = [{a: [4, 2, 3], b: 3}, {a: [2, 1, 3]}, {a: [8, 0]}];
-test.sort((e1, e2) =>  e1["a"][1] > e2["a"][1]);
+// `Array.sort` (the comparing function should return -1, 0, 1, not a boolean)
+let test = [{ a: [4, 2, 3], b: 3 }, { a: [2, 1, 3] }, { a: [8, 0] }]
+test.sort((e1, e2) =>  e1["a"][1] - e2["a"][1])
 //> [ { a: [ 8, 0 ] }, { a: [ 2, 1, 3 ] }, { a: [ 4, 2, 3 ], b: 3 } ]
 
 
 //////////////////////////////////////////////////////////////////////////////
 // `Array.map` can take two arguments
-["Judy", "Nick", "Flash"].map((n) => n);
+["Judy", "Nick", "Flash"].map((n) => n)
 //> [ 'Judy', 'Nick', 'Flash' ]
-["Judy", "Nick", "Flash"].map((n, i) => i + ":" + n);
+["Judy", "Nick", "Flash"].map((n, i) => i + ":" + n)
 //> [ '0:Judy', '1:Nick', '2:Flash' ]
 
 
@@ -227,22 +239,22 @@ test.sort((e1, e2) =>  e1["a"][1] > e2["a"][1]);
 // setTimeout and requestAnimationFrame will only call the function once.
 
 // Usage:
-setInterval(() => console.log("hi"), 2000);
-setTimeout(() => console.log("hi"), 2000);
-requestAnimationFrame(() => console.log("hi"));
+setInterval(() => console.log("hi"), 2000)
+setTimeout(() => console.log("hi"), 2000)
+requestAnimationFrame(() => console.log("hi"))
 
 // setTimeout can take arguments (so does setInterval)
-setTimeout((x, y) => console.log("args:", x, y), 1000, "a", "b");
+setTimeout((x, y) => console.log("args:", x, y), 1000, "a", "b")
 //> args: a b
 
 // setTimeout can make you function asynchronous.
 //  (if you don't give time argument to setTimeout, it will default to be 4ms)
 
 // content in "a.js"
-function myfunc(n) { console.log("myfunction:", n); }
-setTimeout(myfunc, void 0, 1);
+function myfunc(n) { console.log("myfunction:", n) }
+setTimeout(myfunc, void 0, 1)
 myfunc(2)
-console.log(3);
+console.log(3)
 
 // Then you run: `node a.js`:
 // myfunction: 2
@@ -252,41 +264,18 @@ console.log(3);
 
 //////////////////////////////////////////////////////////////////////////////
 // Convert between *char* and *integer*
-String.fromCharCode(75);
+String.fromCharCode(75)
 //> "K"
-"K".charCodeAt(0);
+"K".charCodeAt(0)
 //> 75
 
 // String.fromCharCode can take multiple arguments
-String.fromCharCode(97, 98, 99, 100, 101);
+String.fromCharCode(97, 98, 99, 100, 101)
 //> 'abcde'
 
 // `somestring[0]` is same as `somestring.charAt(0)`
-"K".charAt(0);
+"K".charAt(0)
 //> 'K'
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Both `Array.concat` and `Array.slice` do *shallow copy*
-var a = [1, [2, 3], 4];
-var b = a.concat([1]);
-b;
-//> [ 1, [ 2, 3 ], 4, 1 ]
-
-a[1][0] = 9;
-//> 9
-a;
-//> [ 1, [ 9, 3 ], 4 ]
-b;
-//> [ 1, [ 9, 3 ], 4, 1 ]
-
-c = a.slice(0, 2);
-c;
-//> [ 1, [ 9, 3 ] ]
-
-c[1][0] = 8;
-a;
-//> [ 1, [ 8, 3 ], 4 ]
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -296,67 +285,48 @@ a;
 
 // For ascii characters, `escape` works just like `encodeURI`.
 //  (not same, but similar).
-escape("hello world!");
+escape("hello world!")
 //> 'hello%20world%21'
-encodeURI("hello world!");
+encodeURI("hello world!")
 //> 'hello%20world!'
 
 // But for non-ascii, they are different:
 //  `escape` use UTF-16 while `encodeURI` use UTF-8.
-escape("中文");
+escape("中文")
 //> "%u4E2D%u6587"
 unescape("%u4E2D%u6587")
 //> "中文"
 
-encodeURI("中文");
+encodeURI("中文")
 //> "%E4%B8%AD%E6%96%87"
 decodeURI("%E4%B8%AD%E6%96%87")
 //> "中文"
 
 // `encodeURIComponent` is almost like `encodeURI`.
-encodeURI("中文/what?");
+encodeURI("中文/what?")
 //> "%E4%B8%AD%E6%96%87/what?"
-encodeURIComponent("中文/what?");
+encodeURIComponent("中文/what?")
 //> "%E4%B8%AD%E6%96%87%2Fwhat%3F"
 
 
 //////////////////////////////////////////////////////////////////////////////
-// ES6 !
 // ES2015 === ES6, ES2016 === ES7
 
 
 //////////////////////////////////////////////////////////////////////////////
-// Compile ES6 or JSX in command line:
-npm install --save-dev babel-preset-es2015
-npm install --save-dev babel-preset-react
-npm install --global babel-cli
-
-// Before compile, you need the `.babelrc` file in *CURRENT* path. Content
-// of that file:
-{ "presets": ["react", "es2015"] }
-
-// The "es2015" is not necessary if you write normal javascript.
-
-// Compile a whole directory
-// `-d` can also be `--out-dir`, `-s` means generate source map
-babel src -d lib -s
-
-
-//////////////////////////////////////////////////////////////////////////////
 // Time related operation (same on nodejs and browser)
-// IT IS UTC by default
-new Date().toString();
+new Date().toString()
 //> "Wed Sep 14 2016 00:14:20 GMT+0800 (CST)"
 
-new Date().toISOString();
+new Date().toISOString()
 //> "2016-09-13T16:14:16.415Z"
 
 // To get current time micro-seconds
-new Date().getTime();
+new Date().getTime()
 //> 1475479101650
 
 // or
-Date.now();
+Date.now()
 //> 1475479102462
 
 //////////////////////////////////////////////////////////////////////////////
@@ -369,70 +339,33 @@ Date.now();
 // So `void 0` can make sure you get `undefined`, not `"undefined"`.
 
 // e.g.
-var counter = 1;
-void (counter += 1);
+let counter = 1
+void (counter += 1)
 //> undefined
 counter
 //> 2
 
 // `function() {...}` is a declaration, not an expression. But with a `void`,
 // it will be treated as an expression.
-void function() { console.log("hi"); }();
+void function() { console.log("hi") }()
 
 // But I prefer this way:
-(function() { console.log("hi"); })();
+(function() { console.log("hi") })()
 // or
-(function() { console.log("hi"); }());
+(function() { console.log("hi") }())
 
 
 //////////////////////////////////////////////////////////////////////////////
 // In javascript, these are treated as false:
 //     0, NaN, "", undefined, null, false
-
-// `if` in javascript works like python sometimes.
-// For numbers, only 0 is considered as false;
-if (1) true; else false;
-//> true
-if (-1) true; else false;
-//> true
-if (0) true; else false;
-//> false
-
-// For String, only empty string is false. (same as python again)
-if ("a") true; else false;
-//> true
-if ("") true; else false;
-//> false
-
-// But for Array and Object, even empty is true. (different from python)
-if ([]) true; else false;
-//> true
-if ({}) true; else false;
-//> true
-
-// You will always see people use `~` with `indexOf`
-// e.g.
-~blah.indexOf("blah") ? "yes" : "no";
-
-// `Array.indexOf` will return `-1` when the nothing find. and `~ -1 === 0`
-// so `blah.indexOf("blah")` is just same as `blah.indexOf("blah") !== -1`
+// But [] and {} are true, which is different from python
 
 
 //////////////////////////////////////////////////////////////////////////////
-// In javascript, global binding are attributes. There is a top-level object.
-// For browsers, it's `window`, for nodejs, it's `global`
-
-// nodejs example:
-var blah = "haha";
-//> undefined
-global.blah
-//> 'haha'
-
-// browser example:
-var blah = "haha";
-//> undefined
-window.blah
-//> 'haha'
+// You will always see people use `~` with `indexOf`
+// Because `Array.indexOf` will return `-1` when the nothing find. and `~ -1 === 0`
+// e.g.
+~blah.indexOf("blah") ? "yes" : "no"
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -440,35 +373,10 @@ window.blah
 //  push    & pop   : add & remove on last  element
 //  unshift & shift : add & remove on first element
 
-// BTW, using `push` and `shift`, you can create a queue
-
-// e.g.
-var a = [];
-a.push("a");
-//> 1
-a.push("b");
-//> 2
-a.push("c");
-//> 3
-a;
-//> [ 'a', 'b', 'c' ]
-a.pop();
-//> 'c'
-a
-//> [ 'a', 'b' ]
-a.unshift("d");
-//> 3
-a
-//> [ 'd', 'a', 'b' ]
-a.shift();
-//> 'd'
-a
-//> [ 'a', 'b' ]
-
 
 //////////////////////////////////////////////////////////////////////////////
 // The key for object have to be String, or it will be converted to String
-a = {0: 1, "0": 2}
+a = { 0: 1, "0": 2 }
 //> { '0': 2 }
 
 
@@ -478,11 +386,11 @@ a = {0: 1, "0": 2}
 
 // e.g.
 function a() {
-  console.log("arguments:", arguments, "\nisArray:", isArray(arguments));
+  console.log("arguments:", arguments, "\nisArray:", Array.isArray(arguments))
 }
 //> undefined
 
-a(1, 2, 3, 4);
+a(1, 2, 3, 4)
 //  arguments: { '0': 1, '1': 2, '2': 3, '3': 4 }
 //  isArray: false
 //> undefined
@@ -492,52 +400,52 @@ a(1, 2, 3, 4);
 // Convert non-Array object to Array object
 //  * the object need to have a `length` attribute (for `slice` function)
 function toArray(obj) {
-  return Array.prototype.slice.call(obj);
+  return Array.prototype.slice.call(obj)
 }
 
 // another way to show this:
-var a = {0: "hello", 1: "world"};
+let a = { 0: "hello", 1: "world" }
 a
 //> { '0': 'hello', '1': 'world' }
 
-Array.prototype.slice.call(a);
+Array.prototype.slice.call(a)
 //> []
 
-a.length = 2;
+a.length = 2
 //> 2
-Array.prototype.slice.call(a);
+Array.prototype.slice.call(a)
 //> [ 'hello', 'world' ]
 
-a.length = 4;
+a.length = 4
 //> 4
-Array.prototype.slice.call(a);
+Array.prototype.slice.call(a)
 //> [ 'hello', 'world', ,  ]
 
 
 //////////////////////////////////////////////////////////////////////////////
 // Array and String have very similar attributes and methods.
 // Unlike Java, String have `.length`, NOT `.length()`.
-a = ["a", "b", "c", "d", "e"];
+a = ["a", "b", "c", "d", "e"]
 //> [ 'a', 'b', 'c', 'd', 'e' ]
-b = "abcde";
+b = "abcde"
 //> 'abcde'
-a.length;
+a.length
 //> 5
-b.length;
+b.length
 //> 5
 
 // The `slice` method works in similar way for String and unnested Array.
-a.slice();
+a.slice()
 //> [ 'a', 'b', 'c', 'd', 'e' ]
-b.slice();
+b.slice()
 //> 'abcde'
-a.slice(3);
+a.slice(3)
 //> [ 'd', 'e' ]
-b.slice(3);
+b.slice(3)
 //> 'de'
-a.slice(1,4);
+a.slice(1,4)
 //> [ 'b', 'c', 'd' ]
-b.slice(1,4);
+b.slice(1,4)
 //> 'bcd'
 
 
@@ -545,15 +453,15 @@ b.slice(1,4);
 // BASE64 encoding and decoding
 
 // in Web Browser
-btoa("hello, world");
+btoa("hello, world")
 //> "aGVsbG8sIHdvcmxk"
-atob("aGVsbG8sIHdvcmxk");
+atob("aGVsbG8sIHdvcmxk")
 //> "hello, world"
 
 // in Node.js
-new Buffer("hello, world").toString("base64");
+new Buffer("hello, world").toString("base64")
 //> 'aGVsbG8sIHdvcmxk'
-new Buffer("aGVsbG8sIHdvcmxk", "base64").toString();
+new Buffer("aGVsbG8sIHdvcmxk", "base64").toString()
 //> 'hello, world'
 
 
@@ -565,9 +473,9 @@ new Buffer("aGVsbG8sIHdvcmxk", "base64").toString();
 // u: unicode(treat pattern as a sequence of unicode code points)
 
 // e.g. (3 ways to create RegExp with parameters)
-new RegExp("\\w+", "i");
-new RegExp(/\w+/, "i");
-/\w+/i;
+new RegExp("\\w+", "i")
+new RegExp(/\w+/, "i")
+/\w+/i
 
 // !!!
 // In javascript, the "m" flag does NOT change the behavior of ".".
@@ -575,50 +483,36 @@ new RegExp(/\w+/, "i");
 // the character set [^] can be used.
 
 // A example for multiple lines matching
-var a = "abc\ndef\nghi";
+let a = "abc\ndef\nghi"
 
-/([^\n]*)\n(.*)/m.exec(a);
+/([^\n]*)\n(.*)/m.exec(a)
 //> [ 'abc\ndef', 'abc', 'def', ... ]
 
-/([^\n]*)\n([^]*)/.exec(a);
+/([^\n]*)\n([^]*)/.exec(a)
 //> [ 'abc\ndef\nghi', 'abc', 'def\nghi', ... ]
 
 // Do multiple match, use `string.match` instead of `regexp.exec`
-/^[^\s]+/mg.exec("\r\nwhat\ris\nthis?\n");
+/^[^\s]+/mg.exec("\r\nwhat\ris\nthis?\n")
 //> [ "what" ]
 
-"\r\nwhat\ris\nthis?\n".match(/^[^\s]+/mg);
+"\r\nwhat\ris\nthis?\n".match(/^[^\s]+/mg)
 //> [ "what", "is", "this?" ]
 
 // string.replace
-"what123is".replace(/([0-9])/, "-" + "$1" + "-");
+"what123is".replace(/([0-9])/, "-" + "$1" + "-")
 //> "what-1-23is"
 
-"what123is".replace(/([0-9])/g, "-" + "$1" + "-");
+"what123is".replace(/([0-9])/g, "-" + "$1" + "-")
 //> "what-1--2--3-is"
-
 
 
 //////////////////////////////////////////////////////////////////////////////
 // The `Spidermonkey` specific way to do deep copy. (`eval` & `uneval`)
-var a = [1, 2, 3, 4, 5];
-var b = eval(uneval(a));
-a === b;
+let a = [1, 2, 3, 4, 5]
+let b = eval(uneval(a))
+a === b
 //> false
 
 // You can test it in "Firefox Web Browser" and "CouchDB".
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Browsers now support `keys` and `values` in console. (not in script files)
-//  (tested on Firefox49 and Chromium53)
-keys({a: 1, b: 2});
-//> ["a", "b"]
-values({a: 1, b: 2});
-//> [1, 2]
-
-// When writing script files, you can only use `Object.keys`
-Object.keys({a: 1, b: 2});
-//> [ 'a', 'b' ]
 
 
