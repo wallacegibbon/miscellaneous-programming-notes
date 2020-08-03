@@ -1014,6 +1014,12 @@ gpg --verify emacs-26.2.tar.gz.sig emacs-26.2.tar.gz
 gpg --import gnu-keyring.gpg
 
 
+## gnupg can encrypt/decrypt file with password, which is convenient
+gpg -c test.txt # will ask for password and generate the file "test.txt.gpg"
+
+## decrypt the file
+gpg test.txt.gpg
+
 
 ## `bash -e' will start a subshell that will exit if any command returns a value
 ## other than 0, you can use `bash -e' in the auto-build process
