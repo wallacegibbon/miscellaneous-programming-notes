@@ -32,7 +32,7 @@ typedef struct A {
 A test = {1, "hello", 0};
 struct A test = {1, "hello", 0};
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 struct A
     a: isize, b: char^, counter: u64
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 fun main(argc: isize, argv: char^^): isize
     return 0
@@ -74,7 +74,7 @@ if (fn1(fn2(val1)) >= fn3(val2)) {
     fn6();
 }
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 if fn1(fn2(val1)) >= fn3(val2)
     fn4()
@@ -102,7 +102,7 @@ for (int i = 0; i < 3; i++) {
     fn1();
 }
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 while (cond1 or cond2) and cond3
     if fn3()
@@ -129,7 +129,7 @@ Memory allocation:
 
 unsigned int buf[20] = {0};
 
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 buf: usize^ = alloc(size<usize> * 20, 0)
 
