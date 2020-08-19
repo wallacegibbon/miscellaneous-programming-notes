@@ -16,8 +16,8 @@ void *p						p: void^
 (uint8_t *)p					p~<u8^>
 (void *)p					p~<void^>
 ((blah*)p[3])->m				(p+3)^~<blah^>^.m
-sizeof (struct Blah *)				size<Blah^>
-malloc(sizeof(struct A))			malloc(size<A>)
+sizeof (struct Blah *)				size(Blah^)
+malloc(sizeof(struct A))			malloc(size(A))
 
 
 ======================================================================
@@ -35,10 +35,10 @@ struct A test = {1, "hello", 0};
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 struct A
-    a: isize, b: char^, counter: u64
+    a: i32, b: i8^, counter: u64
 end
 
-test: A = A{a: 1, b: "hello", counter: 0}
+test: A = A{a = 1, b = "hello", counter = 0};
 
 ----------------------------------------------------------------------
 
@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-fun main(argc: isize, argv: char^^): isize
-    return 0
+fun main(argc: u8, argv: i8^^): i32
+    return 0;
 end
 
 ----------------------------------------------------------------------
@@ -76,12 +76,12 @@ if (fn1(fn2(val1)) >= fn3(val2)) {
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-if fn1(fn2(val1)) >= fn3(val2)
-    fn4()
-elif val3
-    fn5()
+if (fn1(fn2(val1)) >= fn3(val2))
+    fn4();
+elif (val3)
+    fn5();
 else
-    fn6()
+    fn6();
 end
 
 ----------------------------------------------------------------------
@@ -104,18 +104,18 @@ for (int i = 0; i < 3; i++) {
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-while (cond1 or cond2) and cond3
-    if fn3()
-	cond1 = 0
+while ((cond1 or cond2) and cond3)
+    if (fn3())
+	cond1 = 0;
     end
 end
 
 
-i: isize = 0
+i: i32 = 0;
 
 while i < 3
-    fn1()
-    i += 1
+    fn1();
+    i += 1;
 end
 
 
@@ -131,7 +131,7 @@ unsigned int buf[20] = {0};
 
 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-buf: usize^ = alloc(size<usize> * 20, 0)
+buf: {i32, 20} = {0};
 
 ----------------------------------------------------------------------
 
