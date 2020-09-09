@@ -950,6 +950,9 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="
 # to allow non-root user to use usbasp, add this to rules:
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="05dc", MODE="0666"
 
+# after editing udev rules, you can reload udev to make it working
+sudo udevadm control --reload
+
 
 # linux kernel compiling, the menuconfig is default to x86, for architecture,
 # you need to specify the two env variable: ARCH PLATFORM
