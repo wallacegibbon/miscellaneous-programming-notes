@@ -501,3 +501,23 @@ erlang:system_info(otp_release).
 %> "22"
 
 
+%%-----------------------------------------------------------------------------
+%% regular expression
+%%-----------------------------------------------------------------------------
+re:run("hello, wallace", "hello, ([^\s]+)").
+%> {match,[{0,14},{7,7}]}
+
+re:run("hello, wallace", "hello, ([^\s]+)", [{capture, all, list}]).
+%> {match,["hello, wallace","wallace"]}
+
+re:run("hello, wallace", "hello, ([^\s]+)", [{capture, all_but_first, list}]).
+%> {match,["wallace"]}
+
+%% argument1 and agument2 of re:run are both iodata (iolist | binary)
+re:run(<<"hello, wallace">>, "hello, ([^\s]+)").
+%> {match,[{0,14},{7,7}]}
+
+re:run("hello, wallace", <<"hello, ([^\s]+)">>).
+%> {match,[{0,14},{7,7}]}
+
+
