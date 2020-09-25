@@ -9,7 +9,7 @@ blah(A) ->
     A + 1.
 
 %%$ escript ttt.escript
-%%> escript: exception error: undefined function erl_eval:blah/1 
+%%> escript: exception error: undefined function erl_eval:blah/1
 
 
 %% to fix it, add "-mode(compile)" in the escript

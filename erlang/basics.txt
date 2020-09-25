@@ -521,3 +521,10 @@ re:run("hello, wallace", <<"hello, ([^\s]+)">>).
 %> {match,[{0,14},{7,7}]}
 
 
+%%-----------------------------------------------------------------------------
+%% !, process and port
+%%-----------------------------------------------------------------------------
+erlang:send(Dest, Msg) %> Dest ! Msg.
+erlang:port_command(Port, Data). %> Port ! {PortOwner, {command, Data}}
+
+
