@@ -524,7 +524,12 @@ re:run("hello, wallace", <<"hello, ([^\s]+)">>).
 %%-----------------------------------------------------------------------------
 %% !, process and port
 %%-----------------------------------------------------------------------------
-erlang:send(Dest, Msg) %> Dest ! Msg.
-erlang:port_command(Port, Data). %> Port ! {PortOwner, {command, Data}}
+%% erlang:send/2 is same as the send operator("!")
+erlang:send(Dest, Msg). %> same as: Dest ! Msg.
+
+erlang:port_command(Port, Data).
+%% is similar to:
+Port ! {PortOwner, {command, Data}}
+%% but not the same ! It's synchronous, the error behavior is different, etc.
 
 
