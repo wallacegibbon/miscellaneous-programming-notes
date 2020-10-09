@@ -3,10 +3,10 @@
 %% escript have problem with "fun blah/N" by default
 %% for example, the following escript (filename ttt.escript) will go wrong
 main([]) ->
-    io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
+	io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
 
 blah(A) ->
-    A + 1.
+	A + 1.
 
 %%$ escript ttt.escript
 %%> escript: exception error: undefined function erl_eval:blah/1
@@ -16,10 +16,10 @@ blah(A) ->
 -mode(compile).
 
 main([]) ->
-    io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
+	io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
 
 blah(A) ->
-    A + 1.
+	A + 1.
 
 %%$ escript ttt.escript
 %%> [2,3,4]

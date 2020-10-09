@@ -20,33 +20,33 @@ void **ops = NULL;
 void
 blah(void *op)
 {
-    // "tmp" does NOT have to be static, but being static is more efficient.
-    static void *tmp[] = {&&op1, &&op2};
-    if (op)
-	goto* op;
-    else
-	goto init;
+	// "tmp" does NOT have to be static, but being static is more efficient.
+	static void *tmp[] = {&&op1, &&op2};
+	if (op)
+		goto* op;
+	else
+		goto init;
 
 op1:
-    printf("this is op1\n");
-    return;
+	printf("this is op1\n");
+	return;
 
 op2:
-    printf("this is op2\n");
-    return;
+	printf("this is op2\n");
+	return;
 
 init:
-    printf("ops is initialized\n");
-    ops = tmp;
+	printf("ops is initialized\n");
+	ops = tmp;
 }
 
 
 int
 main(int argc, char **argv)
 {
-    blah(0);
-    blah(ops[0]);
-    blah(ops[1]);
-    return 0;
+	blah(0);
+	blah(ops[0]);
+	blah(ops[1]);
+	return 0;
 }
 
