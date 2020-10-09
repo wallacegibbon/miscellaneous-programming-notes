@@ -402,7 +402,14 @@ filename:dirname(code:which(filename)).
 code:all_loaded().
 %> [{io,"/usr/lib/erlang/lib/stdlib-3.7.1/ebin/io.beam"},
 %   {application,"/usr/lib/erlang/lib/kernel-6.2/ebin/application.beam"},
+%   {prim_net,preloaded},
 %   ...]
+%%
+%% elements returned will be
+{modname, "/path/to/module.beam"}
+%or
+{modname, preloaded}
+
 
 %% get the path to the priv directory in an application.
 %%   (rebar will copy it from source to the build destination)
