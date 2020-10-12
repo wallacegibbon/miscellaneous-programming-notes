@@ -371,6 +371,20 @@ erlang:process_info(self(), total_heap_size).
 erlang:registered().
 %> [rex,erts_code_purger,kernel_refc,kernel_sup,init,...]
 
+%% read process dictionary of other processes
+erlang:process_info(self(), dictionary).
+%> {dictionary,[]}
+
+
+%%-----------------------------------------------------------------------------
+%% get release version
+%%-----------------------------------------------------------------------------
+erlang:system_info(otp_release).
+%> "22"
+
+erlang:system_info(wordsize).
+%> 8
+
 
 %%-----------------------------------------------------------------------------
 %% ETS(Erlang Term Storage), DETS(Disk ETS)
@@ -499,16 +513,6 @@ io:format("~6.. w~n", [{1,2,3}]).
 io:format("~p~n", [#blah{a=1, _=default}]).
 %  {blah,1,default,default}
 %> ok
-
-
-%%-----------------------------------------------------------------------------
-%% get release version
-%%-----------------------------------------------------------------------------
-erlang:system_info(otp_release).
-%> "22"
-
-erlang:system_info(wordsize).
-%> 8
 
 
 %%-----------------------------------------------------------------------------
