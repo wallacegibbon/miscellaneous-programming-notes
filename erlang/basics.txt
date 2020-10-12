@@ -547,3 +547,17 @@ Port ! {PortOwner, {command, Data}}
 %% but not the same ! It's synchronous, the error behavior is different, etc.
 
 
+%%-----------------------------------------------------------------------------
+%% 2 ways to use timer
+%%-----------------------------------------------------------------------------
+erlang:send_after(0, self(), "test").
+%> #Ref<0.2007321174.2698510337.136265>
+receive A -> A end.
+%> "test"
+
+erlang:start_timer(0, self(), "test").
+%> #Ref<0.2007321174.2698510337.136278>
+receive A -> A end.
+%> {timeout,#Ref<0.2007321174.2698510337.136278>,"test"}
+
+
