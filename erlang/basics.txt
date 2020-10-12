@@ -507,6 +507,9 @@ io:format("~p~n", [#blah{a=1, _=default}]).
 erlang:system_info(otp_release).
 %> "22"
 
+erlang:system_info(wordsize).
+%> 8
+
 
 %%-----------------------------------------------------------------------------
 %% regular expression
