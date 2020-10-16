@@ -371,7 +371,7 @@ erlang:process_info(self(), total_heap_size).
 erlang:registered().
 %> [rex,erts_code_purger,kernel_refc,kernel_sup,init,...]
 
-%% read process dictionary of other processes
+%% read process dictionary of any processes
 erlang:process_info(self(), dictionary).
 %> {dictionary,[]}
 
