@@ -1,3 +1,5 @@
+- [The Beam Book](https://blog.stenmans.org/theBeamBook)
+
 - [erlang scheduler](https://www.cnblogs.com/zhengsyao/p/how_erlang_does_scheduling_translation.html)
 
 - [erlang blogs 1](http://blog.yufeng.info/archives/category/erlang)
