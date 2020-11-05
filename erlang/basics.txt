@@ -10,22 +10,20 @@
 
 
 %%-----------------------------------------------------------------------------
+%% Create tuple of certain arity
+%%-----------------------------------------------------------------------------
+erlang:make_tuple(5, 1).
+%> {1,1,1,1,1}
+
+erlang:make_tuple(5, d, [{1, a}, {3, z}]).
+%> {a,d,z,d,d}
+
+
+%%-----------------------------------------------------------------------------
 %% Atom, Variable, funtion call
 %%-----------------------------------------------------------------------------
-test() -> io:format("works~n").
-
-%% in Other function, make the following binding:
-A = test,
-
-%% then you can call test with:
-?MODULE:A().
-%  works
-%> ok
-
-%% you can't call test with A only:
-%%  (and it will raise a compilation warning: invalid function call)
-A().
-%  ** exception error: bad function test
+%% both operands of the ':' operator can be variable
+VarModName:VarFunName().
 
 
 %%-----------------------------------------------------------------------------
