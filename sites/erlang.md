@@ -1,5 +1,13 @@
 - [The Beam Book](https://blog.stenmans.org/theBeamBook)
 
+- [Discord 500W reqs Elixir](https://segmentfault.com/a/1190000019473374)
+
+- [Discord Scaling Up Elixir Using Rust](https://www.infoq.cn/article/2UyDk4hqNEAjtfZ5_3Ql?utm_source=related_read&utm_medium=article)
+
+- [Discord Scaling Up Elixir Using Rust(en)](https://blog.discordapp.com/using-rust-to-scale-elixir-for-11-million-concurrent-users-c6f19fc029d3)
+
+- [Discord Scaling Up Elixir Using Rust(en, mirror)](https://www.infoq.com/news/2019/07/rust-elixir-performance-at-scale/)
+
 - [erlang scheduler](https://www.cnblogs.com/zhengsyao/p/how_erlang_does_scheduling_translation.html)
 
 - [erlang blogs 1](http://blog.yufeng.info/archives/category/erlang)
