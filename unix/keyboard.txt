@@ -1,0 +1,9 @@
+> vim: ft=markdown :
+
+Edit /etc/default/keyboard, change the following configuration:
+```
+XKBOPTIONS=ctrl:nocaps
+```
+
+You can use `localectl status` to see the configuration result
+
