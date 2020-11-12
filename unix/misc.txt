@@ -1149,6 +1149,7 @@ su root
 ## this will always work
 sudo -i
 
+
 ## make process auto-start or non-auto-start with `systemd`
 ## make it start on boot
 sudo systemctl enable nginx
@@ -1171,3 +1172,16 @@ systemctl show -p WantedBy,RequiredBy sys-subsystem-net-devices-multi-user.devic
 
 ## show all enabled units
 systemctl list-unit-files --state enabled
+
+
+## you can change the boot option (console or graphical) with systemctl
+## boot to console
+systemctl set-default multi-user.target
+
+## boot to graphical
+systemctl set-default graphical.target
+
+## show current setting
+systemctl get-default
+#> graphical.target
+
