@@ -15,7 +15,7 @@
 erlang:make_tuple(5, 1).
 %> {1,1,1,1,1}
 
-erlang:make_tuple(5, d, [{1, a}, {3, z}]).
+erlang:make_tuple(5, d, [{1,a},{3,z}]).
 %> {a,d,z,d,d}
 
 
@@ -84,7 +84,7 @@ $\n.
 %> "abcd"
 
 ["a"|"bcd"].
-%> ["a", 98, 99, 100]
+%> ["a",98,99,100]
 
 
 %%-----------------------------------------------------------------------------
@@ -94,10 +94,10 @@ $\n.
 %% but for tuple, select element through index is fast and normal,
 %% so `element(N, L)` is built-in.
 %%-----------------------------------------------------------------------------
-lists:nth(2, [a, b, c, d, e]).
+lists:nth(2, [a,b,c,d,e]).
 %> b
 
-element(2, {a, b, c, d, e}).
+element(2, {a,b,c,d,e}).
 %> b
 
 
@@ -118,25 +118,25 @@ lists:foldr(fun(X, V) -> [X | V] end, [], [1,2,3]).
 %%      use ":=" when possible
 %%-----------------------------------------------------------------------------
 %% create:
-Me = #{name => "wittyfox", age => 19}.
+Me = #{name=>"wittyfox",age=>19}.
 %> #{age => 19,name => "wittyfox"}
 
 %% update:
-Me#{age => 20}.
+Me#{age=>20}.
 %> #{age => 20,name => "wittyfox"}
 
 %% if you write a wrong key:
-Me#{aeg => 20}.
+Me#{aeg=>20}.
 %> #{aeg => 20,age => 19,name => "wittyfox"}
 
 %% if you do NOT want to add element by accident, use ":=" instead of "=>"
-Me#{aeg := 20}.
+Me#{aeg:=20}.
 %> ** exception error: {badkey,aeg}
 %    in function  maps:update/3
 %       called as maps:update(aeg,20,#{age => 19,name => "wittyfox"})
 
 %% pattern match: have to use ":="
-#{age := Age} = Me.
+#{age:=Age} = Me.
 %> #{age => 19,name => "wittyfox"}
 Age.
 %> 19
@@ -146,16 +146,16 @@ Age.
 %% get and update
 %% the default value for get is after map, while the default value
 %% for update_with is before the map
-maps:get(a, #{a => 1, b => 2}).
+maps:get(a, #{a=>1,b=>2}).
 %> 1
 
-maps:get(c, #{a => 1, b => 2}, 3).
+maps:get(c, #{a=>1,b=>2}, 3).
 %> 3
 
-maps:update(a, 3, #{a => 1, b => 2}).
+maps:update(a, 3, #{a=>1,b=>2}).
 %> #{a => 3,b => 2}
 
-maps:update_with(c, fun(V) -> V + 1 end, 3, #{a => 1, b => 2}).
+maps:update_with(c, fun(V) -> V + 1 end, 3, #{a=>1,b=>2}).
 %> #{a => 1,b => 2,c => 3}
 
 
@@ -164,12 +164,12 @@ maps:update_with(c, fun(V) -> V + 1 end, 3, #{a => 1, b => 2}).
 %% use "maps:to_list/1" transform to list and handle things as list, then
 %% use "maps:from_list/1" transform back to map.
 
-maps:map(fun (X, Y) -> io:format("~p => ~p~n", [X, Y]) end, Me).
+maps:map(fun(X, Y) -> io:format("~p => ~p~n", [X,Y]) end, Me).
 %> age => 19
 %  name => "wittyfox"
 %  #{age => ok,name => ok}
 
-maps:fold(fun (X, Y, V) -> V + 1 end, 0, Me).
+maps:fold(fun(X, Y, V) -> V + 1 end, 0, Me).
 %> 2
 
 
@@ -191,24 +191,24 @@ maps:without([age], Me).
 %> #{name => "wittyfox"}
 
 % non-exist key is accepted
-maps:without([age, neme], Me).
+maps:without([age,neme], Me).
 %> #{name => "wittyfox"}
 
 
 %%-----------------------------------------------------------------------------
-%% a problem about map
+%% in pattern matching, #{} will match all maps
 %%-----------------------------------------------------------------------------
-case #{<<"a">> => <<"abcde">>} of #{} -> "!!!"; _ -> ok end.
+case #{a=>1} of #{} -> "!!!"; _ -> ok end.
 %> "!!!"
 
 
 %%-----------------------------------------------------------------------------
 %% list > tuple > atom > number
 %%-----------------------------------------------------------------------------
-[1, 2, 3] > {1, 2, 3}
+[1,2,3] > {1,2,3}
 %> true
 
-lists:sort([a, b, "abc", {1,2,3}, 5]).
+lists:sort([a,b,"abc",{1,2,3},5]).
 %> [5,a,b,{1,2,3},"abc"]
 
 
@@ -224,7 +224,7 @@ lists:sort([a, b, "abc", {1,2,3}, 5]).
 %% To use `qlc:q` the following compile option is needed in the source file:
 -compile({parse_transform,qlc})
 
-QH = qlc:q([{X,Y} || X <- [a,b], Y <- [1,2]]).
+QH = qlc:q([{X,Y} || X<-[a,b],Y<-[1,2]]).
 %> {qlc_handle,{qlc_lc,#Fun<erl_eval.20.128620087>,
 %                      {qlc_opt,false,false,-1,any,[],any,524288,allowed}}}
 
@@ -241,7 +241,7 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 %% a binary field without size is only allowed at the end of a binary pattern
 %%
 %%-----------------------------------------------------------------------------
-<<1, 2, A:2/binary, B/binary>> = <<1, 2, 3, 4, 5, 6, 7, 8>>.
+<<1,2,A:2/binary,B/binary>> = <<1,2,3,4,5,6,7,8>>.
 %> <<1,2,3,4,5,6,7,8>>
 
 A.
@@ -251,7 +251,7 @@ B.
 %> <<5,6,7,8>>
 
 %% These 2 are similar: (both of them are friendly for recursion)
-<<A, B, C/binary>>, [A, B | C]
+<<A,B,C/binary>>, [A,B|C]
 
 
 %%-----------------------------------------------------------------------------
@@ -260,7 +260,7 @@ B.
 %% function contains clauses, a clause is like:
 %%  {clause, Line, [Args], [GuardSeqs], [Body]}
 
-F = "blah([A | B]) when A > 0, A < 5; A > 9, A < 11 -> B * 3.".
+F = "blah([A|B]) when A > 0, A < 5; A > 9, A < 11 -> B * 3.".
 
 erl_parse:parse_form(element(2, erl_scan:string(F))).
 %> {ok,{function,1,blah,1,
@@ -418,9 +418,9 @@ code:all_loaded().
 %   ...]
 %%
 %% elements returned will be
-{modname, "/path/to/module.beam"}
+{modname,"/path/to/module.beam"}
 %or
-{modname, preloaded}
+{modname,preloaded}
 
 
 %% get the path to the priv directory in an application.
@@ -469,7 +469,7 @@ code:unstick_dir("/usr/local/lib/erlang/lib/stdlib-3.11.2/ebin").
 c(maps).
 %> {ok,maps}
 
-maps:from_list([{a, 1}, {b, 2}]).
+maps:from_list([{a,1},{b,2}]).
 %  ** exception error: undefined function maps:iterator/1
 %  ...
 
@@ -506,9 +506,9 @@ io:format("~6.. w~n", [{1,2,3}]).
 %%-----------------------------------------------------------------------------
 %% fields in record can have default values by using the "_"
 %%-----------------------------------------------------------------------------
--record(blah, {a, b, c}).
+-record(blah, {a,b,c}).
 
-io:format("~p~n", [#blah{a=1, _=default}]).
+io:format("~p~n", [#blah{a=1,_=default}]).
 %  {blah,1,default,default}
 %> ok
 
@@ -519,10 +519,10 @@ io:format("~p~n", [#blah{a=1, _=default}]).
 re:run("hello, wallace", "hello, ([^\s]+)").
 %> {match,[{0,14},{7,7}]}
 
-re:run("hello, wallace", "hello, ([^\s]+)", [{capture, all, list}]).
+re:run("hello, wallace", "hello, ([^\s]+)", [{capture,all,list}]).
 %> {match,["hello, wallace","wallace"]}
 
-re:run("hello, wallace", "hello, ([^\s]+)", [{capture, all_but_first, list}]).
+re:run("hello, wallace", "hello, ([^\s]+)", [{capture,all_but_first,list}]).
 %> {match,["wallace"]}
 
 %% argument1 and agument2 of re:run are both iodata (iolist | binary)
@@ -541,7 +541,7 @@ erlang:send(Dest, Msg). %> same as: Dest ! Msg.
 
 erlang:port_command(Port, Data).
 %% is similar to:
-Port ! {PortOwner, {command, Data}}
+Port ! {PortOwner,{command,Data}}
 %% but not the same ! It's synchronous, the error behavior is different, etc.
 
 
