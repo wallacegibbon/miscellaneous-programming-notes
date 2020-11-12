@@ -1,5 +1,7 @@
 - [The Beam Book](https://blog.stenmans.org/theBeamBook)
 
+- [Programming Rules and Conventions](http://www.erlang.se/doc/programming_rules.shtml)
+
 - [Discord 500W reqs Elixir](https://segmentfault.com/a/1190000019473374)
 
 - [Discord Scaling Up Elixir Using Rust](https://www.infoq.cn/article/2UyDk4hqNEAjtfZ5_3Ql?utm_source=related_read&utm_medium=article)
