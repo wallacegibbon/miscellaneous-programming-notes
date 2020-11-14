@@ -28,3 +28,5 @@
 
 - [Erlang Questions](http://erlang.2086793.n4.nabble.com/Erlang-Questions-f2086794.html)
 
+- [Erlang BIF\_TRAP](https://www.ttalk.im/pages/995338350745354244)
+
