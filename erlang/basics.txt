@@ -104,10 +104,10 @@ element(2, {a,b,c,d,e}).
 %%-----------------------------------------------------------------------------
 %% there is no "reduce" in erlang, it's called "fold"
 %%-----------------------------------------------------------------------------
-lists:foldl(fun(X, V) -> [X | V] end, [], [1,2,3]).
+lists:foldl(fun(X, V) -> [X|V] end, [], [1,2,3]).
 %> [3,2,1]
 
-lists:foldr(fun(X, V) -> [X | V] end, [], [1,2,3]).
+lists:foldr(fun(X, V) -> [X|V] end, [], [1,2,3]).
 %> [1,2,3]
 
 
@@ -224,7 +224,7 @@ lists:sort([a,b,"abc",{1,2,3},5]).
 %% To use `qlc:q` the following compile option is needed in the source file:
 -compile({parse_transform,qlc})
 
-QH = qlc:q([{X,Y} || X<-[a,b],Y<-[1,2]]).
+QH = qlc:q([{X,Y} || X <- [a,b], Y <- [1,2]]).
 %> {qlc_handle,{qlc_lc,#Fun<erl_eval.20.128620087>,
 %                      {qlc_opt,false,false,-1,any,[],any,524288,allowed}}}
 
@@ -258,7 +258,7 @@ B.
 %% the AST of a function
 %%-----------------------------------------------------------------------------
 %% function contains clauses, a clause is like:
-%%  {clause, Line, [Args], [GuardSeqs], [Body]}
+%%  {clause,Line,[Args],[GuardSeqs],[Body]}
 
 F = "blah([A|B]) when A > 0, A < 5; A > 9, A < 11 -> B * 3.".
 
@@ -525,7 +525,7 @@ re:run("hello, wallace", "hello, ([^\s]+)", [{capture,all,list}]).
 re:run("hello, wallace", "hello, ([^\s]+)", [{capture,all_but_first,list}]).
 %> {match,["wallace"]}
 
-%% argument1 and agument2 of re:run are both iodata (iolist | binary)
+%% argument1 and agument2 of re:run are both iodata (iolist|binary)
 re:run(<<"hello, wallace">>, "hello, ([^\s]+)").
 %> {match,[{0,14},{7,7}]}
 
