@@ -30,3 +30,5 @@
 
 - [Erlang BIF\_TRAP](https://www.ttalk.im/pages/995338350745354244)
 
+- [Weird Binding error in Erlang shell](https://www.iteye.com/blog/mryufeng-633662)
+
