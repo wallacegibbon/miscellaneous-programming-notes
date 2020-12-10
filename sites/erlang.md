@@ -32,3 +32,5 @@
 
 - [Weird Binding error in Erlang shell](https://www.iteye.com/blog/mryufeng-633662)
 
+- [Ranch Application Design](http://learningelixir.joekain.com/ranch-application-design/)
+
