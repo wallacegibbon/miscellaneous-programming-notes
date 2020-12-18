@@ -34,3 +34,5 @@
 
 - [Ranch Application Design](http://learningelixir.joekain.com/ranch-application-design/)
 
+- [Mnesia/Mysql Op comparings](https://www.cnblogs.com/xuan52rock/p/4601810.html?utm_source=tuicool)
+
