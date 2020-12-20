@@ -490,11 +490,12 @@ io:format("~10.3.0f~n", [math:pi()]).
 %  000003.142
 %> ok
 
+%% the explicit " " is needed.
 io:format("~10.3. f~n", [math:pi()]).
 %       3.142
 %> ok
 
-%% when the width is not enough, "***..." will be printed
+%% when the width is not enough, "***..." will be printed.
 io:format("~7.. w~n", [{1,2,3}]).
 %  {1,2,3}
 %> ok
@@ -503,15 +504,31 @@ io:format("~6.. w~n", [{1,2,3}]).
 %  ******
 %> ok
 
+%% print number in certain base.
+io:format("~.10.0B~n", [126]).
+% 126
+%> ok
+
+io:format("~.16.0B~n", [126]).
+% 7E
+%> ok
+
+io:format("~.2.0B~n", [126]).
+% 1111110
+%> ok
+
 
 %%-----------------------------------------------------------------------------
-%% fields in record can have default values by using the "_"
+%% fields in record can have different default values by using the "_"
+%% the "default default value" is undefined
 %%-----------------------------------------------------------------------------
 -record(blah, {a,b,c}).
 
-io:format("~p~n", [#blah{a=1,_=default}]).
-%  {blah,1,default,default}
-%> ok
+#blah{a=1}.
+%> {blah,1,undefined,undefined}
+
+#blah{a=1,_=a}.
+%> {blah,1,a,a}
 
 
 %%-----------------------------------------------------------------------------
