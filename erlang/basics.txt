@@ -238,10 +238,27 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 
 %%-----------------------------------------------------------------------------
 %% binary
-%% !!
-%% a binary field without size is only allowed at the end of a binary pattern
-%%
+%% Value | Value:Size | Value/TypeSpecifierList | Value:Size/TypeSpecifierList
 %%-----------------------------------------------------------------------------
+%% TypeSpecifierList contains specifiers separated by hyphens(-) in any order.
+%% for example, both "little" and "integer" are specifiers
+%% (big endian is the default option for erlang integer/utf16/utf32/float)
+<<16#ff:16>>.
+%> <<0,255>>
+
+<<16#ff:16/integer>>.
+%> <<0,255>>
+
+<<16#ff:16/little>>.
+%> <<255,0>>
+
+<<16#ff:16/integer-little>>.
+%> <<255,0>>
+
+<<16#ff:16/little-integer>>.
+%> <<255,0>>
+
+%% a binary field without size is only allowed at the end of a binary pattern
 <<1,2,A:2/binary,B/binary>> = <<1,2,3,4,5,6,7,8>>.
 %> <<1,2,3,4,5,6,7,8>>
 
