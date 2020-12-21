@@ -258,15 +258,21 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 <<16#ff:16/little-integer>>.
 %> <<255,0>>
 
+
 %% a binary field without size is only allowed at the end of a binary pattern
 <<1,2,A:2/binary,B/binary>> = <<1,2,3,4,5,6,7,8>>.
 %> <<1,2,3,4,5,6,7,8>>
 
 A.
 %> <<3,4>>
-
 B.
 %> <<5,6,7,8>>
+
+%% if it's not the left value (the matching part), binary field without size
+%% is allowed.
+<<A/binary,B/binary>>.
+%> <<3,4,5,6,7,8>>
+
 
 %% These 2 are similar: (both of them are friendly for recursion)
 <<A,B,C/binary>>, [A,B|C]
