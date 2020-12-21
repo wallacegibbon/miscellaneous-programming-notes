@@ -272,6 +272,45 @@ B.
 <<A,B,C/binary>>, [A,B|C]
 
 
+%% big/little endian is about byte, MSB/LSB is about bit
+
+%% The bit syntax is MSB first.
+io:format("~16.2.0B~n", [22445]).
+%  0101011110101101
+%> ok
+
+<<X:4,Y:8,Z:4,_/binary>> = <<22445:16>>.
+%> <<"W­">>
+
+io:format("~4.2.0B~n", [X]).
+%  0101
+%> ok
+
+io:format("~8.2.0B~n", [Y]).
+%  01111010
+%> ok
+
+io:format("~4.2.0B~n", [Z]).
+%  1101
+%> ok
+
+%% if it's little endian, (10101101_01010111)
+<<X:4,Y:8,Z:4,_/binary>> = <<22445:16/little>>.
+%> <<"­W">>
+
+io:format("~4.2.0B~n", [X]).
+%  1010
+%> ok
+
+io:format("~8.2.0B~n", [Y]).
+%  11010101
+%> ok
+
+io:format("~4.2.0B~n", [Z]).
+%  0111
+%> ok
+
+
 %%-----------------------------------------------------------------------------
 %% the AST of a function
 %%-----------------------------------------------------------------------------
