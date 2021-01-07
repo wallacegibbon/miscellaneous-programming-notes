@@ -417,7 +417,11 @@ F(10).
 erlang:processes().
 %> [<0.0.0>,<0.1.0>,<0.2.0>,<0.3.0>,...]
 
-%% get information of a certain process
+%% get information of a certain process, and according to erlang doc,
+%%
+%%   This BIF is intended for debugging only. For all other purposes,
+%%   use process_info/2.
+%%
 erlang:process_info(self()).
 %> [{current_function,{erl_eval,do_apply,6}},...]
 
@@ -435,6 +439,14 @@ erlang:registered().
 %% read process dictionary of any processes
 erlang:process_info(self(), dictionary).
 %> {dictionary,[]}
+
+%% !
+%% the `erlang:get_stacktrace/0` is deprecated, so use this:
+erlang:process_info(self(), current_stacktrace).
+%> {current_stacktrace,[{erl_eval,do_apply,6,
+%				  [{file,"erl_eval.erl"},{line,684}]},
+%			{shell,exprs,7,[{file,"shell.erl"},{line,686}]},
+%			...]}
 
 
 %%-----------------------------------------------------------------------------
