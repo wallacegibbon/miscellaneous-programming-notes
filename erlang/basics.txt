@@ -237,6 +237,30 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 
 
 %%-----------------------------------------------------------------------------
+%% fun2ms is a parse_transform, too
+%% it creates "match specification" for mnesia/ets's select function
+%%-----------------------------------------------------------------------------
+ets:fun2ms(fun({A,B,C}) when A < B; A > B, B < C ->
+		   A;
+	      ({A,B}) when A >= B ->
+		   B
+	   end).
+%> [{{'$1','$2','$3'},[{'<','$1','$2'}],['$1']},
+%   {{'$1','$2','$3'},[{'>','$1','$2'},{'<','$2','$3'}],['$1']},
+%   {{'$1','$2'},[{'>=','$1','$2'}],['$2']}]
+
+ets:fun2ms(fun({A,B,C}=D) -> D end).
+%> [{{'$1','$2','$3'},[],['$_']}]
+
+ets:fun2ms(fun(D) -> D end).
+%> [{'$1',[],['$1']}]
+
+ets:fun2ms(fun([A]) -> A end).
+%  Error: ets:fun2ms requires fun with single variable or tuple parameter
+%> {error,transform_error}
+
+
+%%-----------------------------------------------------------------------------
 %% binary
 %% Value | Value:Size | Value/TypeSpecifierList | Value:Size/TypeSpecifierList
 %%-----------------------------------------------------------------------------
