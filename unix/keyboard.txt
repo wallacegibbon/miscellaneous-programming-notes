@@ -13,3 +13,6 @@ more documents about this topic can be find [here](https://wiki.archlinux.org/in
 
 This configuration works both in X window and console.
 
+For more unusual configurations, edit this file directly:
+/usr/share/X11/xkb/keycodes/evdev
+(change the default xkb_keycodes "evdev")
