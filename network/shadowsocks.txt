@@ -1,0 +1,32 @@
+## vim: ft=markdown :
+
+There are many versions of shadowsocks implementations, bug many of them just
+did not work for some reason, the python version works.
+
+Use pip to install `shadowsocks` and start it like this:
+```sh
+ssserver -c conf.json start
+
+ssserver -c conf.json -d start #run as daemon
+ssserver -c conf.json -d stop
+```
+
+The configuration json:
+```json
+{
+    "server":"12.34.56.78",
+    "server_port":8388,
+    "local_address": "127.0.0.1",
+    "local_port":1080,
+    "password":"mypassword...",
+    "timeout":300,
+    "method":"aes-256-gcm"
+}
+```
+
+the shadowsocks pakcege may be outdate (and do not support aes-256-gcm),
+update it in this way
+```sh
+pip3 install https://github.com/shadowsocks/shadowsocks/archive/master.zip -U
+```
+
