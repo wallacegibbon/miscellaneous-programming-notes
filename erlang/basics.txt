@@ -37,9 +37,14 @@ if A() -> 1; true -> 2 end. % user defined function is not allow in "if"
 %> * 1: illegal guard expression
 
 %% "if" is not necessary in erlang, for example,
-if N > 0 -> positive end.
+if
+    N > 0 -> positive
+end.
+
 %% is just like:
-case dummy of _ when N > 0 -> positive end.
+case dummy of
+    _ when N > 0 -> positive
+end.
 
 
 %%-----------------------------------------------------------------------------
@@ -49,7 +54,9 @@ case dummy of _ when N > 0 -> positive end.
 %% In other words, ";" is like "or" in guard, "," is like "and",
 %% and "," has higher priority
 %%-----------------------------------------------------------------------------
-X = fun (A) when A > 3, A < 5; A > 8, A < 10 -> A end.
+X = fun (A) when A > 3, A < 5; A > 8, A < 10 ->
+            A
+    end.
 %> #Fun<erl_eval.6.128620087>
 
 X(1).
@@ -81,10 +88,10 @@ $\r.
 $\n.
 %> 10
 
-[$a|"bcd"].
+[$a | "bcd"].
 %> "abcd"
 
-["a"|"bcd"].
+["a" | "bcd"].
 %> ["a",98,99,100]
 
 
@@ -95,20 +102,20 @@ $\n.
 %% but for tuple, select element through index is fast and normal,
 %% so `element(N, L)` is built-in.
 %%-----------------------------------------------------------------------------
-lists:nth(2, [a,b,c,d,e]).
+lists:nth(2, [a, b, c, d, e]).
 %> b
 
-element(2, {a,b,c,d,e}).
+element(2, {a, b, c, d, e}).
 %> b
 
 
 %%-----------------------------------------------------------------------------
 %% there is no "reduce" in erlang, it's called "fold"
 %%-----------------------------------------------------------------------------
-lists:foldl(fun (X, V) -> [X|V] end, [], [1,2,3]).
+lists:foldl(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 %> [3,2,1]
 
-lists:foldr(fun (X, V) -> [X|V] end, [], [1,2,3]).
+lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 %> [1,2,3]
 
 
@@ -232,7 +239,7 @@ QH = qlc:q([{X, Y} || X <- [a, b], Y <- [1, 2]]).
 qlc:e(QH).
 %> [{a,1},{a,2},{b,1},{b,2}]
 
-qlc:q([{a,1},{a,2},{b,1},{b,2}]).
+qlc:q([{a, 1}, {a, 2}, {b, 1}, {b, 2}]).
 %> ** exception error: bad argument
 
 
@@ -242,7 +249,8 @@ qlc:q([{a,1},{a,2},{b,1},{b,2}]).
 %%-----------------------------------------------------------------------------
 ets:fun2ms(fun ({A, B, C}) when A < B; A > B, B < C ->
                    A;
-               ({A, B}) when A >= B -> B
+               ({A, B}) when A >= B ->
+                   B
            end).
 %> [{{'$1','$2','$3'},[{'<','$1','$2'}],['$1']},
 %   {{'$1','$2','$3'},[{'>','$1','$2'},{'<','$2','$3'}],['$1']},
@@ -338,6 +346,10 @@ io:format("~8.2.0B~n", [Y]).
 io:format("~4.2.0B~n", [Z]).
 %  0111
 %> ok
+
+%% bit syntax can be used to get the byte representation of floats (or others)
+<<3.1415926:32/float>>.
+%> <<64,73,15,218>>
 
 
 %%-----------------------------------------------------------------------------
@@ -621,10 +633,10 @@ io:format("~.2.0B~n", [126]).
 %%-----------------------------------------------------------------------------
 -record(blah,  {a, b, c}).
 
-#blah{a=1}.
+#blah{a = 1}.
 %> {blah,1,undefined,undefined}
 
-#blah{a=1, _=a}.
+#blah{a = 1, _ = a}.
 %> {blah,1,a,a}
 
 
