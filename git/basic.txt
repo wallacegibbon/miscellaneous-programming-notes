@@ -23,6 +23,9 @@ git config --global color.diff auto
 # disable color
 git config --global color.ui false
 
+# set proxy
+git config --global http.proxy socks5://127.0.0.1:1080
+
 # list current config
 git config --list   # or just `git config -l`
 
