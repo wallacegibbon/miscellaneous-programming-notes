@@ -275,7 +275,7 @@ v.val = 0x12345678;
 printf("(%d), %d, %d, %d, (%d)\n", v.fields.pad1, v.fields.v1, v.fields.v2, v.fields.v3, v.fields.pad2);
 // (120), 12, 2, 209, (18)
 
-printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0x7f, (v.val >> 7) & 0x0f, (v.val >> 11) & 0x07, (v.val >> 14) & 0x3ff, v.val >4);
+printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0x7f, (v.val >> 7) & 0x0f, (v.val >> 11) & 0x07, (v.val >> 14) & 0x3ff, v.val >> 24;
 // use bit operations: (120), 12, 2, 209, (18)
 ```
 
@@ -453,7 +453,7 @@ erlang:process_info(self(), current_stacktrace).
 ```
 
 
-## et release version
+## Get release version
 
 ```erlang
 erlang:system_info(otp_release).
@@ -646,11 +646,13 @@ Port ! {PortOwner, {command, Data}}
 ```erlang
 erlang:send_after(0, self(), "test").
 %> #Ref<0.2007321174.2698510337.136265>
+
 receive A -> A end.
 %> "test"
 
 erlang:start_timer(0, self(), "test").
 %> #Ref<0.2007321174.2698510337.136278>
+
 receive A -> A end.
 %> {timeout,#Ref<0.2007321174.2698510337.136278>,"test"}
 ```
@@ -658,14 +660,12 @@ receive A -> A end.
 
 ## unicode
 
-For utf8-encoded string "支付测试"
+For utf8-encoded string "汉字测试"
 
 ```erlang
-unicode:characters_to_list(<<230,148,175,228,187,152,230,181,139,232,175,149>>).
-%> [25903,20184,27979,35797]
+unicode:characters_to_list(<<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>).
+%> [27721,23383,27979,35797]
 
-
-unicode:characters_to_binary([25903,20184,27979,35797]).
-%> <<230,148,175,228,187,152,230,181,139,232,175,149>>
-
+unicode:characters_to_binary([27721,23383,27979,35797]).
+%> <<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>
 ```
