@@ -17,8 +17,7 @@
 
 void **ops = NULL;
 
-void
-blah(void *op)
+void blah(void *op)
 {
 	// "tmp" does NOT have to be static, but being static is more efficient.
 	static void *tmp[] = {&&op1, &&op2};
@@ -41,8 +40,7 @@ init:
 }
 
 
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	blah(0);
 	blah(ops[0]);
