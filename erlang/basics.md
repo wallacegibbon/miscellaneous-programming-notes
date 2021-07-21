@@ -1,14 +1,7 @@
-## These 4 operators are "right to left" (++, --, !, =)
-
-```erlang
-[1,2,3] -- [1,2,3,4,5]      -- [1,2].
-%> [1,2]
-
-([1,2,3] -- [1,2,3,4,5])    -- [1,2].
-%> []
-```
-
 ## Create tuple of certain arity
+
+Tuples are based on Array in BEAM machine, which make it effecient and useful in some special situations.
+
 ```erlang
 erlang:make_tuple(5, 1).
 %> {1,1,1,1,1}
@@ -17,9 +10,19 @@ erlang:make_tuple(5, d, [{1, a}, {3, z}]).
 %> {a,d,z,d,d}
 ```
 
+
 ## Atom, Variable, funtion call
 
 both operands of the ':' operator can be variable: e.g. `VarModName:VarFunName()`.
+
+
+## These 4 operators are "right to left" (++, --, !, =)
+
+```erlang
+( [1,2,3] -- [1,2,3,4,5] )  -- [1,2].   %> []
+
+  [1,2,3] -- [1,2,3,4,5]    -- [1,2].   %> [1,2]
+```
 
 
 ## The "if" in erlang only support guard, so it only have limited power.
@@ -82,13 +85,21 @@ $\n.
 %> ["a",98,99,100]
 ```
 
+This rule also works for Unicode
+```erlang
+%% The following expression won't work on Windows CMD (for the encoding problem).
+"汉字测试".
+%> [27721,23383,27979,35797]    %this is not what the shell shows, but it is what it represents
+```
+
+
 ## There is no "reduce" in erlang, it's called "fold"
 
 ```erlang
-lists:foldl(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
+lists:foldl( fun (X, V) -> [X | V] end, [], [1, 2, 3] ).
 %> [3,2,1]
 
-lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
+lists:foldr( fun (X, V) -> [X | V] end, [], [1, 2, 3] ).
 %> [1,2,3]
 ```
 
@@ -96,9 +107,23 @@ lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 ## In pattern matching, #{} will match all maps
 
 ```erlang
-case #{a => 1} of #{} -> "!!!"; _ -> ok end.
+case #{a => 1} of
+    #{} ->              "!!!";
+    _ ->                ok
+end.
 %> "!!!"
 ```
+
+It's the same situation for tuples
+
+```erlang
+case #blah{a = 1} of
+    #blah{} ->          "!!!";
+    _ ->                ok
+end.
+%> "!!!"
+```
+
 
 ## In Comparison: list > tuple > atom > number
 
@@ -110,6 +135,9 @@ lists:sort([a, b, "abc", {1, 2, 3}, 5]).
 %> [5,a,b,{1,2,3},"abc"]
 ```
 
+THIS CAN BRING BUGS when you sort things without checking it's type.
+
+
 ## Pre-defined macros:
 
 ?MODULE, ?FILE, ?LINE
@@ -117,7 +145,7 @@ lists:sort([a, b, "abc", {1, 2, 3}, 5]).
 
 ## The qlc
 
-`qlc:q` is not a real function, it is a parse_transform
+`qlc:q` is not a real function, it is a *parse_transform*
 
 To use `qlc:q` the following compile option is needed in the source file:
 ```erlang
@@ -138,7 +166,7 @@ qlc:q([{a, 1}, {a, 2}, {b, 1}, {b, 2}]).
 
 ## `fun2ms` is another parse_transform
 
-It creates "match specification" for mnesia/ets's select function
+It creates *match specification* for mnesia/ets's select function
 
 ```erlang
 ets:fun2ms(fun ({A, B, C}) when A < B; A > B, B < C -> A;
@@ -403,7 +431,7 @@ try 1 of _ -> 1/0 catch error:Any -> Any end.
 
 ## Function expression
 
-Since R17, "fun" can have name. (good for defining recursive function)
+Since R17, `fun` expressions can have name. (convenient for defining recursive functions)
 
 ```erlang
 F = fun X(0) -> 1; X(N) -> N * X(N - 1) end.
@@ -662,13 +690,9 @@ receive A -> A end.
 
 ## Unicode
 
-For utf8-encoded string "汉字测试"
+For utf8-encoded string "汉字测试". (write as `[27721,23383,27979,35797]` just for convenience on Windows CMD)
 
 ```erlang
-%% The following expression won't work on Windows CMD (for the encoding problem).
-"汉字测试".
-%> [27721,23383,27979,35797]    %this is not what the shell shows, but it is what it represents
-
 unicode:characters_to_list(<<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>).
 %> [27721,23383,27979,35797]
 
