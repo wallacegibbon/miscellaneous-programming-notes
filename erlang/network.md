@@ -14,6 +14,12 @@ httpc:request(get, {"https://baidu.com", []}, [{timeout, 3000}], [{body_format, 
 %     <<"<!DOCTYPE html>\r\n<html>\r\n<head>\n\t"...>>}}
 ```
 
+The `content-type` is not to be put into the headers list, but as the 3rd element of the 2nd argument of httpc:request
+
+```erlang
+httpc:request(post, {"https://blah.com", [], "application/json", <<"{\"a\":1}">>}, [], []).
+```
+
 
 ## The following situation could be a bug (in OTP21)
 

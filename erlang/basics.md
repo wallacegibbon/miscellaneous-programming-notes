@@ -1,10 +1,10 @@
 ## These 4 operators are "right to left" (++, --, !, =)
 
 ```erlang
-[1,2,3] -- [1,2,3,4,5] -- [1,2].
+[1,2,3] -- [1,2,3,4,5]      -- [1,2].
 %> [1,2]
 
-([1,2,3] -- [1,2,3,4,5]) -- [1,2].
+([1,2,3] -- [1,2,3,4,5])    -- [1,2].
 %> []
 ```
 
@@ -61,7 +61,7 @@ X(11).
 %> ** exception error: no function clause matching
 ```
 
-## character
+## Character
 
 Erlang has no character or string, it's integer and list.
 
@@ -82,7 +82,7 @@ $\n.
 %> ["a",98,99,100]
 ```
 
-## there is no "reduce" in erlang, it's called "fold"
+## There is no "reduce" in erlang, it's called "fold"
 
 ```erlang
 lists:foldl(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
@@ -93,14 +93,14 @@ lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 ```
 
 
-## in pattern matching, #{} will match all maps
+## In pattern matching, #{} will match all maps
 
 ```erlang
 case #{a => 1} of #{} -> "!!!"; _ -> ok end.
 %> "!!!"
 ```
 
-## in Comparison: list > tuple > atom > number
+## In Comparison: list > tuple > atom > number
 
 ```erlang
 [1, 2, 3] > {1, 2, 3}
@@ -110,7 +110,7 @@ lists:sort([a, b, "abc", {1, 2, 3}, 5]).
 %> [5,a,b,{1,2,3},"abc"]
 ```
 
-## pre-defined macros:
+## Pre-defined macros:
 
 ?MODULE, ?FILE, ?LINE
 
@@ -136,7 +136,7 @@ qlc:q([{a, 1}, {a, 2}, {b, 1}, {b, 2}]).
 %> ** exception error: bad argument
 ```
 
-## fun2ms is another parse_transform
+## `fun2ms` is another parse_transform
 
 It creates "match specification" for mnesia/ets's select function
 
@@ -160,7 +160,7 @@ ets:fun2ms(fun ([A]) -> A end).
 ```
 
 
-## binary
+## Binary
 
 Value | Value:Size | Value/TypeSpecifierList | Value:Size/TypeSpecifierList
 
@@ -280,6 +280,7 @@ printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0x7f, (v.val >> 7
 ```
 
 But in Erlang:
+
 ```erlang
 <<P1:7, V1:3, V2:4, V3:10/little, P2:8>> = <<16#12345678:32/little-signed>>.
 
@@ -308,6 +309,7 @@ printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0xff, (v.val >> 8
 ```
 
 In Erlang:
+
 ```erlang
 <<P1:8, V1:4, V2:4, V3:8/little, P2:8>> = <<16#12345678:32/little-signed>>.
 
@@ -316,7 +318,7 @@ In Erlang:
 ```
 
 
-## the AST of a function
+## The AST of a function
 
 Function contains clauses, a clause is like: `{clause,Line,[Args],[GuardSeqs],[Body]}`
 
@@ -338,7 +340,7 @@ erl_parse:parse_form(element(2, erl_scan:string("blah() -> 3."))).
 ```
 
 
-## try...of...catch...after...end
+## `try...of...catch...after...end`
 
 There can be multiple expressions in try, which is invalid in case:
 ```erlang
@@ -399,7 +401,7 @@ try 1 of _ -> 1/0 catch error:Any -> Any end.
 ```
 
 
-## function expression
+## Function expression
 
 Since R17, "fun" can have name. (good for defining recursive function)
 
@@ -411,7 +413,7 @@ F(10).
 %> 3628800
 ```
 
-## process operations
+## Process operations
 
 list all processes
 ```erlang
@@ -464,13 +466,13 @@ erlang:system_info(wordsize).
 ```
 
 
-## module related functions
+## Module related functions
 
 ```erlang
 code:which(filename).
 %> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin/filename.beam"
 
-filename:dirname(code:which(filename)).
+filename:dirname( code:which(filename) ).
 %> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin"
 
 %% list all loaded modules
@@ -553,7 +555,7 @@ The sticky mechanism can only protect erts while it is running.
 
 
 
-## format
+## Format
 
 The format  `~<FieldWidth>.<Precision>.<Pad><Mod>`
 
@@ -607,7 +609,7 @@ Fields in record can have different default values by using the `_` the "default
 
 
 
-## regular expression
+## Regular expression
 
 ```erlang
 re:run("hello, wallace", "hello, ([^\s]+)").
@@ -628,7 +630,7 @@ re:run("hello, wallace", <<"hello, ([^\s]+)">>).
 ```
 
 
-## !, process and port
+## `!`, process and port
 
 ```erlang
 %% erlang:send/2 is same as the send operator("!")
@@ -658,14 +660,55 @@ receive A -> A end.
 ```
 
 
-## unicode
+## Unicode
 
 For utf8-encoded string "汉字测试"
 
 ```erlang
+%% The following expression won't work on Windows CMD (for the encoding problem).
+"汉字测试".
+%> [27721,23383,27979,35797]    %this is not what the shell shows, but it is what it represents
+
 unicode:characters_to_list(<<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>).
 %> [27721,23383,27979,35797]
 
 unicode:characters_to_binary([27721,23383,27979,35797]).
-%> <<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>
+%> <<230,177,137,229,173,151,230,181,139,232,175,149>>
+
+%% The following expression won't work on Windows CMD (for the encoding problem).
+unicode:characters_to_binary("汉字测试").
+%> <<230,177,137,229,173,151,230,181,139,232,175,149>>
+```
+
+
+## Filename Operations
+
+The most common filename operation functions in erlang (`dirname`, `basename`, `extension`) is very similar to those that are in Node.js
+
+```erlang
+filename:dirname("/a/b/c/d/e.erl").
+%> "/a/b/c/d"
+
+filename:basename("/a/b/c/d/e.erl").
+%> "e.erl"
+
+filename:basename("/a/b/c/d/e.erl", ".erl").
+%> "e"
+
+filename:extension("/a/b/c/d/e.erl").
+%> ".erl"
+```
+
+```javascript
+path.dirname("/a/b/c/d/e.erl");
+//> '/a/b/c/d'
+
+path.basename("/a/b/c/d/e.erl");
+//> 'e.erl'
+
+path.basename("/a/b/c/d/e.erl", ".erl");
+//> 'e'
+
+path.extname("/a/b/c/d/e.erl");
+//> '.erl'
 ```
