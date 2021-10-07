@@ -89,17 +89,17 @@ This rule also works for Unicode
 ```erlang
 %% The following expression won't work on Windows CMD (for the encoding problem).
 "汉字测试".
-%> [27721,23383,27979,35797]    %this is not what the shell shows, but it is what it represents
+%> [27721,23383,27979,35797] %this is not what the shell shows, but it is what it represents
 ```
 
 
 ## There is no "reduce" in erlang, it's called "fold"
 
 ```erlang
-lists:foldl( fun (X, V) -> [X | V] end, [], [1, 2, 3] ).
+lists:foldl(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 %> [3,2,1]
 
-lists:foldr( fun (X, V) -> [X | V] end, [], [1, 2, 3] ).
+lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 %> [1,2,3]
 ```
 
@@ -108,8 +108,10 @@ lists:foldr( fun (X, V) -> [X | V] end, [], [1, 2, 3] ).
 
 ```erlang
 case #{a => 1} of
-    #{} ->              "!!!";
-    _ ->                ok
+    #{} ->
+        "!!!";
+    _ ->
+        ok
 end.
 %> "!!!"
 ```
@@ -118,8 +120,10 @@ It's the same situation for tuples
 
 ```erlang
 case #blah{a = 1} of
-    #blah{} ->          "!!!";
-    _ ->                ok
+    #blah{} ->
+        "!!!";
+    _ ->
+        ok
 end.
 %> "!!!"
 ```
@@ -176,7 +180,7 @@ ets:fun2ms(fun ({A, B, C}) when A < B; A > B, B < C -> A;
 %   {{'$1','$2','$3'},[{'>','$1','$2'},{'<','$2','$3'}],['$1']},
 %   {{'$1','$2'},[{'>=','$1','$2'}],['$2']}]
 
-ets:fun2ms(fun ({A, B, C}=D) -> D end).
+ets:fun2ms(fun ({A, B, C} = D) -> D end).
 %> [{{'$1','$2','$3'},[],['$_']}]
 
 ets:fun2ms(fun (D) -> D end).
@@ -500,7 +504,7 @@ erlang:system_info(wordsize).
 code:which(filename).
 %> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin/filename.beam"
 
-filename:dirname( code:which(filename) ).
+filename:dirname(code:which(filename)).
 %> "/usr/lib/erlang/lib/stdlib-3.7.1/ebin"
 
 %% list all loaded modules
@@ -626,7 +630,7 @@ io:format("~.2.0B~n", [126]).
 Fields in record can have different default values by using the `_` the "default default value" is `undefined`
 
 ```erlang
--record(blah,  {a, b, c}).
+-record(blah, {a, b, c}).
 
 #blah{a = 1}.
 %> {blah,1,undefined,undefined}
@@ -634,7 +638,6 @@ Fields in record can have different default values by using the `_` the "default
 #blah{a = 1, _ = a}.
 %> {blah,1,a,a}
 ```
-
 
 
 ## Regular expression
@@ -736,3 +739,4 @@ path.basename("/a/b/c/d/e.erl", ".erl");
 path.extname("/a/b/c/d/e.erl");
 //> '.erl'
 ```
+

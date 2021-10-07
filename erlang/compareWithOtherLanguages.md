@@ -25,7 +25,7 @@ Matching List (or Array) is very similar.
 In Erlang, it's `[A | B] = Data`:
 
 ```erlang
-[A | B] =       [1, 2, 3, 4, 5, 6].
+[A | B] = [1, 2, 3, 4, 5, 6].
 %> [1,2,3,4,5,6]
 
 A.
@@ -38,7 +38,7 @@ B.
 In Javascript, it's `[A, ...B]`:
 
 ```javascript
-[A, ...B] =     [1, 2, 3, 4, 5, 6];
+[A, ...B] = [1, 2, 3, 4, 5, 6];
 //> [ 1, 2, 3, 4, 5, 6 ]
 
 A;
@@ -47,3 +47,4 @@ A;
 B;
 //> [ 2, 3, 4, 5, 6 ]
 ```
+
