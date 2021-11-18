@@ -693,7 +693,7 @@ receive A -> A end.
 
 ## Unicode
 
-For utf8-encoded string "汉字测试". (write as `[27721,23383,27979,35797]` just for convenience on Windows CMD)
+For utf8-encoded string "汉字测试". (also can be written as `[27721,23383,27979,35797]`)
 
 ```erlang
 unicode:characters_to_list(<<230, 177, 137, 229, 173, 151, 230, 181, 139, 232, 175, 149>>).
@@ -704,6 +704,13 @@ unicode:characters_to_binary([27721,23383,27979,35797]).
 
 %% The following expression won't work on Windows CMD (for the encoding problem).
 unicode:characters_to_binary("汉字测试").
+%> <<230,177,137,229,173,151,230,181,139,232,175,149>>
+```
+
+UTF-8 literal in binary syntax: (do not test this on windows CMD or PowerShell, write it in a file and run the file)
+
+```erlang
+<<"汉字测试"/utf8>>.
 %> <<230,177,137,229,173,151,230,181,139,232,175,149>>
 ```
 
