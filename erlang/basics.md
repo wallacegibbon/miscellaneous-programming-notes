@@ -660,6 +660,19 @@ re:run("hello, wallace", <<"hello, ([^\s]+)">>).
 %> {match,[{0,14},{7,7}]}
 ```
 
+For replacing, you can choose the return type. (flat list or iolist, the later one is more effecient)
+
+```erlang
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g1").
+%> [[<<"a">>]|<<"b/c/d/e">>]
+
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g1", [{return, list}]).
+%> "ab/c/d/e"
+
+re:replace("/a/b/c/d/e", "/([^/]*)/", "~\\g1~", [{return, list}]).
+%> "~a~b/c/d/e"
+```
+
 
 ## `!`, process and port
 
