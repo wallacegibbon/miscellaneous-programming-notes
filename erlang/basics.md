@@ -663,14 +663,28 @@ re:run("hello, wallace", <<"hello, ([^\s]+)">>).
 For replacing, you can choose the return type. (flat list or iolist, the later one is more effecient)
 
 ```erlang
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\1").
+%> [[<<"a">>]|<<"b/c/d/e">>]
+
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\1", [{return, list}]).
+%> "ab/c/d/e"
+
+re:replace("/a/b/c/d/e", "/([^/]*)/", "~\\1~", [{return, list}]).
+%> "~a~b/c/d/e"
+```
+
+The following 3 are the same:
+
+```erlang
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\1").
+%> [[<<"a">>]|<<"b/c/d/e">>]
+
 re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g1").
 %> [[<<"a">>]|<<"b/c/d/e">>]
 
-re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g1", [{return, list}]).
-%> "ab/c/d/e"
+re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g{1}").
+%> [[<<"a">>]|<<"b/c/d/e">>]
 
-re:replace("/a/b/c/d/e", "/([^/]*)/", "~\\g1~", [{return, list}]).
-%> "~a~b/c/d/e"
 ```
 
 
