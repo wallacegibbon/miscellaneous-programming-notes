@@ -687,6 +687,51 @@ re:replace("/a/b/c/d/e", "/([^/]*)/", "\\g{1}").
 
 ```
 
+### Some advanced regular expression skills
+> <http://www.cs.man.ac.uk/~pjj/cs212/ex2_str_comm.html>
+
+```erlang
+%% use "@=" & "=@" for block comments (just like the /* ... */ in C language)
+R1 = "@=(?:[^=]|=[^@])*=@".
+%%         ---- -----
+
+R2 = "@=(?:[^=]*=+[^@])*[^=]*=+@".
+%%         -----------  ~~~~~~~~
+
+re:run("before@=this= == @ is comments=@after@=fasdfa=@test", R1, [{capture, all, list}]).
+%> {match,["@=this= == @ is comments=@"]}
+
+re:run("before@=this= == @ is comments=@after@=fasdfa=@test", R2, [{capture, all, list}]).
+%> {match,["@=this= == @ is comments=@"]}
+
+%% use "@#=>" & "<=#@" for block comments
+R3 = "@#=>(?:[^<]|<[^=]|<=[^#]|<=#[^@])*<=#@".
+%%           ---- ----- ------ -------
+
+R4 = "@#=>(?:[^=]*=+[^=])*(?:[^=]*=+=[^=])*(?:[^=]*=+==[^@])*[^=]*<+=#@".
+%%           -----------     ------------     -------------  ~~~~~~~~~~
+
+re:run("before@#=>this<<=<=# is comments<=#@after", R3, [{capture, all, list}]).
+%> {match,["@#=>this<<=<=# is comments<=#@"]}
+
+re:run("before@#=>this<<=<=# is comments<=#@after", R4, [{capture, all, list}]).
+%> {match,["@#=>this<<=<=# is comments<=#@"]}
+
+
+%% use "@===" & "===@" for block comments
+R5 = "@===(?:[^=]|=[^=]|==[^=]|===[^@])*===@".
+%%           ---- ----- ------ -------
+
+R6 = "@===(?:[^=]*=+[^=])*(?:[^=]*=+=[^=])*(?:[^=]*=+==[^@])*[^=]*===@".
+%%           -----------     ------------     -------------  ~~~~~~~~~
+
+re:run("before@===this= == === is comments===@after", R5, [{capture, all, list}]).
+%> {match,["@===this= == === is comments===@"]}
+
+re:run("before@===this= == === is comments===@after", R6, [{capture, all, list}]).
+%> {match,["@===this= == === is comments===@"]}
+```
+
 
 ## `!`, process and port
 
