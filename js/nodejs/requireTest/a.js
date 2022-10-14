@@ -1,5 +1,5 @@
 function newObject() {
-  return {};
+	return {};
 }
 
 module.exports = newObject();

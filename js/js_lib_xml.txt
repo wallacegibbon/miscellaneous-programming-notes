@@ -1,10 +1,10 @@
-// vim: ft=javascript :
+/// vim: ft=javascript :
 
 
-// in nodejs, you need "npm install xmldom", and then:
+/// in nodejs, you need "npm install xmldom", and then:
 var DOMParser = require('xmldom').DOMParser;
 
-// browsers support DOMParser by default.
+/// browsers support DOMParser by default.
 
 var parser = new DOMParser();
 var dom = parser.parseFromString("<x><y id=\"a\" /></x>", "text/xml");
