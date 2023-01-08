@@ -1,6 +1,3 @@
--- vim: ft=sql :
-
-
 -- The first time you start mysqld
 -- run:
 --  	mysqld --initialize --console
@@ -71,31 +68,29 @@ show databases;
 show tables;
 
 -- create database
-create database myfirstdatabase;
+CREATE DATABASE myfirstdatabase;
 
 -- delete database
-drop database myfirstdatabase;
+DROP DATABASE myfirstdatabase;
 
 -- select database
-use dbname;
+USE dbname;
 
 -- allow root to login from any ip address
-use mysql;
-update user set host='%' where user='root';
+USE mysql;
+UPDATE user SET host='%' WHERE user='root';
 
 -- change password (have to be root)
-update user set password=PASSWORD('zxcvb') where user='root';
+UPDATE user SET password=PASSWORD('zxcvb') WHERE user='root';
 flush privileges;
 
 -- show users who have logged in
-select user();
+SELECT user();
 
 -- transaction
-start transaction;
+START TRANSACTION;
 ...
-rollback; -- commit;
+ROLLBACK; -- commit;
 
 -- save data into a text file
-select * into outfile 'd:\\data\\parking.txt' lines terminated by '\r\n'
-from parking;
-
+SELECT * INTO outfile 'd:\\data\\parking.txt' lines terminated BY '\r\n' FROM parking;
