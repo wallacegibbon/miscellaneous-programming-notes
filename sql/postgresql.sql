@@ -11,20 +11,19 @@ SELECT rolname, rolpassword FROM pg_authid;
 \du
 
 -- connect (switch) to a DB:
--c dbname
+\c dbname
 
 -- connect without argument will query current DB and current user
--c
+\c
 
 -- list all tables (on current DB)
--dt
+\dt
 
 -- list table spaces
--db
+\db
 
 -- list detailed table spaces
--db+
+\db+
 
 -- list schemas
--dn
-
+\dn
