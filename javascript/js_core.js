@@ -1,5 +1,3 @@
-/// vim: ft=javascript :
-
 //////////////////////////////////////////////////////////////////////////////
 /// ArrayBuffer is just like the result of malloc in C. It can be manipulated
 /// by "views" (like pointer type converting in C).
@@ -475,6 +473,18 @@ void function() { console.log("hi") }();
 
 
 //////////////////////////////////////////////////////////////////////////////
+/// `?:` is right-associativity
+true ? false : 1 ? 2 : 3;
+//> false
+
+(true ? false : 1) ? 2 : 3;
+//> 3
+
+true ? false : (1 ? 2 : 3);
+//> false
+
+
+//////////////////////////////////////////////////////////////////////////////
 /// javascript list operations:
 ///  push    & pop   : add & remove on last  element
 ///  unshift & shift : add & remove on first element
@@ -569,10 +579,10 @@ atob("aGVsbG8sIHdvcmxk");
 //> "hello, world"
 
 /// in Node.js
-new Buffer("hello, world").toString("base64");
+Buffer.from("hello, world").toString("base64");
 //> 'aGVsbG8sIHdvcmxk'
 
-new Buffer("aGVsbG8sIHdvcmxk", "base64").toString();
+Buffer.from("aGVsbG8sIHdvcmxk", "base64").toString();
 //> 'hello, world'
 
 
@@ -626,4 +636,5 @@ a === b;
 
 /// You can test it in "Firefox Web Browser" and "CouchDB".
 
+/// Modern Javascript has `structuredClone` for deep clone.
 

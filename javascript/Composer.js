@@ -3,41 +3,37 @@
 
 class Composer {
 
-constructor(middlewares) {
-	this.middlewares = middlewares;
-	this.next = () => 0;
-	this.context = {};
-	this.index = -1;
-}
-
-dispatch(i) {
-	if (i <= this.index)
-		return Promise.reject("next() called multiple times");
-
-	this.index = i;
-
-	let fn = this.middlewares[i];
-	if (i == this.middlewares.length)
-		fn = this.next;
-	if (!fn)
-		return Promise.resolve();
-
-	try {
-		return Promise.resolve(
-			fn(this.context, () => this.dispatch(i + 1))
-		);
-	} catch (err) {
-		return Promise.reject(err);
+	constructor(middlewares) {
+		this.middlewares = middlewares;
+		this.next = () => 0;
+		this.context = {};
+		this.index = -1;
 	}
-}
 
-compose() {
-	return async (context, next) => {
-		this.context = context;
-		this.next = next;
-		this.dispatch(0);
-	};
-}
+	dispatch(i) {
+		if (i <= this.index) { return Promise.reject("next() called multiple times"); }
+
+		this.index = i;
+		let fn = this.middlewares[i];
+		if (i == this.middlewares.length) { fn = this.next; }
+		if (!fn) { return Promise.resolve(); }
+
+		try {
+			return Promise.resolve(
+				fn(this.context, () => this.dispatch(i + 1))
+			);
+		} catch (err) {
+			return Promise.reject(err);
+		}
+	}
+
+	compose() {
+		return async (context, next) => {
+			this.context = context;
+			this.next = next;
+			this.dispatch(0);
+		};
+	}
 
 } // class Composer
 
@@ -64,7 +60,6 @@ async function test() {
 	const fn = composer.compose();
 	await fn({}, () => console.log("final"));
 }
-
 
 test().catch(console.error);
 

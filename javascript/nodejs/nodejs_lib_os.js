@@ -1,7 +1,4 @@
-/// vim: ft=javascript :
-
-/////////////////////////////////////////////////////////////////////////////
-var os = require("os");
+const os = require("os");
 //> undefined
 
 os.tmpdir();
@@ -58,4 +55,3 @@ os.networkInterfaces();
 /// end of line
 os.EOL;
 //> '\n'
-

@@ -1,6 +1,3 @@
-## vim: ft=sh :
-
-##############################################################################
 ## Compile ES6 or JSX in command line:
 npm install --save-dev babel-preset-es2015
 npm install --save-dev babel-preset-react
@@ -15,5 +12,3 @@ npm install --global babel-cli
 ## Compile a whole directory
 ## `-d` can also be `--out-dir`, `-s` means generate source map
 babel src -d lib -s
-
-

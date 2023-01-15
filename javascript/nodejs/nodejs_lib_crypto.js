@@ -1,9 +1,6 @@
-/// vim: ft=javascript :
-
 /////////////////////////////////////////////////////////////////////////////
 /// of course you need to import the library
-var crypto = require("crypto");
-
+const crypto = require("crypto");
 
 /////////////////////////////////////////////////////////////////////////////
 /// digest can decide return a hex string, or a buffer.
@@ -19,5 +16,3 @@ crypto.createHash("md4").update("blahblah").digest("hex");
 
 crypto.createHash("sha1").update("blahblah").digest("hex");
 //> 'd3395867d05cc4c27f013d6e6f48d644e96d8241'
-
-

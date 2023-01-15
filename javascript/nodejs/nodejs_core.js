@@ -1,6 +1,3 @@
-/// vim: ft=javascript :
-
-
 //////////////////////////////////////////////////////////////////////////////
 /// "exports" is just a reference to "module.exports",
 /// requrie() will return "module.exports"
@@ -42,6 +39,3 @@ new Buffer([ 97, 98, 99 ]);
 
 `${new Buffer([ 97, 98, 99 ])}`;
 //> 'abc'
-
-
-

@@ -1,16 +1,12 @@
-## vim: ft=sh :
-
 ##############################################################################
 ## The nodejs repl doesn't work well with rlwrap. (try to use Ctrl-u to delete)
 ## But you can make it right by setting a environment variable.
 NODE_NO_READLINE=1 rlwrap -a node
 
-
 ##############################################################################
-## Sometimes it fails to install package with npm. Adding some arguments
-## can solve this problem. e.g.
+## Sometimes it fails to install package with npm.
+## Adding some arguments can solve this problem. e.g.
 npm install --unsafe-perm=true --allow-root sharp
-
 
 ##############################################################################
 ## specify a npm repository (e.g. use taobao's npm)
