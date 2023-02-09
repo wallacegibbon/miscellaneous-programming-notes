@@ -1,27 +1,40 @@
-## vim: ft=sh :
+Create a temporary branch
 
-## create a temporary branch
+```
 git checkout -b task_branch
+```
 
-## do some coding...
+Code may have been changed by other people while you were coding, update it:
 
-## code may have been changed by other people while you were coding, update it
+```
 git checkout <main_branch>
 git pull
+```
 
-## do rebase
+Do rebase
+
+```
 git checkout task_branch
 git rebase -i <main_branch>
+```
 
-## if have conflicts
+When conflicts exists
+
+```
 git mergetool
 git rebase --continue
+```
 
-## push
+Push
+
+```
 git push origin HEAD:refs/for/<main_branch>
+```
 
-## clean up
+Clean up
+
+```
 git checkout <main_branch>
 git pull origin <main_branch>
 git branch -D task_branch
-
+```
