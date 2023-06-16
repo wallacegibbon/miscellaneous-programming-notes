@@ -19,7 +19,7 @@ $Person_vtable->say_hi = "Person_say_hi";
 function Person_new(string $name, int $age): Person {
 	global $Person_vtable;
 	$r = new Person();
-	$r->vtbl = $Person_vtable;
+	$r->vtbl = &$Person_vtable;
 	$r->name = $name;
 	$r->age = $age;
 	return $r;
