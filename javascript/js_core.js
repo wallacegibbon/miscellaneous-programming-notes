@@ -34,12 +34,12 @@ new Uint8Array(new Float64Array([ Math.PI ]).buffer);
 //////////////////////////////////////////////////////////////////////////////
 /// To access the prototype chain of an object, just use `__proto__`, all
 /// objects have this attribute
-let x = {};
-for (let i in x) console.log(i, ":", x[i]);
+var x = {};
+for (var i in x) console.log(i, ":", x[i]);
 //> undefined
 
 x.__proto__ = { ah: true, blah: true };
-for (let i in x) console.log(i, ":", x[i]);
+for (var i in x) console.log(i, ":", x[i]);
 //  ah : true
 //  blah : true
 //> undefined
@@ -151,7 +151,7 @@ function isArray(obj) {
 /// In the following example, the inner function is called in
 /// *function invocation pattern*,
 /// in this case, `this` is bound to global object.
-let o = { i: 3 };
+var o = { i: 3 };
 
 o.f1 = function() {
 	return (function() { return this.i })();
@@ -169,10 +169,10 @@ o.f1();
 
 /// `new`: the *constructor invocation pattern*
 function Person() {};
-let p = new Person();
+var p = new Person();
 
 /// This is what `new` does in the background:
-let p = {};
+var p = {};
 p.__proto__ = Person.prototype;
 Person.call(p);
 
@@ -188,7 +188,7 @@ function add() { return this.a + this.b }
 add();
 //> NaN
 
-let a = 1, b = 2;
+var a = 1, b = 2;
 add();
 //> 3
 
@@ -220,7 +220,7 @@ a.bind({ m: 4 })();
 
 //////////////////////////////////////////////////////////////////////////////
 /// ! when using ES6's `=>`, `call`, `apply`, `bind` will not work
-let a = () => this.x;
+var a = () => this.x;
 a();
 //> undefined
 a.call({ x: 8 });
@@ -241,13 +241,13 @@ Object.create = function (obj) {
 }
 
 Object.create = function (obj) {
-	let B = {};
+	var B = {};
 	Object.setPrototypeOf(B, obj);
 	return B;
 }
 
 Object.create = function (obj) {
-	let B = {};
+	var B = {};
 	B.__proto__ = obj;
 	return B;
 }
@@ -261,7 +261,7 @@ function A() {
 
 A.prototype.aa = function() { console.log(this.a); }
 
-let a = new A();
+var a = new A();
 a
 //> { a: 1, b: 2 }
 a.aa();
@@ -270,7 +270,7 @@ a.aa();
 
 /// We can create a object whose __proto__ is A,
 /// but doesn't have attribute `a` and `b`.
-let b = Object.create(A.prototype);
+var b = Object.create(A.prototype);
 
 /// this is useful when emulating inheritance in Old-styled Javascript.
 /// e.g.
@@ -296,7 +296,7 @@ Child.prototype = Object.create(Parent.prototype);
 
 Child.prototype.constructor = Child;
 
-let c = new Child("wallace", 30);
+var c = new Child("wallace", 30);
 
 c.get_name();
 //  wallace
@@ -308,7 +308,7 @@ JSON.stringify(c);
 
 //////////////////////////////////////////////////////////////////////////////
 /// Something about multiple `.`
-let a = { name: "a", b: { name: "b" } };
+var a = { name: "a", b: { name: "b" } };
 a.b.f = function() { return this.name };
 
 a.b.f();
@@ -318,7 +318,7 @@ a.b.f();
 
 //////////////////////////////////////////////////////////////////////////////
 /// `Array.sort` (the comparing function should return -1, 0, 1, not a boolean)
-let test = [ { a: [4, 2, 3], b: 3 }, { a: [2, 1, 3] }, { a: [8, 0] } ];
+var test = [ { a: [4, 2, 3], b: 3 }, { a: [2, 1, 3] }, { a: [8, 0] } ];
 test.sort((e1, e2) =>  e1["a"][1] - e2["a"][1]);
 //> [ { a: [ 8, 0 ] }, { a: [ 2, 1, 3 ] }, { a: [ 4, 2, 3 ], b: 3 } ]
 
@@ -441,7 +441,7 @@ Date.now();
 /// So `void 0` can make sure you get `undefined`, not `"undefined"`.
 
 /// e.g.
-let counter = 1;
+var counter = 1;
 void (counter += 1);
 //> undefined
 counter;
@@ -523,7 +523,7 @@ function toArray(obj) {
 }
 
 /// another way to show this:
-let a = { 0: "hello", 1: "world" };
+var a = { 0: "hello", 1: "world" };
 a;
 //> { '0': 'hello', '1': 'world' }
 
@@ -604,7 +604,7 @@ new RegExp(/\w+/, "i");
 /// the character set [^] can be used.
 
 /// A example for multiple lines matching
-let a = "abc\ndef\nghi";
+var a = "abc\ndef\nghi";
 
 /([^\n]*)\n(.*)/m.exec(a);
 //> [ 'abc\ndef', 'abc', 'def', ... ]
@@ -629,8 +629,8 @@ let a = "abc\ndef\nghi";
 
 //////////////////////////////////////////////////////////////////////////////
 /// The `Spidermonkey` specific way to do deep copy. (`eval` & `uneval`)
-let a = [1, 2, 3, 4, 5];
-let b = eval(uneval(a));
+var a = [1, 2, 3, 4, 5];
+var b = eval(uneval(a));
 a === b;
 //> false
 

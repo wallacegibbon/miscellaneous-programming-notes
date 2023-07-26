@@ -2,7 +2,6 @@
 /// 	<https://github.com/koajs/compose/blob/master/index.js>
 
 class Composer {
-
 	constructor(middlewares) {
 		this.middlewares = middlewares;
 		this.next = () => 0;

@@ -12,3 +12,4 @@ npm install --global babel-cli
 ## Compile a whole directory
 ## `-d` can also be `--out-dir`, `-s` means generate source map
 babel src -d lib -s
+
