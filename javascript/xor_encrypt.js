@@ -1,4 +1,4 @@
-/// $ node xor_encrypt.js mytestkey "A quick brown fox jumps over the lazy dog"
+/// $ node xor_encrypt.js mytestkey "A quick brown fox jumps over the lazy dog."
 
 function xor_encrypt(raw_string /*: Uint8Array*/, key /*: Uint8Array*/) {
 	var result = [];
@@ -8,10 +8,6 @@ function xor_encrypt(raw_string /*: Uint8Array*/, key /*: Uint8Array*/) {
 	return new Uint8Array(result);
 }
 
-function string_to_uint8array(s) {
-	return new TextEncoder().encode(s);
-}
-
 if (process.argv.length < 4) {
 	console.error(`Usage: node xor_encrypt.js key content`);
 	process.exit(1);
@@ -19,8 +15,8 @@ if (process.argv.length < 4) {
 
 console.log("original\t:", process.argv[3]);
 
-var raw_string = string_to_uint8array(process.argv[3]);
-var key = string_to_uint8array(process.argv[2]);
+var raw_string = new TextEncoder().encode(process.argv[3]);
+var key = new TextEncoder().encode(process.argv[2]);
 
 var encrypted_string = xor_encrypt(raw_string, key);
 var decrypted_string = xor_encrypt(encrypted_string, key);

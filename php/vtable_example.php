@@ -3,7 +3,7 @@
 /// The way to use PHP in the same style that I write C and Javascript code.
 
 $person_vtable = array(
-	"say_hi"	=> "person_say_hi",
+	"say_hi" => "person_say_hi",
 );
 
 function person_new($name, $age) {

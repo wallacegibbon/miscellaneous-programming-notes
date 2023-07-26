@@ -1,7 +1,7 @@
-/// in nodejs, you need "npm install xmldom", and then:
+/// In Node.js, you need "npm install xmldom", and then:
 var { DOMParser } = require('@xmldom/xmldom');
 
-/// browsers support DOMParser by default.
+/// Browsers support DOMParser by default.
 
 var parser = new DOMParser();
 var dom = parser.parseFromString("<x><y id=\"a\" /></x>", "text/xml");

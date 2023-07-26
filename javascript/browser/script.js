@@ -8,3 +8,4 @@ s.src = "/js/ajax.js";
 document.querySelector("head").appendChild(s);
 /// the target do NOT have to be "head"
 document.querySelector("body").appendChild(s);
+
