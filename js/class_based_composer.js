@@ -10,17 +10,15 @@ class Composer {
 	}
 
 	dispatch(i) {
-		if (i <= this.index) { return Promise.reject("next() called multiple times"); }
+		if (i <= this.index) return Promise.reject("next() called multiple times");
 
 		this.index = i;
 		let fn = this.middlewares[i];
-		if (i == this.middlewares.length) { fn = this.next; }
-		if (!fn) { return Promise.resolve(); }
+		if (i == this.middlewares.length) fn = this.next;
+		if (!fn) return Promise.resolve();
 
 		try {
-			return Promise.resolve(
-				fn(this.context, () => this.dispatch(i + 1))
-			);
+			return Promise.resolve(fn(this.context, () => this.dispatch(i + 1)));
 		} catch (err) {
 			return Promise.reject(err);
 		}
