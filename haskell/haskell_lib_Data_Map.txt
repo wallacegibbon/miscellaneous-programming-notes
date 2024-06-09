@@ -1,4 +1,4 @@
--- vim: ft=haskell :
+-- vim:ft=haskell
 
 -- Map is internally implemented with trees
 

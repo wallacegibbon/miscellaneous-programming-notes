@@ -1,5 +1,4 @@
-;; vim: ft=clojure :
-
+;; vim:ft=clojure
 
 ;; the #".." is a syntax sugar for re-pattern
 (re-pattern "\\d+")

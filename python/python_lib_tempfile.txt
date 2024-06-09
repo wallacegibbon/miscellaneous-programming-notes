@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## tempfile
 tempfile.mkstemp(suffix=".wx", prefix="tempfile.")

@@ -1,4 +1,4 @@
--- vim: ft=haskell :
+-- vim:ft=haskell
 
 -- let a = 1 inside GHCI is the equivalent of writing a = 1 in a script
 -- and then loading it.

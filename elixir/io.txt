@@ -1,5 +1,4 @@
-## vim: ft=elixir :
-
+## vim:ft=elixir
 
 ## IO.puts can only be used on string or things that can be converted to string
 

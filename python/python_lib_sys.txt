@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## sys can show all built-in modules:
 sys.builtin_module_names

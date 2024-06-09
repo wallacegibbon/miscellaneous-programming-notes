@@ -1,4 +1,4 @@
-## vim: ft=perl :
+## vim:ft=perl
 
 ## run perl interactive, like python and irb
 #$ perl -de 0

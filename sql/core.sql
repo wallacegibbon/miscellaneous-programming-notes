@@ -1,7 +1,7 @@
 -- create a table
 CREATE TABLE t1(
-  "id"    INTEGER PRIMARY KEY,
-  "value" TEXT,
+	"id"    INTEGER PRIMARY KEY,
+	"value" TEXT,
 );
 
 -- add new column to a table

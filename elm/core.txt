@@ -1,5 +1,4 @@
--- vim: ft=elm :
-
+-- vim:ft=elm
 
 -- operator precedences and associatives
 

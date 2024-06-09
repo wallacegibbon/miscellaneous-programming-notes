@@ -1,4 +1,4 @@
-## vim: ft=sh :
+## vim:ft=sh
 
 ## to see the start up info (which config file is loaded), run this
 vim --version

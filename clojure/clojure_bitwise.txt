@@ -1,4 +1,4 @@
-;; vim: ft=clojure :
+;; vim:ft=clojure
 
 ;; make some test with 0xaa, which is 170 in decimal
 

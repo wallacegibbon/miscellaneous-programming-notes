@@ -1,4 +1,4 @@
-;; vim: ft=clojure :
+;; vim:ft=clojure
 
 
 ;; clojurescript have built-in JSON functions !

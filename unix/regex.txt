@@ -1,4 +1,4 @@
-## vim: ft=sh :
+## vim:ft=sh
 
 ## The unix regular expression (used by grep, sed, vi...) have it's own rule.
 

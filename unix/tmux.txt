@@ -1,5 +1,4 @@
-# vim: ft=sh :
-
+# vim:ft=sh
 
 ## list all sessions:
 tmux ls

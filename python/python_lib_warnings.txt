@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 
 ## warnings.warn: issue a warning

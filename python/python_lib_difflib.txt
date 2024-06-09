@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## difflib
 ## The 3 import class of `difflib':

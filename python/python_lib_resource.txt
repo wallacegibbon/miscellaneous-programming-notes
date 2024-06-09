@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## resource limit
 ## specifies a value one greater than the maximum file descriptor number that

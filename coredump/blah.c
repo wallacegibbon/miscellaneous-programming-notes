@@ -2,19 +2,23 @@
 
 void a();
 
-int main(int argc, const char **argv) {
+int main(int argc, const char **argv)
+{
 	a();
 	return 0;
 }
 
-void c() {
+void c()
+{
 	*(int *)0 = 32;
 }
 
-void b() {
+void b()
+{
 	c();
 }
 
-void a() {
+void a()
+{
 	b();
 }

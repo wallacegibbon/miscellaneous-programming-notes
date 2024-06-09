@@ -1,4 +1,4 @@
-## vim: ft=sh :
+## vim:ft=sh
 
 ##############################################################################
 ## GET PUT DELETE are the most foundamental methods, POST can make something

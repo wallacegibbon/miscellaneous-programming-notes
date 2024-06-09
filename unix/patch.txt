@@ -1,5 +1,4 @@
-# vim: ft=sh :
-
+# vim:ft=sh
 
 # use `diff' to create a patch file. the `-u' is necessary, or the output format
 # of `diff' will be useless to `patch'

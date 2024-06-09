@@ -1,4 +1,4 @@
-;; vim: ft=clojure :
+;; vim:ft=clojure
 
 ;;-----------------------------------------------------------------------------
 ;; load-file will load a clojure file, and return the last function

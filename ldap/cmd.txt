@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 ##============================================================================
 ## a good ldap client you need:  LDAP Browser/Editor v2.8.2

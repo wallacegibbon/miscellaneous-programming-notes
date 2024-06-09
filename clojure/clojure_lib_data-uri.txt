@@ -1,4 +1,4 @@
-;; vim: ft=clojure :
+;; vim:ft=clojure
 
 ;;-----------------------------------------------------------------------------
 ;; This library is not yet available from a public repository.

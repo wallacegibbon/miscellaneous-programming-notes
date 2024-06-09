@@ -1,4 +1,4 @@
-## vim: ft=elixir :
+## vim:ft=elixir
 
 ## register a process, then all other processes can access to this process.
 ## have to do registry with a atom.

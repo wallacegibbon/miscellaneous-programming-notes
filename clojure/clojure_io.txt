@@ -1,5 +1,4 @@
-;; vim: ft=clojure :
-
+;; vim:ft=clojure
 
 (require '[clojure.java.io :as io])
 ;> nil

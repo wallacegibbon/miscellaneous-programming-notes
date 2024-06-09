@@ -1,5 +1,4 @@
-;; vim: ft=clojure :
-
+;; vim:ft=clojure
 
 ;;-----------------------------------------------------------------------------
 ;; the nodejs have a Buffer type, it's pretty handy for binary data.

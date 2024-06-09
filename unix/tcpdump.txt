@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 # `-i'      ->  specify interface
 # `-n'      ->  show ip addr instead of domain name

@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## traceback module
 ## the module use `traceback objects'(the object type that is stored in the

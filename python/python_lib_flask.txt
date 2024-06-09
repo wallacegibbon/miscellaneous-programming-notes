@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## flask import extensions
 #$ pip install flask-bootstrap
@@ -7,7 +7,6 @@
 #$ pip install flask-wtf
 #$ pip install flask-sqlalchemy
 #$ pip install flask-mail
-
 
 ## sending mail use flask-mail
 from flask.ext.mail import Message, Mail

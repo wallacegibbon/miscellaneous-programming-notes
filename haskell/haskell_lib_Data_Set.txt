@@ -1,4 +1,4 @@
--- vim: ft=haskell :
+-- vim:ft=haskell
 
 -- names in Data.Set clash with a lot of Prelude and Data.List names, so
 import qualified Data.Set as Set

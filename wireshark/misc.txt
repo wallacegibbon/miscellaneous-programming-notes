@@ -1,4 +1,4 @@
-## vim: ft=conf :
+## vim:ft=conf
 
 ##---------------------------------------------------------------------------
 ## filter destination ip
@@ -29,5 +29,4 @@ http.request.method == POST
 ##---------------------------------------------------------------------------
 ## combine different filter
 ip.dst == 47.90.63.66 and http.request.method == GET
-
 

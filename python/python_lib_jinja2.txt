@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## jinja2
 ## use the default environment

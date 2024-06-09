@@ -1,5 +1,4 @@
-## vim: ft=elixir :
-
+## vim:ft=elixir
 
 ## the most useful: "=~" & "Regex.run". one for check, one for capture.
 

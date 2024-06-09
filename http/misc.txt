@@ -1,4 +1,4 @@
-## vim: ft=conf :
+## vim:ft=conf
 
 ## a basic form looks like:
 <form action="form_action.asp" method="get">

@@ -1,5 +1,4 @@
-## vim: ft=elixir :
-
+## vim:ft=elixir
 
 ## do/end blocks are a syntactic convenience built on top of the keywords one.
 ## that why do/end blocks do not require a comma between the previous argument

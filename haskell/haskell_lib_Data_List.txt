@@ -1,4 +1,4 @@
--- vim: ft=haskell :
+-- vim:ft=haskell
 
 -- some functions of Data.List that is not preluded
 intersperse '.' "MONKEY" -- > "M.O.N.K.E.Y"

@@ -1,4 +1,4 @@
-## vim: ft=elixir :
+## vim:ft=elixir
 
 ## in erlang, string is char list; but in elixir, string is binary
 is_binary "abc"

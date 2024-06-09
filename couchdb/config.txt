@@ -1,4 +1,4 @@
-## vim: ft=dosini :
+## vim:ft=dosini
 
 ##############################################################################
 ## To enable CORS(Cross-Origin Resource Sharing), you need special

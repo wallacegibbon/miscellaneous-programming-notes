@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 # !!!
 # the `--disable-nls' : `nls' means "Native Language Support", you don't need

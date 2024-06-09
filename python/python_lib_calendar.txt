@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## calendar
 ## return weekday. Wednesday, 0-6 ~ Mon-Sun

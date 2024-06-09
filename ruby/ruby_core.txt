@@ -1,4 +1,4 @@
-## vim: ft=ruby :
+## vim:ft=ruby
 
 ## is the same object? just like `is' in python, use `equal?'
 'a'.equal? 'a'

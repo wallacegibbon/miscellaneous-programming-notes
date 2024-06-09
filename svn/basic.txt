@@ -1,4 +1,4 @@
-## vim: ft=sh :
+## vim:ft=sh
 
 # `status`, `diff`, `log` in svn are similar to those same-name-command in git.
 svn status ./src
@@ -10,8 +10,6 @@ svn log ./src
 svn checkout https://a.com/path/to/my/project
 svn commit https://a.com/path/to/my/project
 
-
 # Show configurations (just like `git config --list`)
 svn info
-
 

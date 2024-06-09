@@ -1,4 +1,4 @@
--- vim: ft=haskell :
+-- vim:ft=haskell
 
 isControl
 isSpace -- (including spaces, tab characters, newlines, etc)

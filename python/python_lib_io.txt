@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## there's no `StringIO' and `cStringIO' module in python3, you should use
 ## io.StringIO or io.BytesIO

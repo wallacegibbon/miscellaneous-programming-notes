@@ -1,5 +1,4 @@
-;; vim: ft=clojure :
-
+;; vim:ft=clojure
 
 ;;-----------------------------------------------------------------------------
 ;; you can use "js/xxx" to access the global javascript objects

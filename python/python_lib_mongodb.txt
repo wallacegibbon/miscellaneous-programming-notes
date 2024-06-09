@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## connect to mongodb server
 conn = pymongo.MongoClient("127.0.0.1", 13357)

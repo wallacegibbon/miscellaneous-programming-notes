@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## python struct: functions to convert between python values and c structs.
 ## b:char      , B:unsigned char       , h:short        , H:unsigned short

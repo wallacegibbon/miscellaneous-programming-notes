@@ -1,5 +1,4 @@
-# vim: ft=sh :
-
+# vim:ft=sh
 
 # define a function in bourne shell
 ttt(){ echo this is a function;}

@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 # VT100
 << CTRL_CODE

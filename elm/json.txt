@@ -1,4 +1,4 @@
--- vim: ft=elm :
+-- vim:ft=elm
 
 ------------------------------------------------------------------------------
 -- This package is usually used alongside elm/http to talk to servers or

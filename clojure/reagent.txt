@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 # create reagent project
 lein new reagent-frontend myprj

@@ -7,7 +7,7 @@ Change
 
 ```vim
 if currline =~# '^\s*when\>'
-    let new_col += 2
+	let new_col += 2
 endif
 ```
 
@@ -15,7 +15,7 @@ to
 
 ```vim
 if currline =~# '^\s*when\>'
-    let new_col += 8
+	let new_col += 8
 endif
 ```
 

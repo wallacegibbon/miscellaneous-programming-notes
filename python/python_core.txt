@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ##----------------------------------------------------------------------------
 ## `help` can do more than just printing docs of classes and functions

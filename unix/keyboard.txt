@@ -1,4 +1,4 @@
-> vim: ft=markdown :
+> vim:ft=markdown
 
 Edit /etc/default/keyboard, change the following configuration:
 ```

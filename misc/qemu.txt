@@ -1,4 +1,4 @@
-## vim: ft=sh :
+## vim:ft=sh
 
 ## create a new image, qcow is the disk format for qemu
 qemu-img create -f qcow winxp.img 8G

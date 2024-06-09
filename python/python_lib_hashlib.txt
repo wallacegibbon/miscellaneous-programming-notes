@@ -1,4 +1,4 @@
-## vim: ft=python :
+## vim:ft=python
 
 ## hashlib
 hashlib.sha1(b"abcdefg").digest()

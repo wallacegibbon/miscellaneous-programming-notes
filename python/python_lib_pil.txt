@@ -1,5 +1,4 @@
-## vim: ft=python :
-
+## vim:ft=python
 
 ## PIL notes
 ## if you create a picture with `PIL.Image.new', you'd better specify the

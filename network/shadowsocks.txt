@@ -1,4 +1,4 @@
-## vim: ft=markdown :
+## vim:ft=markdown
 
 There are many versions of shadowsocks implementations, bug many of them just
 did not work for some reason, the python version works.
@@ -14,13 +14,13 @@ ssserver -c conf.json -d stop
 The configuration json:
 ```json
 {
-    "server":"12.34.56.78",
-    "server_port":8388,
-    "local_address": "127.0.0.1",
-    "local_port":1080,
-    "password":"mypassword...",
-    "timeout":300,
-    "method":"aes-256-gcm"
+	"server":"12.34.56.78",
+	"server_port":8388,
+	"local_address": "127.0.0.1",
+	"local_port":1080,
+	"password":"mypassword...",
+	"timeout":300,
+	"method":"aes-256-gcm"
 }
 ```
 

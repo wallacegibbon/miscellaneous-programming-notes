@@ -1,4 +1,4 @@
-## vim: ft=elixir :
+## vim:ft=elixir
 
 ## maps were recently introduced into the erlang vm, and only from elixir v1.2
 ## they are capable of holding millions of keys efficiently.

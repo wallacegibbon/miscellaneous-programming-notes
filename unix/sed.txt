@@ -1,4 +1,4 @@
-# vim: ft=sh :
+# vim:ft=sh
 
 # the `-e' is not necessary if only one command followed
 ls -l | sed '1d'

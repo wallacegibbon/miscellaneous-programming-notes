@@ -1,4 +1,4 @@
-## vim: ft=elixir :
+## vim:ft=elixir
 
 ## in elixir, we can compare two different data types:
 ## the comparing rule:

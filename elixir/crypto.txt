@@ -1,4 +1,4 @@
-## vim: ft=elixir :
+## vim:ft=elixir
 
 ## the Base module of elixir contains many encode functions
 

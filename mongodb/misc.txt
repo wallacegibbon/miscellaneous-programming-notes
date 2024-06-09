@@ -1,5 +1,4 @@
-## vim: ft=conf :
-
+## vim:ft=conf
 
 ##----------------------------------------------------------------------------
 ## Some basic concepts of mongodb (compare with mysql)
