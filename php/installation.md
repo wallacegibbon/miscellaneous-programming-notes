@@ -1,7 +1,6 @@
-## On Linux
+# On Windows
 
-
-## On Windows
+## Apache Server
 
 You need to **Thread Safe** version of PHP to get `php8apache2_4.dll`.
 
@@ -21,9 +20,23 @@ In `httpd.conf`, add the following lines:
 
 ```conf
 LoadModule php_module C:/PHP/php8apache2_4.dll
+
+<FilesMatch \.php$>
+SetHandler application/x-httpd-php
+</FilesMatch>
+
+PHPIniDir C:/PHP
 ```
 
-```conf
-AddType application/x-httpd-php .php
+## PHP
+
+In `php.ini`, uncomment the following line:
+
+```init
+extension=mysqli
 ```
+
+
+# On Linux
+
 
