@@ -4,10 +4,10 @@ For example, the following escript (filename ttt.escript) will go wrong
 
 ```erlang
 main([]) ->
-    io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
+	io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
 
 blah(A) ->
-    A + 1.
+	A + 1.
 ```
 
 ```sh
@@ -22,13 +22,14 @@ To fix it, add _-mode(compile)_ in the escript
 -mode(compile).
 
 main([]) ->
-    io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
+	io:format("~p~n", [lists:map(fun blah/1, [1, 2, 3])]).
 
 blah(A) ->
-    A + 1.
+	A + 1.
 ```
 
 ```sh
 escript ttt.escript
 #  [2,3,4]
 ```
+
