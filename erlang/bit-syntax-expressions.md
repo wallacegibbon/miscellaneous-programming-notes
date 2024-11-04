@@ -39,7 +39,7 @@ BYTE 0     BYTE 1     BYTE 2     BYTE 3
 ## Example 3
 
 ```erlang
-<<7:9, 7:9, 0: 14>>.
+<<7:9, 7:9, 0:14>>.
 %> <<3,129,192,0>>
 ```
 
@@ -58,7 +58,7 @@ BYTE 0     BYTE 1     BYTE 2     BYTE 3
 ## Example 4
 
 ```erlang
-<<7:9, 7:9/little, 0: 14>>.
+<<7:9, 7:9/little, 0:14>>.
 %> <<3,131,128,0>>
 ```
 
