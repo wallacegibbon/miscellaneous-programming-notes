@@ -19,9 +19,11 @@ both operands of the ':' operator can be variable: e.g. `VarModName:VarFunName()
 ## These 4 operators are "right to left" (++, --, !, =)
 
 ```erlang
-( [1,2,3] -- [1,2,3,4,5] )  -- [1,2].   %> []
+([1,2,3] -- [1,2,3,4,5]) -- [1,2].
+%> []
 
-  [1,2,3] -- [1,2,3,4,5]    -- [1,2].   %> [1,2]
+[1,2,3] -- [1,2,3,4,5] -- [1,2].
+%> [1,2]
 ```
 
 
@@ -108,10 +110,10 @@ lists:foldr(fun (X, V) -> [X | V] end, [], [1, 2, 3]).
 
 ```erlang
 case #{a => 1} of
-    #{} ->
-        "!!!";
-    _ ->
-        ok
+	#{} ->
+		"!!!";
+	_ ->
+		ok
 end.
 %> "!!!"
 ```
@@ -120,10 +122,10 @@ It's the same situation for tuples
 
 ```erlang
 case #blah{a = 1} of
-    #blah{} ->
-        "!!!";
-    _ ->
-        ok
+	#blah{} ->
+		"!!!";
+	_ ->
+		ok
 end.
 %> "!!!"
 ```
@@ -173,9 +175,12 @@ qlc:q([{a, 1}, {a, 2}, {b, 1}, {b, 2}]).
 It creates *match specification* for mnesia/ets's select function
 
 ```erlang
-ets:fun2ms(fun ({A, B, C}) when A < B; A > B, B < C -> A;
-               ({A, B}) when A >= B -> B
-           end).
+ets:fun2ms(
+	fun
+	({A, B, C}) when A < B; A > B, B < C -> A;
+	({A, B}) when A >= B -> B
+	end
+).
 %> [{{'$1','$2','$3'},[{'<','$1','$2'}],['$1']},
 %   {{'$1','$2','$3'},[{'>','$1','$2'},{'<','$2','$3'}],['$1']},
 %   {{'$1','$2'},[{'>=','$1','$2'}],['$2']}]
@@ -288,67 +293,6 @@ The bit syntax can be used to get the byte representation of floats (or others)
 %> <<64,73,15,218>>
 ```
 
-*The bit syntax in Erlang is not friendly to the bit-field syntax (of struct) in C.*
-Because bit syntax in Erlang is MSB, while bit-field in C is LSB first (at least on most architecture).
-When data whose bit number is less than 8 occurs, Erlang and C handle them in different ways.
-
-For example:
-
-In C language:
-```c
-union blah {
-    struct { uint32_t pad1: 7, v1: 3, v2: 4, v3: 10, pad2: 8; } fields;
-    int32_t val;
-};
-
-union blah v;
-v.val = 0x12345678;
-
-printf("(%d), %d, %d, %d, (%d)\n", v.fields.pad1, v.fields.v1, v.fields.v2, v.fields.v3, v.fields.pad2);
-// (120), 12, 2, 209, (18)
-
-printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0x7f, (v.val >> 7) & 0x0f, (v.val >> 11) & 0x07, (v.val >> 14) & 0x3ff, v.val >> 24;
-// use bit operations: (120), 12, 2, 209, (18)
-```
-
-But in Erlang:
-
-```erlang
-<<P1:7, V1:3, V2:4, V3:10/little, P2:8>> = <<16#12345678:32/little-signed>>.
-
-{P1, V1, V2, V3, P2}.
-%> {60,1,5,141,18}
-```
-
-Another Comparison: (Even it's 8-bit margined, things could also go wrong)
-
-In C:
-```c
-union blah {
-    struct { uint32_t pad1: 8, v1: 4, v2: 4, v3: 8, pad2: 8; } fields;
-    int32_t val;
-};
-
-union blah v;
-v.val = 0x12345678;
-
-printf("(%d), %d, %d, %d, (%d)\n", v.fields.pad1, v.fields.v1, v.fields.v2, v.fields.v3, v.fields.pad2);
-// (120), 6, 5, 52, (18)
-
-printf("use bit operations: (%d), %d, %d, %d, (%d)\n", v.val & 0xff, (v.val >> 8) & 0x0f, (v.val >> 12) & 0x0f, (v.val >> 16) & 0xff, v.val >> 24);
-// use bit operations: (120), 6, 5, 52, (18)
-
-```
-
-In Erlang:
-
-```erlang
-<<P1:8, V1:4, V2:4, V3:8/little, P2:8>> = <<16#12345678:32/little-signed>>.
-
-{P1, V1, V2, V3, P2}.
-%> {120,5,6,52,18}
-```
-
 
 ## The AST of a function
 
@@ -455,8 +399,7 @@ erlang:processes().
 
 Get information of a certain process, and according to erlang doc,
 
->   This BIF is intended for debugging only. For all other purposes,
->   use process_info/2.
+> This BIF is intended for debugging only. For all other purposes, use `process_info`/2.
 
 ```erlang
 erlang:process_info(self()).

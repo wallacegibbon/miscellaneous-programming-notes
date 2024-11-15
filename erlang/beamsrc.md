@@ -1,7 +1,7 @@
 Function `process_main` is the core part of BEAM. the _labels as values_ in GCC is the key.
 
-Since label values are inside the "process_main" function, and byte code transformations depend on those label values.
-The "process_main" must be called before code loading.
+Since label values are inside the `process_main` function, and byte code transformations depend on those label values.
+The `process_main` must be called before code loading.
 
 So this function is called twice, the first time is simply for exporting those label values.
 
