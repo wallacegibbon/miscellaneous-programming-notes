@@ -1,16 +1,16 @@
-type Person = {name: string, marriage: boolean};
+type Person = {name: string, marriage: boolean, [blah: number]: string};
 
-type PersonWrapper = {[A in keyof Person as `get_${A}`]: () => Person[A]};
-///> type PersonWrapper = {get_name: () => string, get_marriage: () => boolean}
+type Person0 = {[A in keyof Person as `get${Capitalize<A & string>}`]: () => Person[A]};
+///> type Person0 = {getName: () => string, getMarriage: () => boolean}
 
-type Person0 = {[A in keyof Person as never]: Person[A]};
-///> type Person0 = {}
+type Person1 = {[A in keyof Person as never]: Person[A]};
+///> type Person1 = {}
 
-type Person1 = {[A in keyof Person]: Person[A]};
-///> type Person1 = {name: string, marriage: boolean};
+type Person2 = {[A in keyof Person as A extends string ? A : never]: Person[A]};
+///> type Person2 = {name: string, marriage: boolean};
 
-type PersonConditionWrapper = {[A in keyof Person as Person[A] extends string ? never : `get_${A}`]: () => Person[A]};
-///> type PersonConditionWrapper = {get_marriage: () => boolean};
+type Person3 = {[A in keyof Person as Person[A] extends string ? never : `get${Capitalize<A & string>}`]: () => Person[A]};
+///> type Person3 = {getMarriage: () => boolean};
 
 
 type ABC = "a" | "b" | "c";
